@@ -16,7 +16,7 @@ const { run } = await import(join(root, "packages/cantrip-interpreter/dist/index
 
 const examplesDir = join(root, "examples");
 const files = readdirSync(examplesDir)
-  .filter((f) => f.endsWith(".ctr"))
+  .filter((f) => f.endsWith(".ctrp"))
   .sort();
 
 let passed = 0;

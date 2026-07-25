@@ -3,7 +3,7 @@
 A lightweight, expressive scripting language.
 
 Cantrip is designed as a fast-to-build, enjoyable scripting language with a clean syntax.  
-It serves as a practical learning vehicle and a foundation that will later inform the more systems-oriented [Ward](https://github.com/StormbringerDev/ward) language.
+It serves as a practical learning vehicle and a foundation that will later inform the more systems-oriented [Ward](https://github.com/StormbringerDev/ward-lang) language.
 
 ### Implementation Roadmap
 
@@ -32,7 +32,7 @@ cantrip/
 │   ├── cantrip-parser/       # Recursive descent / Pratt parser
 │   ├── cantrip-interpreter/  # Tree-walking interpreter (Stage 1)
 │   └── cantrip-types/        # Shared TS utilities
-├── examples/                 # .ctr scripts (golden tests live here)
+├── examples/                 # .ctrp scripts (golden tests live here)
 └── docs/
 ```
 
@@ -65,7 +65,7 @@ cargo run -p cantrip-cli
 ### Example
 
 ```cantrip
-// examples/hello.ctr
+// examples/hello.ctrp
 let name = "world";
 print("Hello, " + name + "!");
 
