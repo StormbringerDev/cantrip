@@ -70,7 +70,7 @@ let name = "world";
 print("Hello, " + name + "!");
 
 fn add(a, b) {
-  return a + b;
+  a + b
 }
 
 print(add(40, 2));

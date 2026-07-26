@@ -4,22 +4,22 @@
 print("=== Control Flow ===");
 
 let n = 0;
-while (n < 5) {
+while n < 5 {
   print("n = " + n);
   n = n + 1;
 }
 
-if (n == 5) {
+if n == 5 {
   print("Loop finished correctly");
 } else {
   print("Something went wrong");
 }
 
 fn max(a, b) {
-  if (a > b) {
-    return a;
+  if a > b {
+    a
   } else {
-    return b;
+    b
   }
 }
 
