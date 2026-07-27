@@ -10,5 +10,3 @@ export interface Span {
   readonly start: Position;
   readonly end: Position;
 }
-
-export type Located<T> = T & { readonly span: Span };

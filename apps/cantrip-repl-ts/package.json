@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "bin": {
-    "quill-ts": "./dist/index.js"
+    "cantrip-ts": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -16,10 +16,13 @@
   },
   "dependencies": {
     "@cantrip/interpreter": "workspace:*",
-    "@cantrip/parser": "workspace:*"
+    "@cantrip/parser": "workspace:*",
+    "@cantrip/types": "workspace:*",
+    "prompt-sync": "4.2.0"
   },
   "devDependencies": {
     "@types/node": "^26.1.1",
+    "@types/prompt-sync": "^4.2.3",
     "tsx": "^4.23.1",
     "typescript": "^6.0.3"
   }

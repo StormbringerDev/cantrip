@@ -1,1 +1,1 @@
-export { Scanner, Token, TokenType } from "./scanner/index.js";
+export { Scanner, ScannerError, Token, TokenType } from "./scanner/index.js";

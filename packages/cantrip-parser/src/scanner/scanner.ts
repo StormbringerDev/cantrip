@@ -1,5 +1,5 @@
-import type { Located, Position } from "@cantrip/types";
-import { type Token, TokenType } from "./token.js";
+import type { Position } from "@cantrip/types";
+import { Token, TokenType } from "./token.js";
 
 // Utility character checks
 function isDigit(char: string): boolean {
@@ -16,6 +16,7 @@ function isAlphaNumeric(char: string): boolean {
 
 // Keyword map
 const keywords = new Map<string, TokenType>();
+keywords.set("and", TokenType.And);
 keywords.set("else", TokenType.Else);
 keywords.set("false", TokenType.False);
 keywords.set("fn", TokenType.Fn);
@@ -23,6 +24,7 @@ keywords.set("if", TokenType.If);
 keywords.set("let", TokenType.Let);
 keywords.set("loop", TokenType.Loop);
 keywords.set("nil", TokenType.Nil);
+keywords.set("or", TokenType.Or);
 keywords.set("return", TokenType.Return);
 keywords.set("true", TokenType.True);
 keywords.set("while", TokenType.While);
@@ -39,16 +41,17 @@ export class ScannerError extends Error {
 
 export class Scanner {
   private source: string;
-  private tokens: Located<Token>[] = [];
-  private line = 1;
-  private column = 1;
+  private tokens: Token[] = [];
+  private errors: Error[] = [];
+  private line = 0;
+  private column = 0;
   private offset = 0;
 
   constructor(source: string) {
     this.source = source;
   }
 
-  scanTokens(): Located<Token>[] {
+  scanTokens(): { tokens: Token[]; errors: Error[] } {
     while (!this.isAtEnd()) {
       this.scanToken();
     }
@@ -70,7 +73,7 @@ export class Scanner {
         },
       },
     });
-    return this.tokens;
+    return { tokens: this.tokens, errors: this.errors };
   }
 
   private scanToken() {
@@ -80,99 +83,78 @@ export class Scanner {
       offset: this.offset,
     };
     const char = this.advance();
-    const end: Position = {
-      line: this.line,
-      column: this.column,
-      offset: this.offset,
-    };
     switch (char) {
       case "(":
-        this.addToken(TokenType.LeftParen, start, end);
+        this.addToken(TokenType.LeftParen, start);
         break;
       case ")":
-        this.addToken(TokenType.RightParen, start, end);
+        this.addToken(TokenType.RightParen, start);
         break;
       case "{":
-        this.addToken(TokenType.LeftBrace, start, end);
+        this.addToken(TokenType.LeftBrace, start);
         break;
       case "}":
-        this.addToken(TokenType.RightBrace, start, end);
+        this.addToken(TokenType.RightBrace, start);
         break;
       case "[":
-        this.addToken(TokenType.LeftBracket, start, end);
+        this.addToken(TokenType.LeftBracket, start);
         break;
       case "]":
-        this.addToken(TokenType.RightBracket, start, end);
+        this.addToken(TokenType.RightBracket, start);
         break;
       case ";":
-        this.addToken(TokenType.Semicolon, start, end);
+        this.addToken(TokenType.Semicolon, start);
         break;
       case ":":
-        this.addToken(TokenType.Colon, start, end);
+        this.addToken(TokenType.Colon, start);
         break;
       case ",":
-        this.addToken(TokenType.Comma, start, end);
+        this.addToken(TokenType.Comma, start);
         break;
       case "+":
-        this.addToken(this.match("=") ? TokenType.PlusEq : TokenType.Plus, start, end);
+        this.addToken(this.match("=") ? TokenType.PlusEq : TokenType.Plus, start);
         break;
       case "-":
         if (this.match("=")) {
-          this.addToken(TokenType.MinusEq, start, end);
+          this.addToken(TokenType.MinusEq, start);
         } else if (this.match(">")) {
-          this.addToken(TokenType.Arrow, start, end);
+          this.addToken(TokenType.Arrow, start);
         } else {
-          this.addToken(TokenType.Minus, start, end);
+          this.addToken(TokenType.Minus, start);
         }
         break;
       case "*":
-        this.addToken(this.match("=") ? TokenType.StarEq : TokenType.Star, start, end);
+        this.addToken(this.match("=") ? TokenType.StarEq : TokenType.Star, start);
         break;
       case "/":
         if (this.match("=")) {
-          this.addToken(TokenType.SlashEq, start, end);
+          this.addToken(TokenType.SlashEq, start);
         } else if (this.match("/")) {
           while (this.peek() != "\n" && !this.isAtEnd()) this.advance();
         } else {
-          this.addToken(TokenType.Slash, start, end);
+          this.addToken(TokenType.Slash, start);
         }
         break;
       case "%":
-        this.addToken(
-          this.match("=") ? TokenType.PercentEq : TokenType.Percent,
-          start,
-          end,
-        );
+        this.addToken(this.match("=") ? TokenType.PercentEq : TokenType.Percent, start);
         break;
       case "!":
-        this.addToken(this.match("=") ? TokenType.BangEq : TokenType.Bang, start, end);
+        this.addToken(this.match("=") ? TokenType.BangEq : TokenType.Bang, start);
         break;
       case "=":
         if (this.match("=")) {
-          this.addToken(TokenType.EqEq, start, {
-            line: this.line,
-            column: this.column,
-            offset: this.offset,
-          });
+          this.addToken(TokenType.EqEq, start);
         } else if (this.match(">")) {
-          this.addToken(TokenType.FatArrow, start, {
-            line: this.line,
-            column: this.column,
-            offset: this.offset,
-          });
+          this.addToken(TokenType.FatArrow, start);
         } else {
-          this.addToken(TokenType.Eq, start, end);
+          this.addToken(TokenType.Eq, start);
         }
         break;
       case "<":
-        this.addToken(this.match("=") ? TokenType.LessEq : TokenType.Less, start, end);
+        this.addToken(this.match("=") ? TokenType.LessEq : TokenType.Less, start);
         break;
       case ">":
-        this.addToken(
-          this.match("=") ? TokenType.GreaterEq : TokenType.Greater,
-          start,
-          end,
-        );
+        this.addToken(this.match("=") ? TokenType.GreaterEq : TokenType.Greater, start);
         break;
       case '"':
         this.addString(start);
@@ -192,25 +174,20 @@ export class Scanner {
         } else if (isAlpha(char)) {
           this.addIdentifier(start);
         } else {
-          throw new ScannerError(start, `Unexpected character '${char}'.`);
+          this.errors.push(new ScannerError(start, `Unexpected character '${char}'.`));
         }
     }
   }
 
   // Generic tokens
-  private addToken(
-    type: TokenType,
-    start: Position,
-    end: Position,
-    literal?: number | string,
-  ) {
+  private addToken(type: TokenType, start: Position, literal?: number | string) {
+    const end: Position = {
+      line: this.line,
+      column: this.column,
+      offset: this.offset,
+    };
     const text = this.source.substring(start.offset, end.offset);
-    this.tokens.push({
-      type,
-      lexeme: text,
-      literal: literal ?? null,
-      span: { start, end },
-    });
+    this.tokens.push(new Token(type, text, literal ?? null, { start, end }));
   }
 
   // Literal tokens
@@ -226,6 +203,7 @@ export class Scanner {
       while (isDigit(this.peek())) this.advance();
     }
 
+    // Record end position to determine number value
     const end: Position = {
       line: this.line,
       column: this.column,
@@ -234,7 +212,6 @@ export class Scanner {
     this.addToken(
       TokenType.Number,
       start,
-      end,
       parseFloat(this.source.substring(start.offset, end.offset)),
     );
   }
@@ -249,13 +226,13 @@ export class Scanner {
     }
 
     if (this.isAtEnd()) {
-      throw new ScannerError(start, "Unterminated string.");
+      this.errors.push(new ScannerError(start, "Unterminated string."));
     }
 
     // Consume closing quote
     this.advance();
 
-    // Record ending position
+    // Record ending position to determine string value
     const end: Position = {
       line: this.line,
       column: this.column,
@@ -263,8 +240,8 @@ export class Scanner {
     };
 
     // Trim surrounding quotes
-    const value = this.source.substring(start.offset, end.offset);
-    this.addToken(TokenType.String, start, end, value);
+    const value = this.source.substring(start.offset + 1, end.offset - 1);
+    this.addToken(TokenType.String, start, value);
   }
 
   private addIdentifier(start: Position) {
@@ -279,7 +256,7 @@ export class Scanner {
     const text = this.source.substring(start.offset, end.offset);
     let type = keywords.get(text);
     type ??= TokenType.Identifier;
-    this.addToken(type, start, end);
+    this.addToken(type, start);
   }
 
   // Check if offset is at source length
