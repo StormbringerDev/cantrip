@@ -73,11 +73,16 @@ describe("Scanner", () => {
         } else {
           loop {
             while false and true {
-              // nothing
+              continue;
             }
+            break;
           }
         }
         [1, 2, nil];
+        match answer {
+          42 => print("I understand everything"),
+          _ => print("Still searching"),
+        }
       }
     `);
 
@@ -95,10 +100,13 @@ describe("Scanner", () => {
     expect(types).toContain(TokenType.Or);
     expect(types).toContain(TokenType.Loop);
     expect(types).toContain(TokenType.While);
+    expect(types).toContain(TokenType.Continue);
+    expect(types).toContain(TokenType.Break);
     expect(types).toContain(TokenType.False);
     expect(types).toContain(TokenType.Nil);
     expect(types).toContain(TokenType.LeftBrace);
     expect(types).toContain(TokenType.RightBrace);
+    expect(types).toContain(TokenType.Match);
     expect(types).toContain(TokenType.LeftBracket);
     expect(types).toContain(TokenType.RightBracket);
     expect(types).toContain(TokenType.Colon);

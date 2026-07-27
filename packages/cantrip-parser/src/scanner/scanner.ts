@@ -17,12 +17,15 @@ function isAlphaNumeric(char: string): boolean {
 // Keyword map
 const keywords = new Map<string, TokenType>();
 keywords.set("and", TokenType.And);
+keywords.set("break", TokenType.Break);
+keywords.set("continue", TokenType.Continue);
 keywords.set("else", TokenType.Else);
 keywords.set("false", TokenType.False);
 keywords.set("fn", TokenType.Fn);
 keywords.set("if", TokenType.If);
 keywords.set("let", TokenType.Let);
 keywords.set("loop", TokenType.Loop);
+keywords.set("match", TokenType.Match);
 keywords.set("nil", TokenType.Nil);
 keywords.set("or", TokenType.Or);
 keywords.set("return", TokenType.Return);

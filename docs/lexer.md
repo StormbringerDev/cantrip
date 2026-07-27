@@ -40,12 +40,15 @@ It is the only (mostly) completed front-end component at the moment and serves a
 | `String`       | `"..."`                          | Currently very simple (see notes) |
 | `Number`       | `[0-9]+(\.[0-9]+)?`              | See rules below                   |
 | `And`          | `and`                            | Keyword                           |
+| `Break`        | `break`                          | Keyword                           |
+| `Continue`     | `continue`                       | Keyword                           |
 | `Else`         | `else`                           | Keyword                           |
 | `False`        | `false`                          | Keyword                           |
 | `Fn`           | `fn`                             | Keyword                           |
 | `If`           | `if`                             | Keyword                           |
 | `Let`          | `let`                            | Keyword                           |
 | `Loop`         | `loop`                           | Keyword                           |
+| `Match`        | `match`                          | Keyword                           |
 | `Nil`          | `nil`                            | Keyword                           |
 | `Or`           | `or`                             | Keyword                           |
 | `Return`       | `return`                         | Keyword                           |

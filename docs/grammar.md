@@ -19,11 +19,15 @@ let_decl         -> "let" IDENTIFIER ( "=" expression )? ";"
 
 statement        -> expr_stmt
                   | return_stmt
+                  | break_stmt
+                  | continue_stmt
                   | while_stmt
                   | block
 
 expr_stmt        -> expression ";"
 return_stmt      -> "return" expression? ";"
+break_stmt       -> "break" expression? ";"
+continue_stmt    -> "continue" ";"
 while_stmt       -> "while" expression block
 
 expression       -> assignment
@@ -50,11 +54,15 @@ primary          -> "true" | "false" | "nil"
                   | "(" expression ")"
                   | if_expr
                   | loop_expr
+                  | match_expr
                   | block
 
 if_expr          -> "if" expression block ( "else" ( if_expr | block ) )?
 
 loop_expr        -> "loop" block
+
+match_expr       -> "match" expression "{" match_branch* "}"
+match_branch     -> expression "=>" expression ","?
 
 block            -> "{" declaration* "}"
 ```

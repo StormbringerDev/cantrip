@@ -63,12 +63,15 @@ export enum TokenType {
 
   // Keywords
   And,
+  Break,
+  Continue,
   Else,
   False,
   Fn,
   If,
   Let,
   Loop,
+  Match,
   Nil,
   Or,
   Return,
@@ -146,6 +149,10 @@ function tokenTypeToString(type: TokenType): string {
       return "Number";
     case TokenType.And:
       return "And";
+    case TokenType.Break:
+      return "Break";
+    case TokenType.Continue:
+      return "Continue";
     case TokenType.Else:
       return "Else";
     case TokenType.False:
@@ -158,6 +165,8 @@ function tokenTypeToString(type: TokenType): string {
       return "Let";
     case TokenType.Loop:
       return "Loop";
+    case TokenType.Match:
+      return "Match";
     case TokenType.Nil:
       return "Nil";
     case TokenType.Or:
