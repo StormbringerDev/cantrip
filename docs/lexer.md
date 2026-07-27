@@ -39,6 +39,7 @@ It is the only (mostly) completed front-end component at the moment and serves a
 | `Identifier`   | `[_a-zA-Z][_a-zA-Z0-9]*`         | See rules below                   |
 | `String`       | `"..."`                          | Currently very simple (see notes) |
 | `Number`       | `[0-9]+(\.[0-9]+)?`              | See rules below                   |
+| `And`          | `and`                            | Keyword                           |
 | `Else`         | `else`                           | Keyword                           |
 | `False`        | `false`                          | Keyword                           |
 | `Fn`           | `fn`                             | Keyword                           |
@@ -46,6 +47,7 @@ It is the only (mostly) completed front-end component at the moment and serves a
 | `Let`          | `let`                            | Keyword                           |
 | `Loop`         | `loop`                           | Keyword                           |
 | `Nil`          | `nil`                            | Keyword                           |
+| `Or`           | `or`                             | Keyword                           |
 | `Return`       | `return`                         | Keyword                           |
 | `True`         | `true`                           | Keyword                           |
 | `While`        | `while`                          | Keyword                           |
