@@ -12,18 +12,18 @@ It is designed to be easy to embed and easy to reason about.
 
 ## Current Status
 
-| Component                | Status      | Notes                    |
-| ------------------------ | ----------- | ------------------------ |
-| Lexer / Scanner          | Polishing   | See [lexer.md](lexer.md) |
-| Parser                   | Not started |                          |
-| Tree-walking interpreter | Planned     | First execution target   |
-| Bytecode VM              | Planned     |                          |
-| Cranelift JIT            | Planned     |                          |
+| Component                | Status             | Notes                        |
+| ------------------------ | ------------------ | ---------------------------- |
+| Lexer / Scanner          | Complete           | See [lexer.md](lexer.md)     |
+| Parser                   | Planning Structure | See [grammar.md](grammar.md) |
+| Tree-walking interpreter | Planned            | First execution target       |
+| Bytecode VM              | Planned            |                              |
+| Cranelift JIT            | Planned            |                              |
 
 ## Documentation Layout
 
 - [`lexer.md`](lexer.md) - complete token definitions and scanning rules (source of truth for the current implementation)
-- `grammar.md` - (coming soon) surface syntax
+- [`grammar.md`](grammar.md) - surface syntax
 - `semantics.md` - (coming soon) evaluation rules once the interpreter exists
 
 The lexer documentation is intentionally the most detailed right now that is the only (mostly) finished component. All other sections will be filled in as the corresponding implementation lands.
