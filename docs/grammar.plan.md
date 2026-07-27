@@ -106,5 +106,5 @@ block            -> "{" declaration* "}"
 
 ### Source of truth
 
-Until the parser exists, this document is aspirational.  
-Once parsing begins, the implemented grammar takes precedence and this file must be kept in sync.
+This document serves as reference for the planned syntax structure of Cantrip.  
+It is purely aspirational and will not be a complete source of truth for the current status of the parser.
