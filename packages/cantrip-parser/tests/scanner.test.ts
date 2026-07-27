@@ -1,0 +1,124 @@
+import { afterEach, describe, expect, it } from "vitest";
+import { Scanner } from "../src/scanner/scanner.js";
+import { TokenType } from "../src/scanner/token.js";
+
+describe("Scanner", () => {
+  let scanner: Scanner | null;
+
+  afterEach(() => {
+    scanner = null;
+  });
+
+  it("emits an Eof token when scanning is complete", () => {
+    scanner = new Scanner("");
+    const tokens = scanner.scanTokens();
+    expect(tokens).toHaveLength(1);
+    expect(tokens.at(-1)!.type).toBe(TokenType.Eof);
+  });
+
+  it("scans arithmetic, comparison, assignment, and grouping operators", () => {
+    scanner = new Scanner(
+      "((40 + 2) * 3 / 3) != 0 <= 1 >= 2 == 3 % 4 -> 5 => 6 += 7 -= 8 *= 9 /= 10 %= 11",
+    );
+    const tokens = scanner.scanTokens();
+
+    const expected = [
+      TokenType.LeftParen,
+      TokenType.LeftParen,
+      TokenType.Number,
+      TokenType.Plus,
+      TokenType.Number,
+      TokenType.RightParen,
+      TokenType.Star,
+      TokenType.Number,
+      TokenType.Slash,
+      TokenType.Number,
+      TokenType.RightParen,
+      TokenType.BangEq,
+      TokenType.Number,
+      TokenType.LessEq,
+      TokenType.Number,
+      TokenType.GreaterEq,
+      TokenType.Number,
+      TokenType.EqEq,
+      TokenType.Number,
+      TokenType.Percent,
+      TokenType.Number,
+      TokenType.Arrow,
+      TokenType.Number,
+      TokenType.FatArrow,
+      TokenType.Number,
+      TokenType.PlusEq,
+      TokenType.Number,
+      TokenType.MinusEq,
+      TokenType.Number,
+      TokenType.StarEq,
+      TokenType.Number,
+      TokenType.SlashEq,
+      TokenType.Number,
+      TokenType.PercentEq,
+      TokenType.Number,
+      TokenType.Eof,
+    ];
+
+    expect(tokens.map((t) => t.type)).toEqual(expected);
+  });
+
+  it("scans keywords, identifiers, strings, brackets, and remaining punctuation", () => {
+    scanner = new Scanner(`
+      fn main() {
+        let answer: number = 42;
+        if true {
+          return "hello";
+        } else {
+          loop {
+            while false {
+              // nothing
+            }
+          }
+        }
+        [1, 2, nil];
+      }
+    `);
+
+    const tokens = scanner.scanTokens();
+    const types = tokens.map((t) => t.type);
+
+    expect(types).toContain(TokenType.Fn);
+    expect(types).toContain(TokenType.Let);
+    expect(types).toContain(TokenType.If);
+    expect(types).toContain(TokenType.True);
+    expect(types).toContain(TokenType.Return);
+    expect(types).toContain(TokenType.String);
+    expect(types).toContain(TokenType.Else);
+    expect(types).toContain(TokenType.Loop);
+    expect(types).toContain(TokenType.While);
+    expect(types).toContain(TokenType.False);
+    expect(types).toContain(TokenType.Nil);
+    expect(types).toContain(TokenType.LeftBrace);
+    expect(types).toContain(TokenType.RightBrace);
+    expect(types).toContain(TokenType.LeftBracket);
+    expect(types).toContain(TokenType.RightBracket);
+    expect(types).toContain(TokenType.Colon);
+    expect(types).toContain(TokenType.Comma);
+    expect(types).toContain(TokenType.Semicolon);
+    expect(types).toContain(TokenType.Identifier);
+    expect(types.at(-1)).toBe(TokenType.Eof);
+  });
+
+  it("handles bang and other single-character leftovers", () => {
+    scanner = new Scanner("!x");
+    const tokens = scanner.scanTokens();
+    expect(tokens.map((t) => t.type)).toEqual([
+      TokenType.Bang,
+      TokenType.Identifier,
+      TokenType.Eof,
+    ]);
+  });
+
+  it("ignores comments", () => {
+    scanner = new Scanner("// Very important comment");
+    const tokens = scanner.scanTokens();
+    expect(tokens).toHaveLength(1);
+  });
+});
