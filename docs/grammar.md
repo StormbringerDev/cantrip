@@ -2,6 +2,8 @@
 
 ## EBNF Grammar
 
+Note: Below grammar is not final and is subject to change while writing the parser.
+
 ```
 program          -> declaration* EOF
 
@@ -56,5 +58,3 @@ loop_expr        -> "loop" block
 
 block            -> "{" declaration* "}"
 ```
-
-Note: Above grammar is not final and is subject to change while writing the parser.
