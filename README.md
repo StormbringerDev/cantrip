@@ -9,7 +9,7 @@ It serves as a practical learning vehicle and a foundation that will later infor
 
 | Stage                                  | Status        | Description                            |
 | -------------------------------------- | ------------- | -------------------------------------- |
-| 1. TypeScript Tree-Walking Interpreter | 🚧 Scaffolded | Fast iteration on syntax & semantics   |
+| 1. TypeScript Tree-Walking Interpreter | 🏗️ Building   | Fast iteration on syntax & semantics   |
 | 2. Rust Bytecode VM                    | 🚧 Scaffolded | Portable, efficient execution          |
 | 3. Rust JIT                            | 🚧 Scaffolded | Native performance (Cranelift planned) |
 
