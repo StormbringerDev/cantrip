@@ -27,9 +27,9 @@ export class Parser {
     this.tokens = tokens;
   }
 
-  public parse(): { ast: Expr; errors: ParseError[] } {
+  public parse(): { ast: Expr; parseErrors: ParseError[] } {
     const ast = this.expression();
-    return { ast, errors: this.errors };
+    return { ast, parseErrors: this.errors };
   }
 
   private expression(): Expr {
@@ -177,26 +177,26 @@ export class Parser {
     return err;
   }
 
-  private synchronize() {
-    this.advance();
+  // private synchronize() {
+  //   this.advance();
 
-    while (!this.isAtEnd()) {
-      if (this.previous().type == TokenType.Semicolon) return;
+  //   while (!this.isAtEnd()) {
+  //     if (this.previous().type == TokenType.Semicolon) return;
 
-      switch (this.peek().type) {
-        case TokenType.Break:
-        case TokenType.Continue:
-        case TokenType.Fn:
-        case TokenType.If:
-        case TokenType.Let:
-        case TokenType.Loop:
-        case TokenType.Match:
-        case TokenType.Return:
-        case TokenType.While:
-          return;
-      }
+  //     switch (this.peek().type) {
+  //       case TokenType.Break:
+  //       case TokenType.Continue:
+  //       case TokenType.Fn:
+  //       case TokenType.If:
+  //       case TokenType.Let:
+  //       case TokenType.Loop:
+  //       case TokenType.Match:
+  //       case TokenType.Return:
+  //       case TokenType.While:
+  //         return;
+  //     }
 
-      this.advance();
-    }
-  }
+  //     this.advance();
+  //   }
+  // }
 }

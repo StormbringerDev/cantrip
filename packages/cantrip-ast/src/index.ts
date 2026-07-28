@@ -1,3 +1,4 @@
+export { AstPrinter } from "./ast-printer.js";
 export {
   BinaryExpr,
   Expr,

@@ -1,4 +1,5 @@
-import { Scanner, ScannerError } from "@cantrip/parser";
+import { AstPrinter, TokenType } from "@cantrip/ast";
+import { Parser, ParseError, Scanner, ScannerError } from "@cantrip/parser";
 import type { Position } from "@cantrip/types";
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -19,21 +20,33 @@ function report(position: Position, where: string, message: string) {
 
 function run(source: string) {
   const scanner = new Scanner(source);
-  const { tokens, errors } = scanner.scanTokens();
+  const { tokens, scannerErrors } = scanner.scanTokens();
+  const parser = new Parser(tokens);
+  const { ast, parseErrors } = parser.parse();
+  const errors: Error[] = [...scannerErrors, ...parseErrors];
 
   // If there are errors, report errors and end execution
   if (errors.length > 0) {
     for (const error of errors) {
       if (error instanceof ScannerError) {
         report(error.position, "", error.message);
+      } else if (error instanceof ParseError) {
+        if (error.token.type === TokenType.Eof) {
+          report(error.token.span.start, " at end", error.message);
+        } else {
+          report(
+            error.token.span.start,
+            " at '" + error.token.lexeme + "'",
+            error.message,
+          );
+        }
       }
     }
     return;
   }
 
-  for (const token of tokens) {
-    console.log(token.toString());
-  }
+  const printer = new AstPrinter();
+  console.log(printer.print(ast));
 }
 
 function runFile(path: string) {

@@ -45,7 +45,7 @@ export class ScannerError extends Error {
 export class Scanner {
   private readonly source: string;
   private tokens: Token[] = [];
-  private errors: Error[] = [];
+  private errors: ScannerError[] = [];
   private line = 0;
   private column = 0;
   private offset = 0;
@@ -54,16 +54,13 @@ export class Scanner {
     this.source = source;
   }
 
-  scanTokens(): { tokens: Token[]; errors: Error[] } {
+  scanTokens(): { tokens: Token[]; scannerErrors: ScannerError[] } {
     while (!this.isAtEnd()) {
       this.scanToken();
     }
 
-    this.tokens.push({
-      type: TokenType.Eof,
-      lexeme: "",
-      literal: null,
-      span: {
+    this.tokens.push(
+      new Token(TokenType.Eof, "", null, {
         start: {
           line: this.line,
           column: this.column++,
@@ -74,9 +71,9 @@ export class Scanner {
           column: this.column,
           offset: this.offset,
         },
-      },
-    });
-    return { tokens: this.tokens, errors: this.errors };
+      }),
+    );
+    return { tokens: this.tokens, scannerErrors: this.errors };
   }
 
   private scanToken() {
