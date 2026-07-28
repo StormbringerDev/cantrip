@@ -1,24 +1,18 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { Scanner } from "../src/scanner/scanner.js";
-import { TokenType } from "../src/scanner/token.js";
+import { Scanner } from "../src/scanner.js";
+import { TokenType } from "@cantrip/ast";
 
 describe("Scanner", () => {
-  let scanner: Scanner | null;
-
-  afterEach(() => {
-    scanner = null;
-  });
-
   it("emits an Eof token when scanning is complete", () => {
-    scanner = new Scanner("");
+    const scanner = new Scanner("");
     const { tokens } = scanner.scanTokens();
     expect(tokens).toHaveLength(1);
     expect(tokens.at(-1)!.type).toBe(TokenType.Eof);
   });
 
   it("scans arithmetic, comparison, assignment, and grouping operators", () => {
-    scanner = new Scanner(
-      "((40 + 2) * 3 / 3) != 0 <= 1 >= 2 == 3 % 4 -> 5 => 6 += 7 -= 8 *= 9 /= 10 %= 11",
+    const scanner = new Scanner(
+      "((4 + 2) * 3.14 / 3) != 0 <= 1 >= 2 == 3 % 4 -> 5 => 6 += 7 -= 8 *= 9 /= 10 %= 11",
     );
     const { tokens } = scanner.scanTokens();
 
@@ -65,7 +59,7 @@ describe("Scanner", () => {
   });
 
   it("scans keywords, identifiers, strings, brackets, and remaining punctuation", () => {
-    scanner = new Scanner(`
+    const scanner = new Scanner(`
       fn main() {
         let answer: number = 42;
         if true or false {
@@ -119,7 +113,7 @@ describe("Scanner", () => {
   it("handles bang and other single-character leftovers", () => {
     // I know the source string is illogical, but the scanner only emits tokens and I'm
     // testing that the correct tokens are emitted
-    scanner = new Scanner("!x -y");
+    const scanner = new Scanner("!x -y");
     const { tokens } = scanner.scanTokens();
     expect(tokens.map((t) => t.type)).toEqual([
       TokenType.Bang,
@@ -131,7 +125,7 @@ describe("Scanner", () => {
   });
 
   it("ignores comments", () => {
-    scanner = new Scanner("// Very important comment");
+    const scanner = new Scanner("// Very important comment");
     const { tokens } = scanner.scanTokens();
     expect(tokens).toHaveLength(1);
   });

@@ -5,7 +5,7 @@
     "rootDir": "src",
     "composite": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../cantrip-ast/src/token.ts"],
   "references": [
     {
       "path": "../cantrip-types"

@@ -13,70 +13,23 @@ Cantrip mixes statements and expressions.
 ## EBNF
 
 ```ebnf
-program          -> declaration* EOF
-
-declaration      -> fn_decl
-                  | let_decl
-                  | statement
-
-fn_decl          -> "fn" IDENTIFIER "(" parameters? ")" block
-
-parameters       -> IDENTIFIER ( "," IDENTIFIER )*
-
-let_decl         -> "let" IDENTIFIER ( "=" expression )? ";"
-
-statement        -> expr_stmt
-                  | return_stmt
-                  | break_stmt
-                  | continue_stmt
-                  | while_stmt
-                  | block                 // bare block as statement
-
-expr_stmt        -> expression ";"
-return_stmt      -> "return" expression? ";"
-break_stmt       -> "break" ";"           // value-carrying break is deferred
-continue_stmt    -> "continue" ";"
-while_stmt       -> "while" expression block
+program          -> expression
 
 // -- Expressions (ordered by precedence, lowest to highest) ---------------
 
-expression       -> assignment
+expression       -> equality
 
-assignment       -> IDENTIFIER "=" assignment
-                  | logic_or
-
-logic_or         -> logic_and ( "or" logic_and )*
-logic_and        -> equality ( "and" equality )*
-equality         -> comparison ( ( "!=" | "==" ) comparison )*
+equality         -> comparison ( ( "==" | "+" ) comparison )*
 comparison       -> term ( ( ">" | ">=" | "<" | "<=" ) term )*
 term             -> factor ( ( "-" | "+" ) factor )*
 factor           -> unary ( ( "/" | "*" | "%" ) unary )*
 
 unary            -> ( "!" | "-" ) unary
-                  | call
-
-call             -> primary ( "(" arguments? ")" )*
-arguments        -> expression ( "," expression )*
+                  | primary
 
 primary          -> "true" | "false" | "nil"
                   | NUMBER | STRING
-                  | IDENTIFIER
                   | "(" expression ")"
-                  | if_expr
-                  | loop_expr
-                  | match_expr
-                  | block                 // block as expression
-
-// -- Expression forms ----------------------------------------------------
-
-if_expr          -> "if" expression block ( "else" ( if_expr | block ) )?
-
-loop_expr        -> "loop" block
-
-match_expr       -> "match" expression "{" match_branch* "}"
-match_branch     -> expression "=>" expression ","?
-
-block            -> "{" declaration* "}"
 ```
 
 ## Notes
@@ -106,5 +59,5 @@ block            -> "{" declaration* "}"
 
 ### Source of truth
 
-Until the parser exists, this document is aspirational.  
-Once parsing begins, the implemented grammar takes precedence and this file must be kept in sync.
+The grammar definitions and parsing behavior in the implementation are authoritative.
+This document must be kept in sync with the code. When the parser changes, update this file in the same change.

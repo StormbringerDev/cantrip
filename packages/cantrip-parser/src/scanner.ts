@@ -1,5 +1,5 @@
 import type { Position } from "@cantrip/types";
-import { Token, TokenType } from "./token.js";
+import { Token, TokenType } from "@cantrip/ast";
 
 // Utility character checks
 function isDigit(char: string): boolean {
@@ -43,7 +43,7 @@ export class ScannerError extends Error {
 }
 
 export class Scanner {
-  private source: string;
+  private readonly source: string;
   private tokens: Token[] = [];
   private errors: Error[] = [];
   private line = 0;

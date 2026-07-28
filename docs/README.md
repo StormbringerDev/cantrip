@@ -12,13 +12,13 @@ It is designed to be easy to embed and easy to reason about.
 
 ## Current Status
 
-| Component                | Status             | Notes                        |
-| ------------------------ | ------------------ | ---------------------------- |
-| Lexer / Scanner          | Complete           | See [lexer.md](lexer.md)     |
-| Parser                   | Planning Structure | See [grammar.md](grammar.md) |
-| Tree-walking interpreter | Planned            | First execution target       |
-| Bytecode VM              | Planned            |                              |
-| Cranelift JIT            | Planned            |                              |
+| Component                | Status   | Notes                        |
+| ------------------------ | -------- | ---------------------------- |
+| Lexer / Scanner          | Complete | See [lexer.md](lexer.md)     |
+| Parser                   | Building | See [grammar.md](grammar.md) |
+| Tree-walking interpreter | Planned  | First execution target       |
+| Bytecode VM              | Planned  |                              |
+| Cranelift JIT            | Planned  |                              |
 
 ## Documentation Layout
 

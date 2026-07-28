@@ -1,14 +1,12 @@
 import { assertNever, type Span } from "@cantrip/types";
 
-export type Literal = string | number | null;
-
 export class Token {
   readonly type: TokenType;
   readonly lexeme: string;
-  readonly literal: Literal;
+  readonly literal: unknown;
   readonly span: Span;
 
-  constructor(type: TokenType, lexeme: string, literal: Literal, span: Span) {
+  constructor(type: TokenType, lexeme: string, literal: unknown, span: Span) {
     this.type = type;
     this.lexeme = lexeme;
     this.literal = literal;
