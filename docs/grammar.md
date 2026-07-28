@@ -19,7 +19,7 @@ program          -> expression
 
 expression       -> equality
 
-equality         -> comparison ( ( "==" | "+" ) comparison )*
+equality         -> comparison ( ( "!=" | "==" ) comparison )*
 comparison       -> term ( ( ">" | ">=" | "<" | "<=" ) term )*
 term             -> factor ( ( "-" | "+" ) factor )*
 factor           -> unary ( ( "/" | "*" | "%" ) unary )*
