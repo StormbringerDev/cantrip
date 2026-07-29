@@ -27,7 +27,9 @@ export class AstPrinter implements ExprVisitor<string> {
   public visitLiteralExpr(expr: LiteralExpr): string {
     if (expr.value === null) return "nil";
     if (typeof expr.value === "string") return getRawString(expr.value);
-    return expr.value.toString();
+    if (typeof expr.value === "number" || typeof expr.value === "boolean")
+      return expr.value.toString();
+    return "";
   }
 
   public visitUnaryExpr(expr: UnaryExpr): string {
