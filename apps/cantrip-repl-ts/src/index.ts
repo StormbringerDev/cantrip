@@ -1,4 +1,5 @@
-import { AstPrinter, TokenType } from "@cantrip/ast";
+import { TokenType } from "@cantrip/ast";
+import { AstPrinter } from "@cantrip/interpreter";
 import { Parser, ParseError, Scanner, ScannerError } from "@cantrip/parser";
 import type { Position } from "@cantrip/types";
 import { readFileSync } from "fs";

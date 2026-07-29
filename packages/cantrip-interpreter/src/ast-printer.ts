@@ -5,7 +5,7 @@ import type {
   GroupingExpr,
   LiteralExpr,
   UnaryExpr,
-} from "./expr.js";
+} from "../../cantrip-ast/src/expr.js";
 
 function getRawString(str: string): string {
   return JSON.stringify(str).slice(1, -1).replace(/\\\\/g, "\\");

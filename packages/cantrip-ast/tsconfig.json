@@ -5,7 +5,7 @@
     "rootDir": "src",
     "composite": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../cantrip-interpreter/src/ast-printer.ts"],
   "references": [
     {
       "path": "../cantrip-types"
