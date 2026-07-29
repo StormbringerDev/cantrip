@@ -217,11 +217,39 @@ export class Scanner {
   }
 
   private addString(start: Position) {
+    let value = "";
+
     while (this.peek() != '"' && !this.isAtEnd()) {
       if (this.peek() == "\n") {
         this.line++;
         this.column = 1;
       }
+
+      // Process escape sequences
+      if (this.match("\\")) {
+        switch (this.peek()) {
+          case "n":
+            value += "\n";
+            break;
+          case "t":
+            value += "\t";
+            break;
+          case '"':
+            value += '"';
+            break;
+          case "\\":
+            value += "\\";
+            break;
+          case "0":
+            value += "\0";
+            break;
+          default:
+            value += `\\${this.peek()}`;
+        }
+      } else {
+        value += this.peek();
+      }
+
       this.advance();
     }
 
@@ -233,14 +261,14 @@ export class Scanner {
     this.advance();
 
     // Record ending position to determine string value
-    const end: Position = {
-      line: this.line,
-      column: this.column,
-      offset: this.offset,
-    };
+    // const end: Position = {
+    //   line: this.line,
+    //   column: this.column,
+    //   offset: this.offset,
+    // };
 
     // Trim surrounding quotes
-    const value = this.source.substring(start.offset + 1, end.offset - 1);
+    // const value = this.source.substring(start.offset + 1, end.offset - 1);
     this.addToken(TokenType.String, start, value);
   }
 

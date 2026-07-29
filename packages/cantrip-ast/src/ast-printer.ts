@@ -7,6 +7,10 @@ import type {
   UnaryExpr,
 } from "./expr.js";
 
+function getRawString(str: string): string {
+  return JSON.stringify(str).slice(1, -1).replace(/\\\\/g, "\\");
+}
+
 export class AstPrinter implements ExprVisitor<string> {
   public print(expr: Expr): string {
     return expr.accept(this);
@@ -21,7 +25,8 @@ export class AstPrinter implements ExprVisitor<string> {
   }
 
   public visitLiteralExpr(expr: LiteralExpr): string {
-    if (expr.value == null) return "nil";
+    if (expr.value === null) return "nil";
+    if (typeof expr.value === "string") return getRawString(expr.value);
     return expr.value.toString();
   }
 

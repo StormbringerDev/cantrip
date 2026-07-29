@@ -129,4 +129,24 @@ describe("Scanner", () => {
     const { tokens } = scanner.scanTokens();
     expect(tokens).toHaveLength(1);
   });
+
+  it("handles escape sequences in string literals", () => {
+    const scanner = new Scanner(String.raw`
+      "This string has a \"substring\"."
+      "\tThis string starts with a tab."
+      "\nThis string starts with a newline."
+      "Escape sequences are written with \\."
+    `);
+    const { tokens } = scanner.scanTokens();
+
+    const expected = [
+      'This string has a "substring".',
+      "\tThis string starts with a tab.",
+      "\nThis string starts with a newline.",
+      "Escape sequences are written with \\.",
+    ];
+
+    const values = tokens.map((t) => t.literal);
+    expect(values.slice(0, 4)).toEqual(expected);
+  });
 });

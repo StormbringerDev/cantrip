@@ -72,7 +72,8 @@ It is the only (mostly) completed front-end component at the moment and serves a
 ### Strings
 
 - Currently a very simple double-quoted string: anything between `"..."`.
-- Escape sequences, multi-line strings, and raw strings are **not** yet defined. I plan to define escape sequences in the future, but the rest of the listed features are not gaurenteed.
+- Escape sequences currently supported in Cantrip strings are `\n`, `\t`, `\"`, and `\\`. With the infrastructure in place, more will be added as development continues.
+- Multi-line strings, and raw strings are **not** yet defined. These features are not gaurenteed.
 
 ### Operators
 
