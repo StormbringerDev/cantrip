@@ -24,7 +24,7 @@ comparison       = term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 term             = factor ( ( "-" | "+" ) factor )* ;
 factor           = unary ( ( "/" | "*" | "%" ) unary )* ;
 
-unary            = ( "!" | "-" ) unary ;
+unary            = ( "!" | "-" ) unary
                  | primary ;
 
 primary          = "true" | "false" | "nil"
