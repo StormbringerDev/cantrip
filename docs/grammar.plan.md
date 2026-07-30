@@ -13,76 +13,76 @@ Cantrip mixes statements and expressions.
 ## EBNF
 
 ```ebnf
-program          -> declaration* EOF
+program          = declaration* EOF ;
 
-declaration      -> fn_decl
-                  | let_decl
-                  | statement
+declaration      = fn_decl
+                 | let_decl
+                 | statement ;
 
-fn_decl          -> "fn" IDENTIFIER "(" parameters? ")" block
+fn_decl          = "fn" IDENTIFIER "(" parameters? ")" block ;
 
-parameters       -> IDENTIFIER ( "," IDENTIFIER )*
+parameters       = IDENTIFIER ( "," IDENTIFIER )* ;
 
-let_decl         -> "let" IDENTIFIER ( "=" expression )? ";"
+let_decl         = "let" IDENTIFIER ( "=" expression )? ";" ;
 
-statement        -> expr_stmt
-                  | return_stmt
-                  | break_stmt
-                  | continue_stmt
-                  | while_stmt
-                  | block                 // bare block as statement
+statement        = expr_stmt
+                 | return_stmt
+                 | break_stmt
+                 | continue_stmt
+                 | while_stmt
+                 | block ;               (* bare block as statement *)
 
-expr_stmt        -> expression ";"
-return_stmt      -> "return" expression? ";"
-break_stmt       -> "break" ";"           // value-carrying break is deferred
-continue_stmt    -> "continue" ";"
-while_stmt       -> "while" expression block
+expr_stmt        = expression ";" ;
+return_stmt      = "return" expression? ";" ;
+break_stmt       = "break" ";" ;         (* value-carrying break is deferred *)
+continue_stmt    = "continue" ";" ;
+while_stmt       = "while" expression block ;
 
-// -- Expressions (ordered by precedence, lowest to highest) ---------------
+(* -- Expressions (ordered by precedence, lowest to highest) --------------- *)
 
-expression       -> assignment
+expression       = assignment ;
 
-assignment       -> IDENTIFIER "=" assignment
-                  | logic_or
+assignment       = IDENTIFIER "=" assignment
+                 | logic_or ;
 
-logic_or         -> logic_and ( "or" logic_and )*
-logic_and        -> equality ( "and" equality )*
-equality         -> comparison ( ( "!=" | "==" ) comparison )*
-comparison       -> term ( ( ">" | ">=" | "<" | "<=" ) term )*
-term             -> factor ( ( "-" | "+" ) factor )*
-factor           -> unary ( ( "/" | "*" | "%" ) unary )*
+logic_or         = logic_and ( "or" logic_and )* ;
+logic_and        = equality ( "and" equality )* ;
+equality         = comparison ( ( "!=" | "==" ) comparison )* ;
+comparison       = term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+term             = factor ( ( "-" | "+" ) factor )* ;
+factor           = unary ( ( "/" | "*" | "%" ) unary )* ;
 
-unary            -> ( "!" | "-" ) unary
-                  | call
+unary            = ( "!" | "-" ) unary
+                 | call ;
 
-call             -> primary ( "(" arguments? ")" )*
-arguments        -> expression ( "," expression )*
+call             = primary ( "(" arguments? ")" )* ;
+arguments        = expression ( "," expression )* ;
 
-primary          -> "true" | "false" | "nil"
-                  | NUMBER | STRING
-                  | IDENTIFIER
-                  | array | object
-                  | "(" expression ")"
-                  | if_expr
-                  | loop_expr
-                  | match_expr
-                  | block                 // block as expression
+primary          = "true" | "false" | "nil"
+                 | NUMBER | STRING
+                 | IDENTIFIER
+                 | array | object
+                 | "(" expression ")"
+                 | if_expr
+                 | loop_expr
+                 | match_expr
+                 | block ;               (* block as expression *)
 
-object           -> "{" ( field ( "," field )* ","? )? "}"
-field            -> IDENTIFIER ":" expression
+object           = "{" ( field ( "," field )* ","? )? "}" ;
+field            = IDENTIFIER ":" expression ;
 
-array            -> "[" ( expression ( "," expression )* ","? )? "]"
+array            = "[" ( expression ( "," expression )* ","? )? "]" ;
 
-// -- Expression forms ----------------------------------------------------
+(* -- Expression forms ---------------------------------------------------- *)
 
-if_expr          -> "if" expression block ( "else" ( if_expr | block ) )?
+if_expr          = "if" expression block ( "else" ( if_expr | block ) )? ;
 
-loop_expr        -> "loop" block
+loop_expr        = "loop" block ;
 
-match_expr       -> "match" expression "{" match_branch* "}"
-match_branch     -> expression "=>" expression ","?
+match_expr       = "match" expression "{" match_branch* "}" ;
+match_branch     = expression "=>" expression ","? ;
 
-block            -> "{" declaration* "}"
+block            = "{" declaration* "}" ;
 ```
 
 ## Notes

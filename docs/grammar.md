@@ -13,29 +13,29 @@ Cantrip mixes statements and expressions.
 ## EBNF
 
 ```ebnf
-program          -> expression
+program          = expression ;
 
-// -- Expressions (ordered by precedence, lowest to highest) ---------------
+(* -- Expressions (ordered by precedence, lowest to highest) --------------- *)
 
-expression       -> equality
+expression       = equality ;
 
-equality         -> comparison ( ( "!=" | "==" ) comparison )*
-comparison       -> term ( ( ">" | ">=" | "<" | "<=" ) term )*
-term             -> factor ( ( "-" | "+" ) factor )*
-factor           -> unary ( ( "/" | "*" | "%" ) unary )*
+equality         = comparison ( ( "!=" | "==" ) comparison )* ;
+comparison       = term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+term             = factor ( ( "-" | "+" ) factor )* ;
+factor           = unary ( ( "/" | "*" | "%" ) unary )* ;
 
-unary            -> ( "!" | "-" ) unary
-                  | primary
+unary            = ( "!" | "-" ) unary ;
+                 | primary ;
 
-primary          -> "true" | "false" | "nil"
-                  | NUMBER | STRING
-                  | object | array
-                  | "(" expression ")"
+primary          = "true" | "false" | "nil"
+                 | NUMBER | STRING
+                 | object | array
+                 | "(" expression ")" ;
 
-object           -> "{" ( field ( "," field )* ","? ) ? "}"
-field            -> IDENTIFIER ":" expression
+object           = "{" ( field ( "," field )* ","? ) ? "}" ;
+field            = IDENTIFIER ":" expression ;
 
-array            -> "[" ( expression ( "," expression )* ","? )? "]"
+array            = "[" ( expression ( "," expression )* ","? )? "]" ;
 ```
 
 ## Notes
