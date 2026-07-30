@@ -32,7 +32,7 @@ primary          -> "true" | "false" | "nil"
                   | array
                   | "(" expression ")"
 
-array            -> "[" ( expression ( "," expression ","? )* )? "]"
+array            -> "[" ( expression ( "," expression )* ","? )? "]"
 ```
 
 ## Notes
