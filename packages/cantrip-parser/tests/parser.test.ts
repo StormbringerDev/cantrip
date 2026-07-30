@@ -79,6 +79,58 @@ describe("Parser", () => {
       expect(ast).toBeInstanceOf(LiteralExpr);
       expect(ast.value).toBe(null);
     });
+
+    it("parses an empty array literal", () => {
+      const tokens = [
+        tok(TokenType.LeftBracket, "["),
+        tok(TokenType.RightBracket, "]", null, 1),
+        tok(TokenType.Eof, "", null, 2),
+      ];
+      const parser = new Parser(tokens);
+      const { ast } = parser.parse();
+
+      expect(ast).toBeInstanceOf(LiteralExpr);
+      expect(ast.value).toEqual([]);
+    });
+
+    it("parses an array literal", () => {
+      const tokens = [
+        tok(TokenType.LeftBracket, "["),
+        tok(TokenType.Number, "1", 1, 1),
+        tok(TokenType.Comma, ",", null, 2),
+        tok(TokenType.Number, "2", 2, 3),
+        tok(TokenType.Comma, ",", null, 4),
+        tok(TokenType.Number, "3", 3, 5),
+        tok(TokenType.RightBracket, "]", null, 6),
+        tok(TokenType.Eof, "", null, 7),
+      ];
+      const parser = new Parser(tokens);
+      const { ast } = parser.parse();
+
+      expect(ast).toBeInstanceOf(LiteralExpr);
+      const expected = [1, 2, 3];
+      expect(ast.value.map((e) => e.value)).toEqual(expected);
+    });
+
+    it("parses an array literal with a trailing comma", () => {
+      const tokens = [
+        tok(TokenType.LeftBracket, "["),
+        tok(TokenType.Number, "1", 1, 1),
+        tok(TokenType.Comma, ",", null, 2),
+        tok(TokenType.Number, "2", 2, 3),
+        tok(TokenType.Comma, ",", null, 4),
+        tok(TokenType.Number, "3", 3, 5),
+        tok(TokenType.Comma, ",", null, 6),
+        tok(TokenType.RightBracket, "]", null, 7),
+        tok(TokenType.Eof, "", null, 8),
+      ];
+      const parser = new Parser(tokens);
+      const { ast } = parser.parse();
+
+      expect(ast).toBeInstanceOf(LiteralExpr);
+      const expected = [1, 2, 3];
+      expect(ast.value.map((e) => e.value)).toEqual(expected);
+    });
   });
 
   describe("grouping expressions", () => {

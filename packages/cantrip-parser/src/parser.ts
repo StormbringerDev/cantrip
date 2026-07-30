@@ -116,6 +116,9 @@ export class Parser {
       return new LiteralExpr(token.literal, token.span);
     }
 
+    // Array literals
+    if (this.match(TokenType.LeftBracket)) return this.array();
+
     // Grouping
     if (this.match(TokenType.LeftParen)) {
       const start = this.previous().span.start;
@@ -126,6 +129,32 @@ export class Parser {
     }
 
     throw this.error(this.peek(), "Expect expression.");
+  }
+
+  private array(): Expr {
+    // Record start position
+    const start = this.previous().span.start;
+    const arr: Expr[] = [];
+    while (this.peek().type !== TokenType.RightBracket && !this.isAtEnd()) {
+      // Check for comma if array already contains an element
+      if (arr.length > 0) {
+        this.consume(TokenType.Comma, "Expect ',' between array elements.");
+      }
+
+      // Parse the expression and push it to the current array
+      arr.push(this.expression());
+
+      // Conditional check to allow a trailing comma
+      if (
+        this.peek().type === TokenType.Comma &&
+        this.peekNext().type === TokenType.RightBracket
+      ) {
+        this.advance();
+      }
+    }
+    const end = this.consume(TokenType.RightBracket, "Expect ']' after array literal.")
+      .span.end;
+    return new LiteralExpr(arr, { start, end });
   }
 
   // Consume current token if and only if it matches one of the provided types
@@ -165,6 +194,10 @@ export class Parser {
 
   private peek(): Token {
     return this.tokens[this.current];
+  }
+
+  private peekNext(): Token {
+    return this.tokens[this.current + 1];
   }
 
   private previous(): Token {

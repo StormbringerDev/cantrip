@@ -61,11 +61,17 @@ arguments        -> expression ( "," expression )*
 primary          -> "true" | "false" | "nil"
                   | NUMBER | STRING
                   | IDENTIFIER
+                  | array | object
                   | "(" expression ")"
                   | if_expr
                   | loop_expr
                   | match_expr
                   | block                 // block as expression
+
+object           -> "{" ( field ( "," field )* ","? )? "}"
+field            -> IDENTIFIER ":" expression
+
+array            -> "[" ( expression ( "," expression )* ","? )? "]"
 
 // -- Expression forms ----------------------------------------------------
 

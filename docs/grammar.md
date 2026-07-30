@@ -29,7 +29,10 @@ unary            -> ( "!" | "-" ) unary
 
 primary          -> "true" | "false" | "nil"
                   | NUMBER | STRING
+                  | array
                   | "(" expression ")"
+
+array            -> "[" ( expression ( "," expression ","? )* )? "]"
 ```
 
 ## Notes
@@ -47,11 +50,14 @@ primary          -> "true" | "false" | "nil"
 | `let`                       | yes (decl) | no          |                                         |
 | `return`/`break`/`continue` | yes        | no          |                                         |
 
+| Data Structure | Syntax       | Type         | Notes                               |
+| -------------- | ------------ | ------------ | ----------------------------------- |
+| Array          | `[elements]` | Dynamic list | Can be initialized without elements |
+
 ### Open questions / deferred features
 
 - Value-carrying `break` (currently just `break;`)
 - `for` loops
-- Array / list literals
 - Map / object literals
 - First-class functions / closures
 - Pattern matching beyond simple `match` expressions
