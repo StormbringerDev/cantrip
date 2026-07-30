@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Parser } from "../src/parser.js";
 import {
   BinaryExpr,
+  Expr,
   GroupingExpr,
   LiteralExpr,
   Token,
@@ -130,6 +131,69 @@ describe("Parser", () => {
       expect(ast).toBeInstanceOf(LiteralExpr);
       const expected = [1, 2, 3];
       expect(ast.value.map((e) => e.value)).toEqual(expected);
+    });
+
+    it("parses an empty object literal", () => {
+      const tokens = [
+        tok(TokenType.LeftBrace, "{"),
+        tok(TokenType.RightBrace, "}", null, 1),
+        tok(TokenType.Eof, "", null, 2),
+      ];
+      const parser = new Parser(tokens);
+      const { ast } = parser.parse();
+
+      expect(ast).toBeInstanceOf(LiteralExpr);
+      const expected = new Map<string, Expr>();
+      expect(ast.value).toEqual(expected);
+    });
+
+    it("parses an object literal", () => {
+      const tokens = [
+        tok(TokenType.LeftBrace, "{"),
+        tok(TokenType.Identifier, "name", null, 1),
+        tok(TokenType.Colon, ":", null, 5),
+        tok(TokenType.String, '"Reyek"', "Reyek", 6),
+        tok(TokenType.Comma, ",", null, 13),
+        tok(TokenType.Identifier, "level", null, 14),
+        tok(TokenType.Colon, ":", null, 19),
+        tok(TokenType.Number, "5", 5, 20),
+        tok(TokenType.RightBrace, "}", null, 21),
+        tok(TokenType.Eof, "", null, 22),
+      ];
+      const parser = new Parser(tokens);
+      const { ast } = parser.parse();
+
+      expect(ast).toBeInstanceOf(LiteralExpr);
+      const expected = new Map<string, Expr>([
+        ["name", new LiteralExpr("Reyek", makeSpan(6, 13))],
+        ["level", new LiteralExpr(5, makeSpan(20, 21))],
+      ]);
+      expect(ast.value).toEqual(expected);
+    });
+
+    it("parses an object literal with a trailing comma", () => {
+      const tokens = [
+        tok(TokenType.LeftBrace, "{"),
+        tok(TokenType.Identifier, "name", null, 1),
+        tok(TokenType.Colon, ":", null, 5),
+        tok(TokenType.String, '"Reyek"', "Reyek", 6),
+        tok(TokenType.Comma, ",", null, 13),
+        tok(TokenType.Identifier, "level", null, 14),
+        tok(TokenType.Colon, ":", null, 19),
+        tok(TokenType.Number, "5", 5, 20),
+        tok(TokenType.Comma, ",", null, 21),
+        tok(TokenType.RightBrace, "}", null, 22),
+        tok(TokenType.Eof, "", null, 23),
+      ];
+      const parser = new Parser(tokens);
+      const { ast } = parser.parse();
+
+      expect(ast).toBeInstanceOf(LiteralExpr);
+      const expected = new Map<string, Expr>([
+        ["name", new LiteralExpr("Reyek", makeSpan(6, 13))],
+        ["level", new LiteralExpr(5, makeSpan(20, 21))],
+      ]);
+      expect(ast.value).toEqual(expected);
     });
   });
 

@@ -100,6 +100,11 @@ block            -> "{" declaration* "}"
 | `let`                       | yes (decl) | no          |                                         |
 | `return`/`break`/`continue` | yes        | no          |                                         |
 
+| Data Structure | Syntax         | Type           | Notes                               |
+| -------------- | -------------- | -------------- | ----------------------------------- |
+| Array          | `[elements]`   | Dynamic list   | Can be initialized without elements |
+| Object         | `{key: value}` | Key-value pair | Can be initialized without fields   |
+
 ### Open questions / deferred features
 
 - Value-carrying `break` (currently just `break;`)

@@ -29,8 +29,11 @@ unary            -> ( "!" | "-" ) unary
 
 primary          -> "true" | "false" | "nil"
                   | NUMBER | STRING
-                  | array
+                  | object | array
                   | "(" expression ")"
+
+object           -> "{" ( field ( "," field )* ","? ) ? "}"
+field            -> IDENTIFIER ":" expression
 
 array            -> "[" ( expression ( "," expression )* ","? )? "]"
 ```
@@ -50,9 +53,10 @@ array            -> "[" ( expression ( "," expression )* ","? )? "]"
 | `let`                       | yes (decl) | no          |                                         |
 | `return`/`break`/`continue` | yes        | no          |                                         |
 
-| Data Structure | Syntax       | Type         | Notes                               |
-| -------------- | ------------ | ------------ | ----------------------------------- |
-| Array          | `[elements]` | Dynamic list | Can be initialized without elements |
+| Data Structure | Syntax         | Type           | Notes                               |
+| -------------- | -------------- | -------------- | ----------------------------------- |
+| Array          | `[elements]`   | Dynamic list   | Can be initialized without elements |
+| Object         | `{key: value}` | Key-value pair | Can be initialized without fields   |
 
 ### Open questions / deferred features
 

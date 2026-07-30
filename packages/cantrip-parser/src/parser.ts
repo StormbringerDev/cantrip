@@ -119,6 +119,9 @@ export class Parser {
     // Array literals
     if (this.match(TokenType.LeftBracket)) return this.array();
 
+    // Object Literals
+    if (this.match(TokenType.LeftBrace)) return this.object();
+
     // Grouping
     if (this.match(TokenType.LeftParen)) {
       const start = this.previous().span.start;
@@ -155,6 +158,38 @@ export class Parser {
     const end = this.consume(TokenType.RightBracket, "Expect ']' after array literal.")
       .span.end;
     return new LiteralExpr(arr, { start, end });
+  }
+
+  private object(): Expr {
+    // Record start position
+    const start = this.previous().span.start;
+    // Store key-value pairs as a map
+    const obj = new Map<string, Expr>();
+    while (this.peek().type !== TokenType.RightBrace && !this.isAtEnd()) {
+      // Check for commma if internal map already contains fields
+      if (obj.size > 0) {
+        this.consume(TokenType.Comma, "Expect ',' between object fields.");
+      }
+
+      // Record key-value pair
+      const key = this.consume(TokenType.Identifier, "Expect field identifier.").lexeme;
+      this.consume(TokenType.Colon, "Expect ':' after field identifier.");
+      const value = this.expression();
+
+      // Add key and value to the map
+      obj.set(key, value);
+
+      // Conditional check to allow a trailing comma
+      if (
+        this.peek().type === TokenType.Comma &&
+        this.peekNext().type === TokenType.RightBrace
+      ) {
+        this.advance();
+      }
+    }
+    const end = this.consume(TokenType.RightBrace, "Expect '}' after object literal.")
+      .span.end;
+    return new LiteralExpr(obj, { start, end });
   }
 
   // Consume current token if and only if it matches one of the provided types
