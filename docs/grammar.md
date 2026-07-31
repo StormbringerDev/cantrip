@@ -37,7 +37,7 @@ term             = factor ( ( "-" | "+" ) factor )* ;
 factor           = unary ( ( "/" | "*" | "%" ) unary )* ;
 
 unary            = ( "!" | "-" ) unary
-                 | primary ;
+                 | call ;
 
 call             = primary ( "." IDENTIFIER )* ;
 primary          = "true" | "false" | "nil"
