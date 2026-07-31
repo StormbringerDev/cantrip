@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { Scanner } from "../src/scanner.js";
 import { TokenType } from "@cantrip/ast";
 

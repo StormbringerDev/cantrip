@@ -16,11 +16,29 @@ export abstract class Expr {
 }
 
 export interface ExprVisitor<R> {
-  visitBinaryExpr: (expr: BinaryExpr) => R;
-  visitGroupingExpr: (expr: GroupingExpr) => R;
-  visitLiteralExpr: (expr: LiteralExpr) => R;
-  visitUnaryExpr: (expr: UnaryExpr) => R;
-  visitVarExpr: (expr: VarExpr) => R;
+  visitAssignExpr(expr: AssignExpr): R;
+  visitBinaryExpr(expr: BinaryExpr): R;
+  visitGroupingExpr(expr: GroupingExpr): R;
+  visitLiteralExpr(expr: LiteralExpr): R;
+  visitUnaryExpr(expr: UnaryExpr): R;
+  visitVarExpr(expr: VarExpr): R;
+}
+
+export class AssignExpr extends Expr {
+  public readonly name: Token;
+  public readonly operator: Token;
+  public readonly value: Expr;
+
+  constructor(name: Token, operator: Token, value: Expr, span: Span) {
+    super(span);
+    this.name = name;
+    this.operator = operator;
+    this.value = value;
+  }
+
+  public accept<R>(visitor: ExprVisitor<R>): R {
+    return visitor.visitAssignExpr(this);
+  }
 }
 
 export class BinaryExpr extends Expr {

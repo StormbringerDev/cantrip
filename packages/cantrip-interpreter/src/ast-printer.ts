@@ -1,19 +1,52 @@
+import { TokenType } from "@cantrip/ast";
 import type {
+  LetStmt,
+  Stmt,
+  StmtVisitor,
+  AssignExpr,
   BinaryExpr,
   Expr,
+  ExprStmt,
   ExprVisitor,
   GroupingExpr,
   LiteralExpr,
   UnaryExpr,
-} from "../../cantrip-ast/src/expr.js";
+  VarExpr,
+} from "@cantrip/ast";
 
 function getRawString(str: string): string {
   return JSON.stringify(str).slice(1, -1).replace(/\\\\/g, "\\");
 }
 
-export class AstPrinter implements ExprVisitor<string> {
-  public print(expr: Expr): string {
-    return expr.accept(this);
+export class AstPrinter implements ExprVisitor<string>, StmtVisitor<string> {
+  public print(stmts: (Stmt | null)[]): string {
+    const program: string[] = [];
+    for (const stmt of stmts) {
+      if (stmt) program.push(`${stmt.accept(this)}`);
+    }
+    return program.join("\n");
+  }
+
+  public visitAssignExpr(expr: AssignExpr): string {
+    let operation = "assign";
+    switch (expr.operator.type) {
+      case TokenType.PlusEq:
+        operation = "addAssign";
+        break;
+      case TokenType.MinusEq:
+        operation = "subAssign";
+        break;
+      case TokenType.StarEq:
+        operation = "mulAssign";
+        break;
+      case TokenType.SlashEq:
+        operation = "divAssign";
+        break;
+      case TokenType.PercentEq:
+        operation = "modAssign";
+        break;
+    }
+    return this.parenthesize(`${operation} ${expr.name.lexeme}`, expr.value);
   }
 
   public visitBinaryExpr(expr: BinaryExpr): string {
@@ -26,14 +59,43 @@ export class AstPrinter implements ExprVisitor<string> {
 
   public visitLiteralExpr(expr: LiteralExpr): string {
     if (expr.value === null) return "nil";
-    if (typeof expr.value === "string") return getRawString(expr.value);
+    if (typeof expr.value === "string") return `"${getRawString(expr.value)}"`;
     if (typeof expr.value === "number" || typeof expr.value === "boolean")
       return expr.value.toString();
+    if (Array.isArray(expr.value)) return this.array(expr.value);
+    if (expr.value instanceof Map) return this.object(expr.value);
     return "";
+  }
+
+  private array(elements: Expr[]): string {
+    const stringifiedElements: string[] = [];
+    for (const element of elements) stringifiedElements.push(element.accept(this));
+    return `[${stringifiedElements.join(", ")}]`;
+  }
+
+  private object(fields: Map<string, Expr>): string {
+    const stringifiedFields: string[] = [];
+    for (const [key, value] of fields)
+      stringifiedFields.push(`${key}: ${value.accept(this)}`);
+    return `{ ${stringifiedFields.join(", ")} }`;
   }
 
   public visitUnaryExpr(expr: UnaryExpr): string {
     return this.parenthesize(expr.operator.lexeme, expr.right);
+  }
+
+  public visitVarExpr(expr: VarExpr): string {
+    return expr.name.lexeme;
+  }
+
+  public visitExprStmt(stmt: ExprStmt): string {
+    return stmt.expr.accept(this);
+  }
+
+  public visitLetStmt(stmt: LetStmt): string {
+    if (stmt.initializer)
+      return this.parenthesize(`let ${stmt.name.lexeme}`, stmt.initializer);
+    return this.parenthesize(`let ${stmt.name.lexeme}`);
   }
 
   private parenthesize(name: string, ...exprs: Expr[]) {

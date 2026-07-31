@@ -1,13 +1,17 @@
 import {
+  AssignExpr,
   BinaryExpr,
   type Expr,
+  ExprStmt,
   GroupingExpr,
+  LetStmt,
   LiteralExpr,
+  type Stmt,
   type Token,
   TokenType,
   UnaryExpr,
+  VarExpr,
 } from "@cantrip/ast";
-import { VarExpr } from "../../cantrip-ast/src/expr.js";
 
 export class ParseError extends Error {
   public readonly token: Token;
@@ -28,13 +32,85 @@ export class Parser {
     this.tokens = tokens;
   }
 
-  public parse(): { ast: Expr; parseErrors: ParseError[] } {
-    const ast = this.expression();
+  public parse(): { ast: (Stmt | null)[]; parseErrors: ParseError[] } {
+    const ast: (Stmt | null)[] = [];
+    while (!this.isAtEnd()) {
+      ast.push(this.declaration());
+    }
+
     return { ast, parseErrors: this.errors };
   }
 
+  private declaration(): Stmt | null {
+    try {
+      if (this.match(TokenType.Let)) return this.letDecl();
+
+      return this.statement();
+    } catch {
+      this.synchronize();
+      return null;
+    }
+  }
+
+  private letDecl(): Stmt {
+    const start = this.previous().span.start;
+    const name = this.consume(TokenType.Identifier, "Expect variable name.");
+
+    let initializer: Expr | null = null;
+    if (this.match(TokenType.Eq)) {
+      initializer = this.expression();
+    }
+
+    const end = this.consume(
+      TokenType.Semicolon,
+      "Expect ';' after variable declaration.",
+    ).span.end;
+    return new LetStmt(name, initializer, { start, end });
+  }
+
+  private statement(): Stmt {
+    return this.exprStmt();
+  }
+
+  private exprStmt(): Stmt {
+    const expr = this.expression();
+    const start = expr.span.start;
+    const end = this.consume(TokenType.Semicolon, "Expect ';' after expression.").span
+      .end;
+    return new ExprStmt(expr, { start, end });
+  }
+
   private expression(): Expr {
-    return this.equality();
+    return this.assignment();
+  }
+
+  private assignment(): Expr {
+    const start = this.peek().span.start;
+    const expr = this.equality();
+
+    if (
+      this.match(
+        TokenType.Eq,
+        TokenType.PlusEq,
+        TokenType.MinusEq,
+        TokenType.StarEq,
+        TokenType.SlashEq,
+        TokenType.PercentEq,
+      )
+    ) {
+      const operator = this.previous();
+      const value = this.assignment();
+
+      if (expr instanceof VarExpr) {
+        const name = expr.name;
+        const end = value.span.end;
+        return new AssignExpr(name, operator, value, { start, end });
+      }
+
+      this.error(operator, "Invalid assignment target.");
+    }
+
+    return expr;
   }
 
   private equality(): Expr {
@@ -254,26 +330,26 @@ export class Parser {
     return err;
   }
 
-  // private synchronize() {
-  //   this.advance();
+  private synchronize() {
+    this.advance();
 
-  //   while (!this.isAtEnd()) {
-  //     if (this.previous().type == TokenType.Semicolon) return;
+    while (!this.isAtEnd()) {
+      if (this.previous().type == TokenType.Semicolon) return;
 
-  //     switch (this.peek().type) {
-  //       case TokenType.Break:
-  //       case TokenType.Continue:
-  //       case TokenType.Fn:
-  //       case TokenType.If:
-  //       case TokenType.Let:
-  //       case TokenType.Loop:
-  //       case TokenType.Match:
-  //       case TokenType.Return:
-  //       case TokenType.While:
-  //         return;
-  //     }
+      switch (this.peek().type) {
+        case TokenType.Break:
+        case TokenType.Continue:
+        case TokenType.Fn:
+        case TokenType.If:
+        case TokenType.Let:
+        case TokenType.Loop:
+        case TokenType.Match:
+        case TokenType.Return:
+        case TokenType.While:
+          return;
+      }
 
-  //     this.advance();
-  //   }
-  // }
+      this.advance();
+    }
+  }
 }

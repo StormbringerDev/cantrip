@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  AssignExpr,
   BinaryExpr,
   type Expr,
   type ExprVisitor,
@@ -115,8 +116,22 @@ describe("expression classes", () => {
     expect(expr.span).toEqual(token.span);
   });
 
+  it("instantiates an AssignExpr", () => {
+    const name = tok(TokenType.Identifier, "answer");
+    const operator = tok(TokenType.Eq, "=", null, 6);
+    const expr = new AssignExpr(name, operator, litExpr(42, 7), makeSpan(0, 9));
+    expect(expr).toBeInstanceOf(AssignExpr);
+    expect(expr.name.lexeme).toBe("answer");
+    expect(expr.operator.type).toBe(TokenType.Eq);
+    expect(expr.value.value).toBe(42);
+  });
+
   describe("visitor", () => {
     class TestVisitor implements ExprVisitor<void> {
+      visitAssignExpr(expr: AssignExpr): void {
+        return;
+      }
+
       visitBinaryExpr(expr: BinaryExpr): void {
         return;
       }
@@ -140,6 +155,18 @@ describe("expression classes", () => {
 
     const testVisitor = new TestVisitor();
     const binaryExpr = binExpr(5, tok(TokenType.Minus, "-", null, 1), 5);
+
+    it("calls visitAssignExpr", () => {
+      const expr = new AssignExpr(
+        tok(TokenType.Identifier, "answer"),
+        tok(TokenType.Eq, "=", null, 6),
+        litExpr(42, 7),
+        makeSpan(0, 9),
+      );
+      const spy = vi.spyOn(TestVisitor.prototype, "visitAssignExpr");
+      expr.accept(testVisitor);
+      expect(spy).toHaveBeenCalled();
+    });
 
     it("calls visitBinaryExpr", () => {
       const spy = vi.spyOn(TestVisitor.prototype, "visitBinaryExpr");

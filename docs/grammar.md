@@ -13,11 +13,23 @@ Cantrip mixes statements and expressions.
 ## EBNF
 
 ```ebnf
-program          = expression ;
+program          = declaration* EOF ;
+
+declaration      = let_decl
+                 | statement ;
+
+let_decl         = "let" IDENTIFIER ( "=" expression )? ";" ;
+
+statement        = expr_stmt ;
+
+expr_stmt        = expression ";" ;
 
 (* -- Expressions (ordered by precedence, lowest to highest) --------------- *)
 
-expression       = equality ;
+expression       = assignment ;
+
+assignment       = IDENTIFIER "=" assignment
+                 | equality ;
 
 equality         = comparison ( ( "!=" | "==" ) comparison )* ;
 comparison       = term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
