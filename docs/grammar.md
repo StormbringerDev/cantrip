@@ -62,10 +62,8 @@ array            = "[" ( expression ( "," expression )* ","? )? "]" ;
 
 - Value-carrying `break` (currently just `break;`)
 - `for` loops
-- Map / object literals
 - First-class functions / closures
 - Pattern matching beyond simple `match` expressions
-- Trailing commas in more places
 
 ### Source of truth
 
