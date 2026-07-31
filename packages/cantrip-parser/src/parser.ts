@@ -3,9 +3,11 @@ import {
   BinaryExpr,
   type Expr,
   ExprStmt,
+  GetExpr,
   GroupingExpr,
   LetStmt,
   LiteralExpr,
+  SetExpr,
   type Stmt,
   type Token,
   TokenType,
@@ -105,6 +107,9 @@ export class Parser {
         const name = expr.name;
         const end = value.span.end;
         return new AssignExpr(name, operator, value, { start, end });
+      } else if (expr instanceof GetExpr) {
+        const end = value.span.end;
+        return new SetExpr(expr.object, expr.name, operator, value, { start, end });
       }
 
       this.error(operator, "Invalid assignment target.");
@@ -179,7 +184,27 @@ export class Parser {
       return new UnaryExpr(operator, right, span);
     }
 
-    return this.primary();
+    return this.call();
+  }
+
+  private call(): Expr {
+    const start = this.peek().span.start;
+    let expr = this.primary();
+
+    while (true) {
+      if (this.match(TokenType.Dot)) {
+        const name = this.consume(
+          TokenType.Identifier,
+          "Expect property name after '.'.",
+        );
+        const end = name.span.end;
+        expr = new GetExpr(expr, name, { start, end });
+      } else {
+        break;
+      }
+    }
+
+    return expr;
   }
 
   private primary(): Expr {

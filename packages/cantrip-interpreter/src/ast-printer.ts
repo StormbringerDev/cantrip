@@ -8,8 +8,10 @@ import type {
   Expr,
   ExprStmt,
   ExprVisitor,
+  GetExpr,
   GroupingExpr,
   LiteralExpr,
+  SetExpr,
   UnaryExpr,
   VarExpr,
 } from "@cantrip/ast";
@@ -53,6 +55,10 @@ export class AstPrinter implements ExprVisitor<string>, StmtVisitor<string> {
     return this.parenthesize(expr.operator.lexeme, expr.left, expr.right);
   }
 
+  public visitGetExpr(expr: GetExpr): string {
+    return `${expr.object.accept(this)}.${expr.name.lexeme}`;
+  }
+
   public visitGroupingExpr(expr: GroupingExpr): string {
     return this.parenthesize("group", expr.expression);
   }
@@ -78,6 +84,31 @@ export class AstPrinter implements ExprVisitor<string>, StmtVisitor<string> {
     for (const [key, value] of fields)
       stringifiedFields.push(`${key}: ${value.accept(this)}`);
     return `{ ${stringifiedFields.join(", ")} }`;
+  }
+
+  public visitSetExpr(expr: SetExpr): string {
+    let operation = "assign";
+    switch (expr.operator.type) {
+      case TokenType.PlusEq:
+        operation = "addAssign";
+        break;
+      case TokenType.MinusEq:
+        operation = "subAssign";
+        break;
+      case TokenType.StarEq:
+        operation = "mulAssign";
+        break;
+      case TokenType.SlashEq:
+        operation = "divAssign";
+        break;
+      case TokenType.PercentEq:
+        operation = "modAssign";
+        break;
+    }
+    return this.parenthesize(
+      `${operation} ${expr.object.accept(this)}.${expr.name.lexeme}`,
+      expr.value,
+    );
   }
 
   public visitUnaryExpr(expr: UnaryExpr): string {

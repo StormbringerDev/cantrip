@@ -5,9 +5,11 @@ import {
   BinaryExpr,
   type Expr,
   ExprStmt,
+  GetExpr,
   GroupingExpr,
   LetStmt,
   LiteralExpr,
+  SetExpr,
   Token,
   TokenType,
   UnaryExpr,
@@ -851,6 +853,48 @@ describe("Parser", () => {
         expect(((ast[0] as ExprStmt).expr as AssignExpr).value).toEqual(
           new LiteralExpr(3, makeSpan(11, 12)),
         );
+      });
+
+      it("parses a set expression", () => {
+        const tokens = [
+          tok(TokenType.Identifier, "reyek"),
+          tok(TokenType.Dot, ".", null, 6),
+          tok(TokenType.Identifier, "level", null, 7),
+          tok(TokenType.Eq, "=", null, 12),
+          tok(TokenType.Number, "5", 5, 13),
+          tok(TokenType.Semicolon, ";", null, 14),
+          tok(TokenType.Eof, "", null, 15),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ExprStmt);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(SetExpr);
+        expect(((ast[0] as ExprStmt).expr as SetExpr).object).toBeInstanceOf(VarExpr);
+        expect(((ast[0] as ExprStmt).expr as SetExpr).name.lexeme).toBe("level");
+        expect(((ast[0] as ExprStmt).expr as SetExpr).operator.type).toBe(TokenType.Eq);
+        expect(((ast[0] as ExprStmt).expr as SetExpr).value).toBeInstanceOf(LiteralExpr);
+      });
+    });
+
+    describe("call expressions", () => {
+      it("parses a get expression", () => {
+        const tokens = [
+          tok(TokenType.Identifier, "reyek"),
+          tok(TokenType.Dot, ".", null, 6),
+          tok(TokenType.Identifier, "subclass", null, 7),
+          tok(TokenType.Semicolon, ";", 15),
+          tok(TokenType.Eof, "", null, 16),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ExprStmt);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(GetExpr);
+        expect(((ast[0] as ExprStmt).expr as GetExpr).object).toBeInstanceOf(VarExpr);
+        expect(((ast[0] as ExprStmt).expr as GetExpr).name.lexeme).toBe("subclass");
       });
     });
   });

@@ -18,8 +18,10 @@ export abstract class Expr {
 export interface ExprVisitor<R> {
   visitAssignExpr(expr: AssignExpr): R;
   visitBinaryExpr(expr: BinaryExpr): R;
+  visitGetExpr(expr: GetExpr): R;
   visitGroupingExpr(expr: GroupingExpr): R;
   visitLiteralExpr(expr: LiteralExpr): R;
+  visitSetExpr(expr: SetExpr): R;
   visitUnaryExpr(expr: UnaryExpr): R;
   visitVarExpr(expr: VarExpr): R;
 }
@@ -58,6 +60,21 @@ export class BinaryExpr extends Expr {
   }
 }
 
+export class GetExpr extends Expr {
+  public readonly object: Expr;
+  public readonly name: Token;
+
+  constructor(object: Expr, name: Token, span: Span) {
+    super(span);
+    this.object = object;
+    this.name = name;
+  }
+
+  public accept<R>(visitor: ExprVisitor<R>): R {
+    return visitor.visitGetExpr(this);
+  }
+}
+
 export class GroupingExpr extends Expr {
   public readonly expression: Expr;
 
@@ -81,6 +98,25 @@ export class LiteralExpr extends Expr {
 
   public accept<R>(visitor: ExprVisitor<R>): R {
     return visitor.visitLiteralExpr(this);
+  }
+}
+
+export class SetExpr extends Expr {
+  public readonly object: Expr;
+  public readonly name: Token;
+  public readonly operator: Token;
+  public readonly value: Expr;
+
+  constructor(object: Expr, name: Token, operator: Token, value: Expr, span: Span) {
+    super(span);
+    this.object = object;
+    this.name = name;
+    this.operator = operator;
+    this.value = value;
+  }
+
+  public accept<R>(visitor: ExprVisitor<R>): R {
+    return visitor.visitSetExpr(this);
   }
 }
 

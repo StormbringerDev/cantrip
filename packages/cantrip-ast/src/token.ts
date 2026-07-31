@@ -32,6 +32,7 @@ export enum TokenType {
   RightBracket, // ]
   Colon,
   Comma,
+  Dot,
   Semicolon,
 
   // One or two characters
@@ -99,6 +100,8 @@ function tokenTypeToString(type: TokenType): string {
       return "Colon";
     case TokenType.Comma:
       return "Comma";
+    case TokenType.Dot:
+      return "Dot";
     case TokenType.Semicolon:
       return "Semicolon";
     case TokenType.Arrow:

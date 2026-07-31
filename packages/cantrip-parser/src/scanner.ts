@@ -111,6 +111,9 @@ export class Scanner {
       case ",":
         this.addToken(TokenType.Comma, start);
         break;
+      case ".":
+        this.addToken(TokenType.Dot, start);
+        break;
       case "+":
         this.addToken(this.match("=") ? TokenType.PlusEq : TokenType.Plus, start);
         break;

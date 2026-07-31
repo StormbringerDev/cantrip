@@ -28,7 +28,7 @@ expr_stmt        = expression ";" ;
 
 expression       = assignment ;
 
-assignment       = IDENTIFIER "=" assignment
+assignment       = ( call "." )? IDENTIFIER "=" assignment
                  | equality ;
 
 equality         = comparison ( ( "!=" | "==" ) comparison )* ;
@@ -39,6 +39,7 @@ factor           = unary ( ( "/" | "*" | "%" ) unary )* ;
 unary            = ( "!" | "-" ) unary
                  | primary ;
 
+call             = primary ( "." IDENTIFIER )* ;
 primary          = "true" | "false" | "nil"
                  | NUMBER | STRING
                  | IDENTIFIER

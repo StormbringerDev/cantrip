@@ -3,8 +3,10 @@ export {
   BinaryExpr,
   Expr,
   ExprVisitor,
+  GetExpr,
   GroupingExpr,
   LiteralExpr,
+  SetExpr,
   UnaryExpr,
   VarExpr,
 } from "./expr.js";
