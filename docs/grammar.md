@@ -29,11 +29,12 @@ unary            = ( "!" | "-" ) unary
 
 primary          = "true" | "false" | "nil"
                  | NUMBER | STRING
+                 | IDENTIFIER
                  | object | array
                  | "(" expression ")" ;
 
 object           = "{" ( field ( "," field )* ","? ) ? "}" ;
-field            = IDENTIFIER ":" expression ;
+field            = ( IDENTIFIER | STRING ) ":" expression ;
 
 array            = "[" ( expression ( "," expression )* ","? )? "]" ;
 ```

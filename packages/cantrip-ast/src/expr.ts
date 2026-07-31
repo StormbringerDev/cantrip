@@ -1,6 +1,10 @@
 import type { Span } from "@cantrip/types";
 import type { Token } from "./token.js";
 
+type CantripValue = number | string | boolean | null;
+type CantripArray = Expr[];
+type CantripObject = Map<string, Expr>;
+
 export abstract class Expr {
   public readonly span: Span;
 
@@ -16,6 +20,7 @@ export interface ExprVisitor<R> {
   visitGroupingExpr: (expr: GroupingExpr) => R;
   visitLiteralExpr: (expr: LiteralExpr) => R;
   visitUnaryExpr: (expr: UnaryExpr) => R;
+  visitVarExpr: (expr: VarExpr) => R;
 }
 
 export class BinaryExpr extends Expr {
@@ -49,9 +54,9 @@ export class GroupingExpr extends Expr {
 }
 
 export class LiteralExpr extends Expr {
-  public readonly value: unknown;
+  public readonly value: CantripValue | CantripArray | CantripObject;
 
-  constructor(value: unknown, span: Span) {
+  constructor(value: CantripValue | CantripArray | CantripObject, span: Span) {
     super(span);
     this.value = value;
   }
@@ -73,5 +78,18 @@ export class UnaryExpr extends Expr {
 
   public accept<R>(visitor: ExprVisitor<R>): R {
     return visitor.visitUnaryExpr(this);
+  }
+}
+
+export class VarExpr extends Expr {
+  public readonly name: Token;
+
+  constructor(name: Token, span: Span) {
+    super(span);
+    this.name = name;
+  }
+
+  public accept<R>(visitor: ExprVisitor<R>): R {
+    return visitor.visitVarExpr(this);
   }
 }

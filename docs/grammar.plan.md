@@ -69,7 +69,7 @@ primary          = "true" | "false" | "nil"
                  | block ;               (* block as expression *)
 
 object           = "{" ( field ( "," field )* ","? )? "}" ;
-field            = IDENTIFIER ":" expression ;
+field            = ( IDENTIFIER | STRING ) ":" expression ;
 
 array            = "[" ( expression ( "," expression )* ","? )? "]" ;
 

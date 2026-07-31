@@ -6,6 +6,7 @@ import {
   GroupingExpr,
   LiteralExpr,
   UnaryExpr,
+  VarExpr,
 } from "../src/expr.js";
 import type { Span } from "@cantrip/types";
 import { Token, TokenType } from "../src/token.js";
@@ -106,6 +107,14 @@ describe("expression classes", () => {
     expect(expr.span).toStrictEqual(expectedSpan);
   });
 
+  it("instantiates a VarExpr", () => {
+    const token = tok(TokenType.Identifier, "num");
+    const expr = new VarExpr(token, token.span);
+    expect(expr).toBeInstanceOf(VarExpr);
+    expect(expr.name.lexeme).toBe("num");
+    expect(expr.span).toEqual(token.span);
+  });
+
   describe("visitor", () => {
     class TestVisitor implements ExprVisitor<void> {
       visitBinaryExpr(expr: BinaryExpr): void {
@@ -123,13 +132,14 @@ describe("expression classes", () => {
       visitUnaryExpr(expr: UnaryExpr): void {
         return;
       }
+
+      visitVarExpr(expr: VarExpr): void {
+        return;
+      }
     }
 
     const testVisitor = new TestVisitor();
     const binaryExpr = binExpr(5, tok(TokenType.Minus, "-", null, 1), 5);
-    const groupingExpr = groupExpr(binaryExpr);
-    const literalExpr = litExpr(5);
-    const unaryExpr = uniExpr(5);
 
     it("calls visitBinaryExpr", () => {
       const spy = vi.spyOn(TestVisitor.prototype, "visitBinaryExpr");
@@ -138,20 +148,31 @@ describe("expression classes", () => {
     });
 
     it("calls visitGroupingExpr", () => {
+      const groupingExpr = groupExpr(binaryExpr);
       const spy = vi.spyOn(TestVisitor.prototype, "visitGroupingExpr");
       groupingExpr.accept(testVisitor);
       expect(spy).toHaveBeenCalled();
     });
 
     it("calls visitLiteralExpr", () => {
+      const literalExpr = litExpr(5);
       const spy = vi.spyOn(TestVisitor.prototype, "visitLiteralExpr");
       literalExpr.accept(testVisitor);
       expect(spy).toHaveBeenCalled();
     });
 
     it("calls visitUnaryExpr", () => {
+      const unaryExpr = uniExpr(5);
       const spy = vi.spyOn(TestVisitor.prototype, "visitUnaryExpr");
       unaryExpr.accept(testVisitor);
+      expect(spy).toHaveBeenCalled();
+    });
+
+    it("calls visitVarExpr", () => {
+      const token = tok(TokenType.Identifier, "num");
+      const varExpr = new VarExpr(token, token.span);
+      const spy = vi.spyOn(TestVisitor.prototype, "visitVarExpr");
+      varExpr.accept(testVisitor);
       expect(spy).toHaveBeenCalled();
     });
   });

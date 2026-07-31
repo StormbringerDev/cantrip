@@ -7,6 +7,7 @@ import {
   TokenType,
   UnaryExpr,
 } from "@cantrip/ast";
+import { VarExpr } from "../../cantrip-ast/src/expr.js";
 
 export class ParseError extends Error {
   public readonly token: Token;
@@ -122,6 +123,11 @@ export class Parser {
     // Object Literals
     if (this.match(TokenType.LeftBrace)) return this.object();
 
+    // Variables
+    if (this.match(TokenType.Identifier)) {
+      return new VarExpr(this.previous(), this.previous().span);
+    }
+
     // Grouping
     if (this.match(TokenType.LeftParen)) {
       const start = this.previous().span.start;
@@ -171,8 +177,11 @@ export class Parser {
         this.consume(TokenType.Comma, "Expect ',' between object fields.");
       }
 
+      let key: string;
+
       // Record key-value pair
-      const key = this.consume(TokenType.Identifier, "Expect field identifier.").lexeme;
+      if (this.peek().type === TokenType.String) key = this.advance().literal as string;
+      else key = this.consume(TokenType.Identifier, "Expect field identifier.").lexeme;
       this.consume(TokenType.Colon, "Expect ':' after field identifier.");
       const value = this.expression();
 

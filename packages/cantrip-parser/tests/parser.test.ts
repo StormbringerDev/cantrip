@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Parser } from "../src/parser.js";
 import {
   BinaryExpr,
-  Expr,
+  type Expr,
   GroupingExpr,
   LiteralExpr,
   Token,
@@ -10,6 +10,7 @@ import {
   UnaryExpr,
 } from "@cantrip/ast";
 import type { Span } from "@cantrip/types";
+import { VarExpr } from "../../cantrip-ast/src/expr.js";
 
 /** Create single-line Span from start/end offsets (column == offset) */
 function makeSpan(start: number, end: number): Span {
@@ -263,6 +264,25 @@ describe("Parser", () => {
       ]);
       expect(ast.value).toEqual(expected);
     });
+
+    it("parses an object literal with a string key", () => {
+      const tokens = [
+        tok(TokenType.LeftBrace, "{"),
+        tok(TokenType.String, '"test-field"', "test-field", 1),
+        tok(TokenType.Colon, ":", 13),
+        tok(TokenType.Number, "42", 42, 14),
+        tok(TokenType.RightBrace, "}", null, 16),
+        tok(TokenType.Eof, "", null, 17),
+      ];
+      const parser = new Parser(tokens);
+      const { ast } = parser.parse();
+
+      expect(ast).toBeInstanceOf(LiteralExpr);
+      const expected = new Map<string, Expr>([
+        ["test-field", new LiteralExpr(42, makeSpan(14, 16))],
+      ]);
+      expect(ast.value).toEqual(expected);
+    });
   });
 
   describe("grouping expressions", () => {
@@ -490,6 +510,17 @@ describe("Parser", () => {
       expect(ast.left).toBeInstanceOf(LiteralExpr);
       expect(ast.operator.type).toBe(TokenType.BangEq);
       expect(ast.right).toBeInstanceOf(LiteralExpr);
+    });
+  });
+
+  describe("variable expressions", () => {
+    it("parses a variable expression", () => {
+      const tokens = [tok(TokenType.Identifier, "num"), tok(TokenType.Eof, "", null, 1)];
+      const parser = new Parser(tokens);
+      const { ast } = parser.parse();
+
+      expect(ast).toBeInstanceOf(VarExpr);
+      expect(ast.name.lexeme).toBe("num");
     });
   });
 });
