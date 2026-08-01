@@ -5,6 +5,7 @@ import {
   ExprStmt,
   GetExpr,
   GroupingExpr,
+  IndexExpr,
   LetStmt,
   LiteralExpr,
   SetExpr,
@@ -192,7 +193,15 @@ export class Parser {
     let expr = this.primary();
 
     while (true) {
-      if (this.match(TokenType.Dot)) {
+      if (this.match(TokenType.LeftBracket)) {
+        const bracket = this.previous();
+        const index = this.expression();
+        const end = this.consume(
+          TokenType.RightBracket,
+          "Expect ']' after specified index.",
+        ).span.end;
+        expr = new IndexExpr(expr, bracket, index, { start, end });
+      } else if (this.match(TokenType.Dot)) {
         const name = this.consume(
           TokenType.Identifier,
           "Expect property name after '.'.",

@@ -20,6 +20,7 @@ export interface ExprVisitor<R> {
   visitBinaryExpr(expr: BinaryExpr): R;
   visitGetExpr(expr: GetExpr): R;
   visitGroupingExpr(expr: GroupingExpr): R;
+  visitIndexExpr(expr: IndexExpr): R;
   visitLiteralExpr(expr: LiteralExpr): R;
   visitSetExpr(expr: SetExpr): R;
   visitUnaryExpr(expr: UnaryExpr): R;
@@ -85,6 +86,23 @@ export class GroupingExpr extends Expr {
 
   public accept<R>(visitor: ExprVisitor<R>): R {
     return visitor.visitGroupingExpr(this);
+  }
+}
+
+export class IndexExpr extends Expr {
+  public readonly indexee: Expr;
+  public readonly bracket: Token;
+  public readonly index: Expr;
+
+  constructor(indexee: Expr, bracket: Token, index: Expr, span: Span) {
+    super(span);
+    this.indexee = indexee;
+    this.bracket = bracket;
+    this.index = index;
+  }
+
+  public accept<R>(visitor: ExprVisitor<R>): R {
+    return visitor.visitIndexExpr(this);
   }
 }
 

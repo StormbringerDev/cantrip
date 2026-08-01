@@ -7,6 +7,7 @@ import {
   ExprStmt,
   GetExpr,
   GroupingExpr,
+  IndexExpr,
   LetStmt,
   LiteralExpr,
   SetExpr,
@@ -895,6 +896,30 @@ describe("Parser", () => {
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(GetExpr);
         expect(((ast[0] as ExprStmt).expr as GetExpr).object).toBeInstanceOf(VarExpr);
         expect(((ast[0] as ExprStmt).expr as GetExpr).name.lexeme).toBe("subclass");
+      });
+
+      it("parses an index expression", () => {
+        const tokens = [
+          tok(TokenType.Identifier, "users"),
+          tok(TokenType.LeftBracket, "[", null, 5),
+          tok(TokenType.Number, "2", 2, 6),
+          tok(TokenType.RightBracket, "]", null, 7),
+          tok(TokenType.Semicolon, ";", null, 8),
+          tok(TokenType.Eof, "", null, 9),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ExprStmt);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(IndexExpr);
+        expect(((ast[0] as ExprStmt).expr as IndexExpr).indexee).toBeInstanceOf(VarExpr);
+        expect(((ast[0] as ExprStmt).expr as IndexExpr).bracket.type).toBe(
+          TokenType.LeftBracket,
+        );
+        expect(((ast[0] as ExprStmt).expr as IndexExpr).index).toBeInstanceOf(
+          LiteralExpr,
+        );
       });
     });
   });

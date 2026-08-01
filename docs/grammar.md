@@ -39,7 +39,8 @@ factor           = unary ( ( "/" | "*" | "%" ) unary )* ;
 unary            = ( "!" | "-" ) unary
                  | call ;
 
-call             = primary ( "." IDENTIFIER )* ;
+call             = primary ( "[" expression "]" | "." IDENTIFIER )* ;
+
 primary          = "true" | "false" | "nil"
                  | NUMBER | STRING
                  | IDENTIFIER

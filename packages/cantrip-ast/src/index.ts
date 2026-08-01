@@ -5,6 +5,7 @@ export {
   ExprVisitor,
   GetExpr,
   GroupingExpr,
+  IndexExpr,
   LiteralExpr,
   SetExpr,
   UnaryExpr,
