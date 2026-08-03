@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Parser } from "../src/parser.js";
+import { ParseError, Parser } from "../src/parser.js";
 import {
   AssignExpr,
   BinaryExpr,
@@ -351,6 +351,165 @@ describe("Parser", () => {
           ["test-field", new LiteralExpr(42, makeSpan(14, 16))],
         ]);
         expect(((ast[0] as ExprStmt).expr as LiteralExpr).value).toEqual(expected);
+      });
+
+      describe("errors", () => {
+        it("pushes an error with a missing comma in array", () => {
+          const tokens = [
+            tok(TokenType.LeftBracket, "["),
+            tok(TokenType.Number, "1", 1, 1),
+            tok(TokenType.Comma, ",", null, 2),
+            tok(TokenType.Number, "2", 2, 3),
+            tok(TokenType.Number, "3", 3, 5),
+            tok(TokenType.RightBracket, "]", null, 6),
+            tok(TokenType.Semicolon, ";", null, 7),
+            tok(TokenType.Eof, "", null, 8),
+          ];
+          const parser = new Parser(tokens);
+          const { ast, parseErrors } = parser.parse();
+
+          expect(ast).toHaveLength(1);
+          expect(ast[0]).toBeNull();
+          expect(parseErrors).toHaveLength(1);
+          expect(parseErrors[0]).toBeInstanceOf(ParseError);
+          expect(parseErrors[0].message).toBe("Expect ',' between array elements.");
+        });
+
+        it("pushes an error with a missing closing bracket", () => {
+          const tokens = [
+            tok(TokenType.LeftBracket, "["),
+            tok(TokenType.Number, "1", 1, 1),
+            tok(TokenType.Comma, ",", null, 2),
+            tok(TokenType.Number, "2", 2, 3),
+            tok(TokenType.Comma, ",", null, 4),
+            tok(TokenType.Number, "3", 3, 5),
+            tok(TokenType.Semicolon, ";", null, 6),
+            tok(TokenType.Eof, "", null, 7),
+          ];
+          const parser = new Parser(tokens);
+          const { ast, parseErrors } = parser.parse();
+
+          expect(ast).toHaveLength(1);
+          expect(ast[0]).toBeNull();
+          expect(parseErrors).toHaveLength(1);
+          expect(parseErrors[0]).toBeInstanceOf(ParseError);
+          expect(parseErrors[0].message).toBe("Expect ']' after array literal.");
+        });
+
+        it("pushes an error with a missing comma in object", () => {
+          const tokens = [
+            tok(TokenType.LeftBrace, "{"),
+            tok(TokenType.Identifier, "name", null, 1),
+            tok(TokenType.Colon, ":", null, 5),
+            tok(TokenType.String, '"Reyek"', "Reyek", 6),
+            tok(TokenType.Identifier, "level", null, 13),
+            tok(TokenType.Colon, ":", null, 18),
+            tok(TokenType.Number, "3", 3, 19),
+            tok(TokenType.RightBrace, "}", null, 20),
+            tok(TokenType.Semicolon, ";", null, 21),
+            tok(TokenType.Eof, "", null, 22),
+          ];
+          const parser = new Parser(tokens);
+          const { ast, parseErrors } = parser.parse();
+
+          expect(ast).toHaveLength(1);
+          expect(ast[0]).toBeNull();
+          expect(parseErrors).toHaveLength(1);
+          expect(parseErrors[0]).toBeInstanceOf(ParseError);
+          expect(parseErrors[0].message).toBe("Expect ',' between object fields.");
+        });
+
+        it("pushes an error with a missing field identifier", () => {
+          const tokens = [
+            tok(TokenType.LeftBrace, "{"),
+            tok(TokenType.Identifier, "name", null, 1),
+            tok(TokenType.Colon, ":", null, 5),
+            tok(TokenType.String, '"Reyek"', "Reyek", 6),
+            tok(TokenType.Comma, ",", null, 13),
+            tok(TokenType.Colon, ":", null, 14),
+            tok(TokenType.Number, "3", 3, 15),
+            tok(TokenType.RightBrace, "}", null, 16),
+            tok(TokenType.Semicolon, ";", null, 17),
+            tok(TokenType.Eof, "", null, 18),
+          ];
+          const parser = new Parser(tokens);
+          const { ast, parseErrors } = parser.parse();
+
+          expect(ast).toHaveLength(1);
+          expect(ast[0]).toBeNull();
+          expect(parseErrors).toHaveLength(1);
+          expect(parseErrors[0]).toBeInstanceOf(ParseError);
+          expect(parseErrors[0].message).toBe("Expect field identifier.");
+        });
+
+        it("pushes an error with a missing colon", () => {
+          const tokens = [
+            tok(TokenType.LeftBrace, "{"),
+            tok(TokenType.Identifier, "name", null, 1),
+            tok(TokenType.Colon, ":", null, 5),
+            tok(TokenType.String, '"Reyek"', "Reyek", 6),
+            tok(TokenType.Comma, ",", null, 13),
+            tok(TokenType.Identifier, "level", null, 14),
+            tok(TokenType.Number, "3", 3, 19),
+            tok(TokenType.RightBrace, "}", null, 20),
+            tok(TokenType.Semicolon, ";", null, 21),
+            tok(TokenType.Eof, "", null, 22),
+          ];
+          const parser = new Parser(tokens);
+          const { ast, parseErrors } = parser.parse();
+
+          expect(ast).toHaveLength(1);
+          expect(ast[0]).toBeNull();
+          expect(parseErrors).toHaveLength(1);
+          expect(parseErrors[0]).toBeInstanceOf(ParseError);
+          expect(parseErrors[0].message).toBe("Expect ':' after field identifier.");
+        });
+
+        it("pushes an error with a missing field value", () => {
+          const tokens = [
+            tok(TokenType.LeftBrace, "{"),
+            tok(TokenType.Identifier, "name", null, 1),
+            tok(TokenType.Colon, ":", null, 5),
+            tok(TokenType.String, '"Reyek"', "Reyek", 6),
+            tok(TokenType.Comma, ",", null, 13),
+            tok(TokenType.Identifier, "level", null, 14),
+            tok(TokenType.Colon, ":", null, 18),
+            tok(TokenType.RightBrace, "}", null, 19),
+            tok(TokenType.Semicolon, ";", null, 20),
+            tok(TokenType.Eof, "", null, 21),
+          ];
+          const parser = new Parser(tokens);
+          const { ast, parseErrors } = parser.parse();
+
+          expect(ast).toHaveLength(1);
+          expect(ast[0]).toBeNull();
+          expect(parseErrors).toHaveLength(1);
+          expect(parseErrors[0]).toBeInstanceOf(ParseError);
+          expect(parseErrors[0].message).toBe("Expect expression.");
+        });
+
+        it("pushes an error with a missing closing brace", () => {
+          const tokens = [
+            tok(TokenType.LeftBrace, "{"),
+            tok(TokenType.Identifier, "name", null, 1),
+            tok(TokenType.Colon, ":", null, 5),
+            tok(TokenType.String, '"Reyek"', "Reyek", 6),
+            tok(TokenType.Comma, ",", null, 13),
+            tok(TokenType.Identifier, "level", null, 14),
+            tok(TokenType.Colon, ":", null, 18),
+            tok(TokenType.Number, "3", null, 19),
+            tok(TokenType.Semicolon, ";", null, 20),
+            tok(TokenType.Eof, "", null, 21),
+          ];
+          const parser = new Parser(tokens);
+          const { ast, parseErrors } = parser.parse();
+
+          expect(ast).toHaveLength(1);
+          expect(ast[0]).toBeNull();
+          expect(parseErrors).toHaveLength(1);
+          expect(parseErrors[0]).toBeInstanceOf(ParseError);
+          expect(parseErrors[0].message).toBe("Expect '}' after object literal.");
+        });
       });
     });
 

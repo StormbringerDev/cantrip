@@ -254,7 +254,11 @@ export class Parser {
     // Record start position
     const start = this.previous().span.start;
     const arr: Expr[] = [];
-    while (this.peek().type !== TokenType.RightBracket && !this.isAtEnd()) {
+    while (
+      this.peek().type !== TokenType.RightBracket &&
+      this.peek().type !== TokenType.Semicolon &&
+      !this.isAtEnd()
+    ) {
       // Check for comma if array already contains an element
       if (arr.length > 0) {
         this.consume(TokenType.Comma, "Expect ',' between array elements.");
@@ -281,7 +285,11 @@ export class Parser {
     const start = this.previous().span.start;
     // Store key-value pairs as a map
     const obj = new Map<string, Expr>();
-    while (this.peek().type !== TokenType.RightBrace && !this.isAtEnd()) {
+    while (
+      this.peek().type !== TokenType.RightBrace &&
+      this.peek().type !== TokenType.Semicolon &&
+      !this.isAtEnd()
+    ) {
       // Check for commma if internal map already contains fields
       if (obj.size > 0) {
         this.consume(TokenType.Comma, "Expect ',' between object fields.");
