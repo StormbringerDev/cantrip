@@ -16,9 +16,20 @@ import {
   VarExpr,
 } from "@cantrip/ast";
 
+/**
+ * Error thrown (and collected) when the parser encounters a syntax error.
+ *
+ * Unlike a hard throw that aborts parsing, these errors are accumulated
+ * so the parser can continue and report multiple problems in one pass.
+ */
 export class ParseError extends Error {
+  /** The token at which the error was detected. */
   public readonly token: Token;
 
+  /**
+   * @param token - Token that triggered the error.
+   * @param message - Human-readable description of the problem.
+   */
   constructor(token: Token, message: string) {
     super(message);
     this.name = "ParseError";
@@ -26,15 +37,38 @@ export class ParseError extends Error {
   }
 }
 
+/**
+ * Recursive-descent parser for Cantrip.
+ *
+ * Consumes a flat list of tokens produced by the {@link Scanner}
+ * and builds an abstract syntax tree of statements and expressions.
+ *
+ * The parser follows Pratt-style precedence climbing for expressions
+ * and recovers from errors via synchronization so that multiple
+ * diagnostics can be reported in a single run.
+ */
 export class Parser {
+  /** Token stream to parse. */
   private readonly tokens: Token[];
+  /** Accumulated parse errors. */
   private errors: ParseError[] = [];
+  /** Index of the current token. */
   private current = 0;
 
+  /**
+   * @param tokens - Complete token list (including the final `Eof` token).
+   */
   constructor(tokens: Token[]) {
     this.tokens = tokens;
   }
 
+  /**
+   * Parse the entire token stream into a list of statements.
+   *
+   * @returns An object containing the produced AST (with `null` entries
+   *          for statements that failed to parse) and the list of
+   *          collected {@link ParseError}s.
+   */
   public parse(): { ast: (Stmt | null)[]; parseErrors: ParseError[] } {
     const ast: (Stmt | null)[] = [];
     while (!this.isAtEnd()) {
@@ -44,6 +78,14 @@ export class Parser {
     return { ast, parseErrors: this.errors };
   }
 
+  /**
+   * Parse a declaration (currently only `let`) or fall through to a statement.
+   *
+   * On error the parser synchronizes and returns `null` so the rest of
+   * the program can still be examined.
+   *
+   * @returns The parsed statement, or `null` for recovery was necessary.
+   */
   private declaration(): Stmt | null {
     try {
       if (this.match(TokenType.Let)) return this.letDecl();
@@ -55,6 +97,16 @@ export class Parser {
     }
   }
 
+  /**
+   * Parse a `let` declaration.
+   *
+   * Grammar:
+   * ```
+   * let_decl = "let" IDENTIFIER ( "=" expression )? ";" ;
+   * ```
+   *
+   * @returns A {@link LetStmt} node.
+   */
   private letDecl(): Stmt {
     const start = this.previous().span.start;
     const name = this.consume(TokenType.Identifier, "Expect variable name.");
@@ -71,10 +123,28 @@ export class Parser {
     return new LetStmt(name, initializer, { start, end });
   }
 
+  /**
+   * Parse a statement.
+   *
+   * Currently only expression statements are supported; future
+   * control-flow statements will be added here.
+   *
+   * @returns The parsed statement.
+   */
   private statement(): Stmt {
     return this.exprStmt();
   }
 
+  /**
+   * Parse an expression statement.
+   *
+   * Grammar:
+   * ```
+   * expr_stmt = expression ";" ;
+   * ```
+   *
+   * @returns An {@link ExprStmt} node.
+   */
   private exprStmt(): Stmt {
     const expr = this.expression();
     const start = expr.span.start;
@@ -83,10 +153,24 @@ export class Parser {
     return new ExprStmt(expr, { start, end });
   }
 
+  /**
+   * Parse an expression (entry point for the expression hierarchy).
+   *
+   * @returns The root of the expression tree.
+   */
   private expression(): Expr {
     return this.assignment();
   }
 
+  /**
+   * Parse an assignment or compound assignment expression.
+   *
+   * Handles both simple variable assignment (`x = ...`) and property
+   * assignment (`obj.prop = ...`). Compound operators (`+=`, `-=`, etc.)
+   * are also recognized.
+   *
+   * @returns An {@link AssignExpr}, {@link SetExpr}, or a lower-precedence expression.
+   */
   private assignment(): Expr {
     const start = this.peek().span.start;
     const expr = this.equality();
@@ -119,6 +203,11 @@ export class Parser {
     return expr;
   }
 
+  /**
+   * Parse equality expressions (`==`, `!=`).
+   *
+   * @returns A {@link BinaryExpr} or a lower-precedence expression.
+   */
   private equality(): Expr {
     const start = this.peek().span.start;
     let expr = this.comparison();
@@ -133,6 +222,11 @@ export class Parser {
     return expr;
   }
 
+  /**
+   * Parse comparison expressions (`>`, `>=`, `<`, `<=`).
+   *
+   * @returns A {@link BinaryExpr} or a lower-precedence expression.
+   */
   private comparison(): Expr {
     const start = this.peek().span.start;
     let expr = this.term();
@@ -149,6 +243,11 @@ export class Parser {
     return expr;
   }
 
+  /**
+   * Parse additive expressions (`+`, `-`).
+   *
+   * @returns A {@link BinaryExpr} or a lower-precedence expression.
+   */
   private term(): Expr {
     const start = this.peek().span.start;
     let expr = this.factor();
@@ -163,6 +262,11 @@ export class Parser {
     return expr;
   }
 
+  /**
+   * Parse multiplicative expressions (`*`, `/`, `%`).
+   *
+   * @returns A {@link BinaryExpr} or a lower-precedence expression.
+   */
   private factor(): Expr {
     const start = this.peek().span.start;
     let expr = this.unary();
@@ -177,6 +281,11 @@ export class Parser {
     return expr;
   }
 
+  /**
+   * Parse unary expressions (`!`, `-`).
+   *
+   * @returns A {@link UnaryExpr} or a call/primary expression.
+   */
   private unary(): Expr {
     if (this.match(TokenType.Bang, TokenType.Minus)) {
       const operator = this.previous();
@@ -188,6 +297,13 @@ export class Parser {
     return this.call();
   }
 
+  /**
+   * Parse postfix call-like expressions: property access and indexing.
+   *
+   * Handles chains such as `obj.prop[0].name`.
+   *
+   * @returns A {@link GetExpr}, {@link IndexExpr}, or a primary expression.
+   */
   private call(): Expr {
     const start = this.peek().span.start;
     let expr = this.primary();
@@ -216,6 +332,12 @@ export class Parser {
     return expr;
   }
 
+  /**
+   * Parse primary expression: literals, variables, arrays, objects, and grouping.
+   *
+   * @returns The corresponding expression node.
+   * @throws {ParseError} when no valid primary expression is found.
+   */
   private primary(): Expr {
     // Basic literals
     if (this.match(TokenType.True)) return new LiteralExpr(true, this.previous().span);
@@ -250,6 +372,18 @@ export class Parser {
     throw this.error(this.peek(), "Expect expression.");
   }
 
+  /**
+   * Parse an array literal.
+   *
+   * Supports trailing commas.
+   *
+   * Grammar (simplified):
+   * ```
+   * array = "[" ( expression ( "," expression )* ","? )? "]"
+   * ```
+   *
+   * @returns A {@link LiteralExpr} whose value is an `Expr[]`.
+   */
   private array(): Expr {
     // Record start position
     const start = this.previous().span.start;
@@ -280,6 +414,18 @@ export class Parser {
     return new LiteralExpr(arr, { start, end });
   }
 
+  /**
+   * Parse an object literal.
+   *
+   * Keys may be identifiers or string literals. Trailing commas are allowed.
+   *
+   * Grammar (simplified):
+   * ```
+   * object = "{" ( ( IDENTIFIER | STRING ) ":" expression ( "," ... )* ","? )? "}"
+   * ```
+   *
+   * @returns A {@link LiteralExpr} whose value is a `Map<string, Expr>`.
+   */
   private object(): Expr {
     // Record start position
     const start = this.previous().span.start;
@@ -319,7 +465,14 @@ export class Parser {
     return new LiteralExpr(obj, { start, end });
   }
 
-  // Consume current token if and only if it matches one of the provided types
+  // --- Utility helpers ------------------------------------------------
+
+  /**
+   * Advance if the current token matches any of the given types.
+   *
+   * @param types - One or more token types to match against.
+   * @returns `true` if a match occurred and the token was consumed.
+   */
   private match(...types: TokenType[]): boolean {
     for (const type of types) {
       if (this.check(type)) {
@@ -331,47 +484,90 @@ export class Parser {
     return false;
   }
 
-  // Consume and return the expected token if it matches, throw error if not a match
+  /**
+   * Require the current token to be of the expected type.
+   *
+   * @param type - Expected token type.
+   * @param message - Error message if the expectation is not met.
+   * @returns The consumed token.
+   * @throws {ParseError} when the current token does not match.
+   */
   private consume(type: TokenType, message: string): Token {
     if (this.check(type)) return this.advance();
 
     throw this.error(this.peek(), message);
   }
 
-  // Check if current token matches provided type without consuming it
+  /**
+   * Check whether the current token is of the given type without consuming it.
+   *
+   * @param type - Token type to test.
+   * @returns `true` if the current token matches.
+   */
   private check(type: TokenType): boolean {
     if (this.isAtEnd()) return false;
     return this.peek().type === type;
   }
 
-  // Consume and return current token
+  /**
+   * Consume and return the current token, advancing the cursor.
+   *
+   * @returns The token that was just consumed.
+   */
   private advance(): Token {
     if (!this.isAtEnd()) this.current++;
     return this.previous();
   }
 
+  /**
+   * @returns `true` when the parser has reached the end-of-file token.
+   */
   private isAtEnd(): boolean {
     return this.peek().type === TokenType.Eof;
   }
 
+  /**
+   * @returns The current token without consuming it.
+   */
   private peek(): Token {
     return this.tokens[this.current];
   }
 
+  /**
+   * Look ahead one token beyond the current position.
+   *
+   * @returns The token at `current + 1`.
+   */
   private peekNext(): Token {
     return this.tokens[this.current + 1];
   }
 
+  /**
+   * @returns The most recently consumed token.
+   */
   private previous(): Token {
     return this.tokens[this.current - 1];
   }
 
+  /**
+   * Record a parse error and return it so it can be thrown.
+   *
+   * @param token - Token associated with the error.
+   * @param message - Description of the problem.
+   * @returns A new {@link ParseError} instance.
+   */
   private error(token: Token, message: string): ParseError {
     const err = new ParseError(token, message);
     this.errors.push(err);
     return err;
   }
 
+  /**
+   * Discard tokens until a likely statement boundary is found.
+   *
+   * Used after a syntax error so that subsequent declarations/statements
+   * can still be parsed and additional diagnostics reported.
+   */
   private synchronize() {
     this.advance();
 

@@ -1,13 +1,33 @@
 import { assertNever, type Span } from "@cantrip/types";
 
+/** Possible literal values attached to a token. */
 type TokenLiteral = number | string | null;
 
+/**
+ * A single lexical token produced by the Cantrip scanner.
+ *
+ * Tokens carry their type, the original source text (lexeme),
+ * an optional literal value, and the source span they occupy.
+ */
 export class Token {
+  /** Discriminated token kind. */
   readonly type: TokenType;
+  /** Exact text from the source that produced this token. */
   readonly lexeme: string;
+  /**
+   * Parsed literal value for number / string tokens.
+   * `null` for all other token kinds.
+   */
   readonly literal: TokenLiteral;
+  /** Source location of this token. */
   readonly span: Span;
 
+  /**
+   * @param type - Token kind.
+   * @param lexeme - Raw source text.
+   * @param literal - Parsed value (numbers & strings only).
+   * @param span - Source span.
+   */
   constructor(type: TokenType, lexeme: string, literal: TokenLiteral, span: Span) {
     this.type = type;
     this.lexeme = lexeme;
@@ -15,6 +35,12 @@ export class Token {
     this.span = span;
   }
 
+  /**
+   * Human-readable representation useful for debugging.
+   *
+   * Includes token type, lexeme, literal, and 1-based line/column
+   * information derived from the span.
+   */
   toString(): string {
     return `${tokenTypeToString(this.type)} ${this.lexeme} ${this.literal as string}
     start: line ${this.span.start.line + 1}, column ${this.span.start.column + 1}
@@ -22,6 +48,16 @@ export class Token {
   }
 }
 
+/**
+ * Enumeration of every token kind recognized by the Cantrip lexer.
+ *
+ * Grouped into:
+ * - Single-character punctuation
+ * - One- or two-character operators
+ * - Literals
+ * - Keywords
+ * - End-of-file
+ */
 export enum TokenType {
   // Single character
   LeftParen,
@@ -82,6 +118,14 @@ export enum TokenType {
   Eof,
 }
 
+/**
+ * Converts a {@link TokenType} to its string name.
+ *
+ * Used by {@link Token.toString} and for diagnostic messages.
+ *
+ * @param type - The token type to stringify.
+ * @returns The corresponding string identifier.
+ */
 function tokenTypeToString(type: TokenType): string {
   switch (type) {
     case TokenType.LeftParen:
