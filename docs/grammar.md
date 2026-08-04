@@ -47,6 +47,7 @@ primary          = "true" | "false" | "nil"
                  | IDENTIFIER
                  | object | array
                  | "(" expression ")"
+                 | if_expr
                  | block ;               (* block as expression *)
 
 object           = "{" ( field ( "," field )* ","? ) ? "}" ;
@@ -55,6 +56,8 @@ field            = ( IDENTIFIER | STRING ) ":" expression ;
 array            = "[" ( expression ( "," expression )* ","? )? "]" ;
 
 (* -- Expression forms ----------------------------------------------------- *)
+
+if_expr          = "if" expression block ( "else" ( if_expr | block ) )? ;
 
 block            = "{" declaration* "}" ;
 ```

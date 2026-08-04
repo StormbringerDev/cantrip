@@ -12,6 +12,7 @@ import type {
   ExprVisitor,
   GetExpr,
   GroupingExpr,
+  IfExpr,
   IndexExpr,
   LiteralExpr,
   SetExpr,
@@ -73,8 +74,16 @@ export class AstPrinter implements ExprVisitor<string>, StmtVisitor<string> {
     return this.parenthesize("group", expr.expression);
   }
 
+  public visitIfExpr(expr: IfExpr): string {
+    if (expr.elseBranch) {
+      return this.parenthesize("if", expr.condition, expr.thenBranch, expr.elseBranch);
+    } else {
+      return this.parenthesize("if", expr.condition, expr.thenBranch);
+    }
+  }
+
   public visitIndexExpr(expr: IndexExpr): string {
-    return this.parenthesize(`index`, expr.indexee, expr.index);
+    return this.parenthesize("index", expr.indexee, expr.index);
   }
 
   public visitLiteralExpr(expr: LiteralExpr): string {

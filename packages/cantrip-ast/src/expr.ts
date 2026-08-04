@@ -49,6 +49,7 @@ export interface ExprVisitor<R> {
   visitBlockExpr(expr: BlockExpr): R;
   visitGetExpr(expr: GetExpr): R;
   visitGroupingExpr(expr: GroupingExpr): R;
+  visitIfExpr(expr: IfExpr): R;
   visitIndexExpr(expr: IndexExpr): R;
   visitLiteralExpr(expr: LiteralExpr): R;
   visitSetExpr(expr: SetExpr): R;
@@ -215,6 +216,42 @@ export class GroupingExpr extends Expr {
   /** @inheritdoc */
   public accept<R>(visitor: ExprVisitor<R>): R {
     return visitor.visitGroupingExpr(this);
+  }
+}
+
+/**
+ * If expression: `if expr { ... } else { ... }`.
+ *
+ * @example
+ * ```cantrip
+ * if x % 2 == 0 {
+ *   true
+ * } else {
+ *   false
+ * }
+ */
+export class IfExpr extends Expr {
+  /** Condition expression to check against. */
+  public readonly condition: Expr;
+  /** Block to be executed if {@link condition} is true. */
+  public readonly thenBranch: BlockExpr;
+  /** Optional else branch if condition is false. */
+  public readonly elseBranch: BlockExpr | IfExpr | null;
+
+  constructor(
+    condition: Expr,
+    thenBranch: BlockExpr,
+    elseBranch: BlockExpr | IfExpr | null,
+    span: Span,
+  ) {
+    super(span);
+    this.condition = condition;
+    this.thenBranch = thenBranch;
+    this.elseBranch = elseBranch;
+  }
+
+  public accept<R>(visitor: ExprVisitor<R>): R {
+    return visitor.visitIfExpr(this);
   }
 }
 
