@@ -73,7 +73,7 @@ field            = ( IDENTIFIER | STRING ) ":" expression ;
 
 array            = "[" ( expression ( "," expression )* ","? )? "]" ;
 
-(* -- Expression forms ---------------------------------------------------- *)
+(* -- Expression forms ----------------------------------------------------- *)
 
 if_expr          = "if" expression block ( "else" ( if_expr | block ) )? ;
 

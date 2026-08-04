@@ -3,6 +3,8 @@ import { ParseError, Parser } from "../src/parser.js";
 import {
   AssignExpr,
   BinaryExpr,
+  BlockExpr,
+  BlockStmt,
   type Expr,
   ExprStmt,
   GetExpr,
@@ -217,140 +219,175 @@ describe("Parser", () => {
 
       it("parses an empty object literal", () => {
         const tokens = [
-          tok(TokenType.LeftBrace, "{"),
-          tok(TokenType.RightBrace, "}", null, 1),
-          tok(TokenType.Semicolon, ";", null, 2),
-          tok(TokenType.Eof, "", null, 3),
+          tok(TokenType.LeftParen, "("),
+          tok(TokenType.LeftBrace, "{", null, 1),
+          tok(TokenType.RightBrace, "}", null, 2),
+          tok(TokenType.RightParen, ")", null, 3),
+          tok(TokenType.Semicolon, ";", null, 4),
+          tok(TokenType.Eof, "", null, 5),
         ];
         const parser = new Parser(tokens);
         const { ast } = parser.parse();
 
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
-        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(LiteralExpr);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(GroupingExpr);
+        expect(((ast[0] as ExprStmt).expr as GroupingExpr).expression).toBeInstanceOf(
+          LiteralExpr,
+        );
         const expected = new Map<string, Expr>();
-        expect(((ast[0] as ExprStmt).expr as LiteralExpr).value).toEqual(expected);
+        expect(
+          (((ast[0] as ExprStmt).expr as GroupingExpr).expression as LiteralExpr).value,
+        ).toEqual(expected);
       });
 
       it("parses an object literal", () => {
         const tokens = [
-          tok(TokenType.LeftBrace, "{"),
-          tok(TokenType.Identifier, "name", null, 1),
-          tok(TokenType.Colon, ":", null, 5),
-          tok(TokenType.String, '"Reyek"', "Reyek", 6),
-          tok(TokenType.Comma, ",", null, 13),
-          tok(TokenType.Identifier, "level", null, 14),
-          tok(TokenType.Colon, ":", null, 19),
-          tok(TokenType.Number, "5", 5, 20),
-          tok(TokenType.RightBrace, "}", null, 21),
-          tok(TokenType.Semicolon, ";", null, 22),
-          tok(TokenType.Eof, "", null, 23),
+          tok(TokenType.LeftParen, "("),
+          tok(TokenType.LeftBrace, "{", null, 1),
+          tok(TokenType.Identifier, "name", null, 2),
+          tok(TokenType.Colon, ":", null, 6),
+          tok(TokenType.String, '"Reyek"', "Reyek", 7),
+          tok(TokenType.Comma, ",", null, 14),
+          tok(TokenType.Identifier, "level", null, 15),
+          tok(TokenType.Colon, ":", null, 20),
+          tok(TokenType.Number, "5", 5, 21),
+          tok(TokenType.RightBrace, "}", null, 22),
+          tok(TokenType.RightParen, ")", null, 23),
+          tok(TokenType.Semicolon, ";", null, 24),
+          tok(TokenType.Eof, "", null, 25),
         ];
         const parser = new Parser(tokens);
         const { ast } = parser.parse();
 
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
-        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(LiteralExpr);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(GroupingExpr);
+        expect(((ast[0] as ExprStmt).expr as GroupingExpr).expression).toBeInstanceOf(
+          LiteralExpr,
+        );
         const expected = new Map<string, Expr>([
-          ["name", new LiteralExpr("Reyek", makeSpan(6, 13))],
-          ["level", new LiteralExpr(5, makeSpan(20, 21))],
+          ["name", new LiteralExpr("Reyek", makeSpan(7, 14))],
+          ["level", new LiteralExpr(5, makeSpan(21, 22))],
         ]);
-        expect(((ast[0] as ExprStmt).expr as LiteralExpr).value).toEqual(expected);
+        expect(
+          (((ast[0] as ExprStmt).expr as GroupingExpr).expression as LiteralExpr).value,
+        ).toEqual(expected);
       });
 
       it("parses an object literal with a trailing comma", () => {
         const tokens = [
-          tok(TokenType.LeftBrace, "{"),
-          tok(TokenType.Identifier, "name", null, 1),
-          tok(TokenType.Colon, ":", null, 5),
-          tok(TokenType.String, '"Reyek"', "Reyek", 6),
-          tok(TokenType.Comma, ",", null, 13),
-          tok(TokenType.Identifier, "level", null, 14),
-          tok(TokenType.Colon, ":", null, 19),
-          tok(TokenType.Number, "5", 5, 20),
-          tok(TokenType.Comma, ",", null, 21),
-          tok(TokenType.RightBrace, "}", null, 22),
-          tok(TokenType.Semicolon, ";", null, 23),
-          tok(TokenType.Eof, "", null, 24),
+          tok(TokenType.LeftParen, "("),
+          tok(TokenType.LeftBrace, "{", null, 1),
+          tok(TokenType.Identifier, "name", null, 2),
+          tok(TokenType.Colon, ":", null, 6),
+          tok(TokenType.String, '"Reyek"', "Reyek", 7),
+          tok(TokenType.Comma, ",", null, 14),
+          tok(TokenType.Identifier, "level", null, 15),
+          tok(TokenType.Colon, ":", null, 20),
+          tok(TokenType.Number, "5", 5, 21),
+          tok(TokenType.Comma, ",", null, 22),
+          tok(TokenType.RightBrace, "}", null, 23),
+          tok(TokenType.RightParen, ")", null, 24),
+          tok(TokenType.Semicolon, ";", null, 25),
+          tok(TokenType.Eof, "", null, 26),
         ];
         const parser = new Parser(tokens);
         const { ast } = parser.parse();
 
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
-        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(LiteralExpr);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(GroupingExpr);
+        expect(((ast[0] as ExprStmt).expr as GroupingExpr).expression).toBeInstanceOf(
+          LiteralExpr,
+        );
         const expected = new Map<string, Expr>([
-          ["name", new LiteralExpr("Reyek", makeSpan(6, 13))],
-          ["level", new LiteralExpr(5, makeSpan(20, 21))],
+          ["name", new LiteralExpr("Reyek", makeSpan(7, 14))],
+          ["level", new LiteralExpr(5, makeSpan(21, 22))],
         ]);
-        expect(((ast[0] as ExprStmt).expr as LiteralExpr).value).toEqual(expected);
+        expect(
+          (((ast[0] as ExprStmt).expr as GroupingExpr).expression as LiteralExpr).value,
+        ).toEqual(expected);
       });
 
       it("parses nested object literals", () => {
         const tokens = [
-          tok(TokenType.LeftBrace, "{"),
-          tok(TokenType.Identifier, "name", null, 1),
-          tok(TokenType.Colon, ":", null, 5),
-          tok(TokenType.String, '"Reyek"', "Reyek", 6),
-          tok(TokenType.Comma, ",", null, 13),
-          tok(TokenType.Identifier, "savingThrows", null, 14),
-          tok(TokenType.Colon, ":", null, 26),
-          tok(TokenType.LeftBrace, "{", null, 27),
-          tok(TokenType.Identifier, "int", null, 28),
-          tok(TokenType.Colon, ":", null, 31),
-          tok(TokenType.True, "true", null, 32),
-          tok(TokenType.Comma, ",", null, 36),
-          tok(TokenType.Identifier, "wis", null, 37),
-          tok(TokenType.Colon, ":", null, 40),
-          tok(TokenType.True, "true", null, 44),
-          tok(TokenType.RightBrace, "}", null, 48),
+          tok(TokenType.LeftParen, "("),
+          tok(TokenType.LeftBrace, "{", null, 1),
+          tok(TokenType.Identifier, "name", null, 2),
+          tok(TokenType.Colon, ":", null, 6),
+          tok(TokenType.String, '"Reyek"', "Reyek", 7),
+          tok(TokenType.Comma, ",", null, 14),
+          tok(TokenType.Identifier, "savingThrows", null, 15),
+          tok(TokenType.Colon, ":", null, 27),
+          tok(TokenType.LeftBrace, "{", null, 28),
+          tok(TokenType.Identifier, "int", null, 29),
+          tok(TokenType.Colon, ":", null, 32),
+          tok(TokenType.True, "true", null, 33),
+          tok(TokenType.Comma, ",", null, 37),
+          tok(TokenType.Identifier, "wis", null, 38),
+          tok(TokenType.Colon, ":", null, 41),
+          tok(TokenType.True, "true", null, 45),
           tok(TokenType.RightBrace, "}", null, 49),
-          tok(TokenType.Semicolon, ";", null, 50),
-          tok(TokenType.Eof, "", null, 51),
+          tok(TokenType.RightBrace, "}", null, 50),
+          tok(TokenType.RightParen, ")", null, 51),
+          tok(TokenType.Semicolon, ";", null, 52),
+          tok(TokenType.Eof, "", null, 53),
         ];
         const parser = new Parser(tokens);
         const { ast } = parser.parse();
 
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
-        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(LiteralExpr);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(GroupingExpr);
+        expect(((ast[0] as ExprStmt).expr as GroupingExpr).expression).toBeInstanceOf(
+          LiteralExpr,
+        );
         const expected = new Map<string, Expr>([
-          ["name", new LiteralExpr("Reyek", makeSpan(6, 13))],
+          ["name", new LiteralExpr("Reyek", makeSpan(7, 14))],
           [
             "savingThrows",
             new LiteralExpr(
               new Map<string, Expr>([
-                ["int", new LiteralExpr(true, makeSpan(32, 36))],
-                ["wis", new LiteralExpr(true, makeSpan(44, 48))],
+                ["int", new LiteralExpr(true, makeSpan(33, 37))],
+                ["wis", new LiteralExpr(true, makeSpan(45, 49))],
               ]),
-              makeSpan(27, 49),
+              makeSpan(28, 50),
             ),
           ],
         ]);
-        expect(((ast[0] as ExprStmt).expr as LiteralExpr).value).toEqual(expected);
+        expect(
+          (((ast[0] as ExprStmt).expr as GroupingExpr).expression as LiteralExpr).value,
+        ).toEqual(expected);
       });
 
       it("parses an object literal with a string key", () => {
         const tokens = [
-          tok(TokenType.LeftBrace, "{"),
-          tok(TokenType.String, '"test-field"', "test-field", 1),
-          tok(TokenType.Colon, ":", 13),
-          tok(TokenType.Number, "42", 42, 14),
-          tok(TokenType.RightBrace, "}", null, 16),
-          tok(TokenType.Semicolon, ";", null, 17),
-          tok(TokenType.Eof, "", null, 18),
+          tok(TokenType.LeftParen, "("),
+          tok(TokenType.LeftBrace, "{", null, 1),
+          tok(TokenType.String, '"test-field"', "test-field", 2),
+          tok(TokenType.Colon, ":", 14),
+          tok(TokenType.Number, "42", 42, 15),
+          tok(TokenType.RightBrace, "}", null, 17),
+          tok(TokenType.RightParen, ")", null, 18),
+          tok(TokenType.Semicolon, ";", null, 19),
+          tok(TokenType.Eof, "", null, 20),
         ];
         const parser = new Parser(tokens);
         const { ast } = parser.parse();
 
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
-        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(LiteralExpr);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(GroupingExpr);
+        expect(((ast[0] as ExprStmt).expr as GroupingExpr).expression).toBeInstanceOf(
+          LiteralExpr,
+        );
         const expected = new Map<string, Expr>([
-          ["test-field", new LiteralExpr(42, makeSpan(14, 16))],
+          ["test-field", new LiteralExpr(42, makeSpan(15, 17))],
         ]);
-        expect(((ast[0] as ExprStmt).expr as LiteralExpr).value).toEqual(expected);
+        expect(
+          (((ast[0] as ExprStmt).expr as GroupingExpr).expression as LiteralExpr).value,
+        ).toEqual(expected);
       });
 
       describe("errors", () => {
@@ -398,16 +435,18 @@ describe("Parser", () => {
 
         it("pushes an error with a missing comma in object", () => {
           const tokens = [
-            tok(TokenType.LeftBrace, "{"),
-            tok(TokenType.Identifier, "name", null, 1),
-            tok(TokenType.Colon, ":", null, 5),
-            tok(TokenType.String, '"Reyek"', "Reyek", 6),
-            tok(TokenType.Identifier, "level", null, 13),
-            tok(TokenType.Colon, ":", null, 18),
-            tok(TokenType.Number, "3", 3, 19),
-            tok(TokenType.RightBrace, "}", null, 20),
-            tok(TokenType.Semicolon, ";", null, 21),
-            tok(TokenType.Eof, "", null, 22),
+            tok(TokenType.LeftParen, "("),
+            tok(TokenType.LeftBrace, "{", null, 1),
+            tok(TokenType.Identifier, "name", null, 2),
+            tok(TokenType.Colon, ":", null, 6),
+            tok(TokenType.String, '"Reyek"', "Reyek", 7),
+            tok(TokenType.Identifier, "level", null, 14),
+            tok(TokenType.Colon, ":", null, 19),
+            tok(TokenType.Number, "3", 3, 20),
+            tok(TokenType.RightBrace, "}", null, 21),
+            tok(TokenType.RightParen, ")", null, 22),
+            tok(TokenType.Semicolon, ";", null, 23),
+            tok(TokenType.Eof, "", null, 24),
           ];
           const parser = new Parser(tokens);
           const { ast, parseErrors } = parser.parse();
@@ -421,16 +460,18 @@ describe("Parser", () => {
 
         it("pushes an error with a missing field identifier", () => {
           const tokens = [
-            tok(TokenType.LeftBrace, "{"),
-            tok(TokenType.Identifier, "name", null, 1),
-            tok(TokenType.Colon, ":", null, 5),
-            tok(TokenType.String, '"Reyek"', "Reyek", 6),
-            tok(TokenType.Comma, ",", null, 13),
-            tok(TokenType.Colon, ":", null, 14),
-            tok(TokenType.Number, "3", 3, 15),
-            tok(TokenType.RightBrace, "}", null, 16),
-            tok(TokenType.Semicolon, ";", null, 17),
-            tok(TokenType.Eof, "", null, 18),
+            tok(TokenType.LeftParen, "("),
+            tok(TokenType.LeftBrace, "{", null, 1),
+            tok(TokenType.Identifier, "name", null, 2),
+            tok(TokenType.Colon, ":", null, 6),
+            tok(TokenType.String, '"Reyek"', "Reyek", 7),
+            tok(TokenType.Comma, ",", null, 14),
+            tok(TokenType.Colon, ":", null, 15),
+            tok(TokenType.Number, "3", 3, 16),
+            tok(TokenType.RightBrace, "}", null, 17),
+            tok(TokenType.RightParen, ")", null, 18),
+            tok(TokenType.Semicolon, ";", null, 19),
+            tok(TokenType.Eof, "", null, 20),
           ];
           const parser = new Parser(tokens);
           const { ast, parseErrors } = parser.parse();
@@ -444,16 +485,18 @@ describe("Parser", () => {
 
         it("pushes an error with a missing colon", () => {
           const tokens = [
-            tok(TokenType.LeftBrace, "{"),
-            tok(TokenType.Identifier, "name", null, 1),
-            tok(TokenType.Colon, ":", null, 5),
-            tok(TokenType.String, '"Reyek"', "Reyek", 6),
-            tok(TokenType.Comma, ",", null, 13),
-            tok(TokenType.Identifier, "level", null, 14),
-            tok(TokenType.Number, "3", 3, 19),
-            tok(TokenType.RightBrace, "}", null, 20),
-            tok(TokenType.Semicolon, ";", null, 21),
-            tok(TokenType.Eof, "", null, 22),
+            tok(TokenType.LeftParen, "("),
+            tok(TokenType.LeftBrace, "{", null, 1),
+            tok(TokenType.Identifier, "name", null, 2),
+            tok(TokenType.Colon, ":", null, 6),
+            tok(TokenType.String, '"Reyek"', "Reyek", 7),
+            tok(TokenType.Comma, ",", null, 14),
+            tok(TokenType.Identifier, "level", null, 15),
+            tok(TokenType.Number, "3", 3, 20),
+            tok(TokenType.RightBrace, "}", null, 21),
+            tok(TokenType.RightParen, ")", null, 22),
+            tok(TokenType.Semicolon, ";", null, 23),
+            tok(TokenType.Eof, "", null, 24),
           ];
           const parser = new Parser(tokens);
           const { ast, parseErrors } = parser.parse();
@@ -467,16 +510,18 @@ describe("Parser", () => {
 
         it("pushes an error with a missing field value", () => {
           const tokens = [
-            tok(TokenType.LeftBrace, "{"),
-            tok(TokenType.Identifier, "name", null, 1),
-            tok(TokenType.Colon, ":", null, 5),
-            tok(TokenType.String, '"Reyek"', "Reyek", 6),
-            tok(TokenType.Comma, ",", null, 13),
-            tok(TokenType.Identifier, "level", null, 14),
-            tok(TokenType.Colon, ":", null, 18),
-            tok(TokenType.RightBrace, "}", null, 19),
-            tok(TokenType.Semicolon, ";", null, 20),
-            tok(TokenType.Eof, "", null, 21),
+            tok(TokenType.LeftParen, "("),
+            tok(TokenType.LeftBrace, "{", null, 1),
+            tok(TokenType.Identifier, "name", null, 2),
+            tok(TokenType.Colon, ":", null, 6),
+            tok(TokenType.String, '"Reyek"', "Reyek", 7),
+            tok(TokenType.Comma, ",", null, 14),
+            tok(TokenType.Identifier, "level", null, 15),
+            tok(TokenType.Colon, ":", null, 19),
+            tok(TokenType.RightBrace, "}", null, 20),
+            tok(TokenType.RightParen, ")", null, 21),
+            tok(TokenType.Semicolon, ";", null, 22),
+            tok(TokenType.Eof, "", null, 23),
           ];
           const parser = new Parser(tokens);
           const { ast, parseErrors } = parser.parse();
@@ -490,16 +535,17 @@ describe("Parser", () => {
 
         it("pushes an error with a missing closing brace", () => {
           const tokens = [
-            tok(TokenType.LeftBrace, "{"),
-            tok(TokenType.Identifier, "name", null, 1),
-            tok(TokenType.Colon, ":", null, 5),
-            tok(TokenType.String, '"Reyek"', "Reyek", 6),
-            tok(TokenType.Comma, ",", null, 13),
-            tok(TokenType.Identifier, "level", null, 14),
-            tok(TokenType.Colon, ":", null, 18),
-            tok(TokenType.Number, "3", null, 19),
-            tok(TokenType.Semicolon, ";", null, 20),
-            tok(TokenType.Eof, "", null, 21),
+            tok(TokenType.LeftParen, "("),
+            tok(TokenType.LeftBrace, "{", null, 1),
+            tok(TokenType.Identifier, "name", null, 2),
+            tok(TokenType.Colon, ":", null, 6),
+            tok(TokenType.String, '"Reyek"', "Reyek", 7),
+            tok(TokenType.Comma, ",", null, 14),
+            tok(TokenType.Identifier, "level", null, 15),
+            tok(TokenType.Colon, ":", null, 19),
+            tok(TokenType.Number, "3", null, 20),
+            tok(TokenType.Semicolon, ";", null, 21),
+            tok(TokenType.Eof, "", null, 22),
           ];
           const parser = new Parser(tokens);
           const { ast, parseErrors } = parser.parse();
@@ -1081,6 +1127,74 @@ describe("Parser", () => {
         );
       });
     });
+
+    describe("block expressions", () => {
+      it("parses a block expression", () => {
+        const tokens = [
+          tok(TokenType.LeftParen, "("),
+          tok(TokenType.LeftBrace, "{", null, 1),
+          tok(TokenType.Let, "let", null, 2),
+          tok(TokenType.Identifier, "answer", null, 6),
+          tok(TokenType.Eq, "=", null, 12),
+          tok(TokenType.Number, "42", 42, 13),
+          tok(TokenType.Semicolon, ";", null, 15),
+          tok(TokenType.RightBrace, "}", null, 16),
+          tok(TokenType.RightParen, ")", null, 17),
+          tok(TokenType.Semicolon, ";", null, 18),
+          tok(TokenType.Eof, "", null, 19),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ExprStmt);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(GroupingExpr);
+        expect(((ast[0] as ExprStmt).expr as GroupingExpr).expression).toBeInstanceOf(
+          BlockExpr,
+        );
+        expect(
+          (((ast[0] as ExprStmt).expr as GroupingExpr).expression as BlockExpr)
+            .statements,
+        ).toHaveLength(1);
+        expect(
+          (((ast[0] as ExprStmt).expr as GroupingExpr).expression as BlockExpr)
+            .statements[0],
+        ).toBeInstanceOf(LetStmt);
+        expect(
+          (((ast[0] as ExprStmt).expr as GroupingExpr).expression as BlockExpr).value,
+        ).toBeNull();
+      });
+
+      it("parses a block expression with a value", () => {
+        const tokens = [
+          tok(TokenType.LeftParen, "("),
+          tok(TokenType.LeftBrace, "{", null, 1),
+          tok(TokenType.Number, "5", 5, 2),
+          tok(TokenType.Plus, "+", null, 3),
+          tok(TokenType.Number, "5", 5, 4),
+          tok(TokenType.RightBrace, "}", null, 5),
+          tok(TokenType.RightParen, ")", null, 6),
+          tok(TokenType.Semicolon, ";", null, 7),
+          tok(TokenType.Eof, "", null, 8),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ExprStmt);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(GroupingExpr);
+        expect(((ast[0] as ExprStmt).expr as GroupingExpr).expression).toBeInstanceOf(
+          BlockExpr,
+        );
+        expect(
+          (((ast[0] as ExprStmt).expr as GroupingExpr).expression as BlockExpr)
+            .statements,
+        ).toHaveLength(0);
+        expect(
+          (((ast[0] as ExprStmt).expr as GroupingExpr).expression as BlockExpr).value,
+        ).toBeInstanceOf(BinaryExpr);
+      });
+    });
   });
 
   describe("statements", () => {
@@ -1117,6 +1231,74 @@ describe("Parser", () => {
         expect(ast[0]).toBeInstanceOf(LetStmt);
         expect((ast[0] as LetStmt).name.lexeme).toBe("answer");
         expect((ast[0] as LetStmt).initializer).toBeInstanceOf(LiteralExpr);
+      });
+    });
+
+    describe("blocks", () => {
+      it("parses an empty block statement", () => {
+        const tokens = [
+          tok(TokenType.LeftBrace, "{"),
+          tok(TokenType.RightBrace, "}", null, 1),
+          tok(TokenType.Eof, "", null, 2),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(BlockStmt);
+        expect((ast[0] as BlockStmt).statements).toHaveLength(0);
+      });
+
+      it("parses a block statement with unterminated expression", () => {
+        const tokens = [
+          tok(TokenType.LeftBrace, "{"),
+          tok(TokenType.Number, "42", 42, 1),
+          tok(TokenType.RightBrace, "}", null, 3),
+          tok(TokenType.Eof, "", null, 4),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(BlockStmt);
+        expect((ast[0] as BlockStmt).statements).toHaveLength(0);
+      });
+
+      it("parses a block statement with expression statement", () => {
+        const tokens = [
+          tok(TokenType.LeftBrace, "{"),
+          tok(TokenType.Number, "42", 42, 1),
+          tok(TokenType.Semicolon, ";", null, 3),
+          tok(TokenType.RightBrace, "}", null, 4),
+          tok(TokenType.Eof, "", null, 5),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(BlockStmt);
+        expect((ast[0] as BlockStmt).statements).toHaveLength(1);
+        expect((ast[0] as BlockStmt).statements[0]).toBeInstanceOf(ExprStmt);
+      });
+
+      it("parses a block statement with a let declaration", () => {
+        const tokens = [
+          tok(TokenType.LeftBrace, "{"),
+          tok(TokenType.Let, "let", null, 1),
+          tok(TokenType.Identifier, "x", null, 5),
+          tok(TokenType.Eq, "=", null, 6),
+          tok(TokenType.Number, "1", 42, 7),
+          tok(TokenType.Semicolon, ";", null, 8),
+          tok(TokenType.RightBrace, "}", null, 9),
+          tok(TokenType.Eof, "", null, 10),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(BlockStmt);
+        expect((ast[0] as BlockStmt).statements).toHaveLength(1);
+        expect((ast[0] as BlockStmt).statements[0]).toBeInstanceOf(LetStmt);
       });
     });
   });

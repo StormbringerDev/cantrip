@@ -1,4 +1,5 @@
 import type { Span } from "@cantrip/types";
+import type { Stmt } from "./stmt.js";
 import type { Token } from "./token.js";
 
 /** Primitive values that can appear in a Cantrip program. */
@@ -45,6 +46,7 @@ export abstract class Expr {
 export interface ExprVisitor<R> {
   visitAssignExpr(expr: AssignExpr): R;
   visitBinaryExpr(expr: BinaryExpr): R;
+  visitBlockExpr(expr: BlockExpr): R;
   visitGetExpr(expr: GetExpr): R;
   visitGroupingExpr(expr: GroupingExpr): R;
   visitIndexExpr(expr: IndexExpr): R;
@@ -119,6 +121,42 @@ export class BinaryExpr extends Expr {
   /** @inheritdoc */
   public accept<R>(visitor: ExprVisitor<R>) {
     return visitor.visitBinaryExpr(this);
+  }
+}
+
+/**
+ * Block expression - a set of statements wrapped in curley braces (`{ ... }`)
+ *
+ * @example
+ * ```cantrip
+ * {
+ *   let x = 42;
+ * }
+ * ```
+ */
+export class BlockExpr extends Expr {
+  /**
+   * The list of contained statements.
+   * `null` values are placeholders for where {@link ParseError}s occured.
+   */
+  public readonly statements: (Stmt | null)[];
+  /** The optional value expression; `nil` by default. */
+  public readonly value: Expr | null;
+
+  /**
+   * @param statements - List of statements to run.
+   * @param value
+   * @param span - Source span of the entire block including braces.
+   */
+  constructor(statements: (Stmt | null)[], value: Expr | null, span: Span) {
+    super(span);
+    this.statements = statements;
+    this.value = value;
+  }
+
+  /** @inheritdoc */
+  public accept<R>(visitor: ExprVisitor<R>): R {
+    return visitor.visitBlockExpr(this);
   }
 }
 

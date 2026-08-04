@@ -1,6 +1,7 @@
 export {
   AssignExpr,
   BinaryExpr,
+  BlockExpr,
   Expr,
   ExprVisitor,
   GetExpr,
@@ -11,5 +12,5 @@ export {
   UnaryExpr,
   VarExpr,
 } from "./expr.js";
-export { ExprStmt, LetStmt, Stmt, StmtVisitor } from "./stmt.js";
+export { BlockStmt, ExprStmt, LetStmt, Stmt, StmtVisitor } from "./stmt.js";
 export { Token, TokenType } from "./token.js";

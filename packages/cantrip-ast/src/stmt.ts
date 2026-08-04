@@ -35,8 +35,41 @@ export abstract class Stmt {
  * @typeParam R - The type returned by each visit method.
  */
 export interface StmtVisitor<R> {
+  visitBlockStmt(stmt: BlockStmt): R;
   visitExprStmt(stmt: ExprStmt): R;
   visitLetStmt(stmt: LetStmt): R;
+}
+
+/**
+ * Block statement - a set of statements wrapped in curley braces (`{ ... }`)
+ *
+ * @example
+ * ```cantrip
+ * {
+ *   let x = 42;
+ * }
+ * ```
+ */
+export class BlockStmt extends Stmt {
+  /**
+   * The list of contained statements.
+   * `null` values are placeholders for where {@link ParseError}s occured.
+   */
+  public readonly statements: (Stmt | null)[];
+
+  /**
+   * @param statements - List of statements to run.
+   * @param span - Source span of the entire block including braces.
+   */
+  constructor(statements: (Stmt | null)[], span: Span) {
+    super(span);
+    this.statements = statements;
+  }
+
+  /** @inheritdoc */
+  public accept<R>(visitor: StmtVisitor<R>): R {
+    return visitor.visitBlockStmt(this);
+  }
 }
 
 /**

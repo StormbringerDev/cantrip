@@ -20,7 +20,8 @@ declaration      = let_decl
 
 let_decl         = "let" IDENTIFIER ( "=" expression )? ";" ;
 
-statement        = expr_stmt ;
+statement        = expr_stmt
+                 | block ;               (* bare block as statement *)
 
 expr_stmt        = expression ";" ;
 
@@ -45,12 +46,17 @@ primary          = "true" | "false" | "nil"
                  | NUMBER | STRING
                  | IDENTIFIER
                  | object | array
-                 | "(" expression ")" ;
+                 | "(" expression ")"
+                 | block ;               (* block as expression *)
 
 object           = "{" ( field ( "," field )* ","? ) ? "}" ;
 field            = ( IDENTIFIER | STRING ) ":" expression ;
 
 array            = "[" ( expression ( "," expression )* ","? )? "]" ;
+
+(* -- Expression forms ----------------------------------------------------- *)
+
+block            = "{" declaration* "}" ;
 ```
 
 ## Notes

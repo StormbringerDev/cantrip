@@ -1,6 +1,8 @@
 import {
   AssignExpr,
   BinaryExpr,
+  BlockExpr,
+  BlockStmt,
   type Expr,
   ExprStmt,
   GetExpr,
@@ -132,6 +134,9 @@ export class Parser {
    * @returns The parsed statement.
    */
   private statement(): Stmt {
+    if (this.check(TokenType.LeftBrace)) {
+      return this.blockStatement();
+    }
     return this.exprStmt();
   }
 
@@ -151,6 +156,18 @@ export class Parser {
     const end = this.consume(TokenType.Semicolon, "Expect ';' after expression.").span
       .end;
     return new ExprStmt(expr, { start, end });
+  }
+
+  /**
+   * Parse a block statement.
+   *
+   * @returns A {@link BlockStmt} node.
+   */
+  private blockStatement(): Stmt {
+    const start = this.advance().span.start;
+    const { statements } = this.parseBlockBody();
+    const end = this.previous().span.end;
+    return new BlockStmt(statements, { start, end });
   }
 
   /**
@@ -352,8 +369,13 @@ export class Parser {
     // Array literals
     if (this.match(TokenType.LeftBracket)) return this.array();
 
-    // Object Literals
-    if (this.match(TokenType.LeftBrace)) return this.object();
+    // Object Literals or Blocks
+    if (this.match(TokenType.LeftBrace)) {
+      if (this.looksLikeObjectLiteral()) {
+        return this.finishObjectLiteral();
+      }
+      return this.blockExpression();
+    }
 
     // Variables
     if (this.match(TokenType.Identifier)) {
@@ -370,6 +392,20 @@ export class Parser {
     }
 
     throw this.error(this.peek(), "Expect expression.");
+  }
+
+  /**
+   * Check the next two tokens to determine if parsing an object literal or block expression.
+   *
+   * @returns `true` if the next two tokens indicate an object literal
+   */
+  private looksLikeObjectLiteral(): boolean {
+    if (this.check(TokenType.RightBrace)) return true; // Prefer empty object
+
+    if (this.check(TokenType.Identifier) || this.check(TokenType.String)) {
+      return this.peekNext().type === TokenType.Colon;
+    }
+    return false;
   }
 
   /**
@@ -426,7 +462,7 @@ export class Parser {
    *
    * @returns A {@link LiteralExpr} whose value is a `Map<string, Expr>`.
    */
-  private object(): Expr {
+  private finishObjectLiteral(): Expr {
     // Record start position
     const start = this.previous().span.start;
     // Store key-value pairs as a map
@@ -463,6 +499,55 @@ export class Parser {
     const end = this.consume(TokenType.RightBrace, "Expect '}' after object literal.")
       .span.end;
     return new LiteralExpr(obj, { start, end });
+  }
+
+  /**
+   * Parse a block expression.
+   *
+   * @returns A {@link BlockExpr} node.
+   */
+  private blockExpression(): Expr {
+    const start = this.previous().span.start;
+    const { statements, value } = this.parseBlockBody();
+    const end = this.previous().span.end;
+    return new BlockExpr(statements, value, { start, end });
+  }
+
+  /**
+   * Parse the internal statements of a block expression or statement.
+   *
+   * @returns An object containing the statements and an optional value which is ignored
+   *          by {@link blockStatement}.
+   */
+  private parseBlockBody(): { statements: (Stmt | null)[]; value: Expr | null } {
+    const statements: (Stmt | null)[] = [];
+    let value: Expr | null = null;
+
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      // Check for keyword indicating a declaration or statement
+      if (this.check(TokenType.Let)) {
+        statements.push(this.declaration());
+        continue;
+      }
+
+      // Parse an expression if unclear
+      const expr = this.expression();
+
+      // Check for semicolon or end of block
+      if (this.match(TokenType.Semicolon)) {
+        // If semicolon, push expression statement
+        statements.push(
+          new ExprStmt(expr, { start: expr.span.start, end: expr.span.end }),
+        );
+      } else {
+        // Final value of block
+        value = expr;
+        break;
+      }
+    }
+
+    this.consume(TokenType.RightBrace, "Expect '}' after block.");
+    return { statements, value };
   }
 
   // --- Utility helpers ------------------------------------------------

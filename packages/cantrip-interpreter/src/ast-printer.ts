@@ -5,6 +5,8 @@ import type {
   StmtVisitor,
   AssignExpr,
   BinaryExpr,
+  BlockExpr,
+  BlockStmt,
   Expr,
   ExprStmt,
   ExprVisitor,
@@ -22,6 +24,8 @@ function getRawString(str: string): string {
 }
 
 export class AstPrinter implements ExprVisitor<string>, StmtVisitor<string> {
+  private indentationLevel = 0;
+
   public print(stmts: (Stmt | null)[]): string {
     const program: string[] = [];
     for (const stmt of stmts) {
@@ -54,6 +58,11 @@ export class AstPrinter implements ExprVisitor<string>, StmtVisitor<string> {
 
   public visitBinaryExpr(expr: BinaryExpr): string {
     return this.parenthesize(expr.operator.lexeme, expr.left, expr.right);
+  }
+
+  public visitBlockExpr(expr: BlockExpr): string {
+    const validStmts = expr.statements.filter((s) => s !== null);
+    return this.block(validStmts);
   }
 
   public visitGetExpr(expr: GetExpr): string {
@@ -124,6 +133,11 @@ export class AstPrinter implements ExprVisitor<string>, StmtVisitor<string> {
     return expr.name.lexeme;
   }
 
+  public visitBlockStmt(stmt: BlockStmt): string {
+    const validStmts = stmt.statements.filter((s) => s !== null);
+    return this.block(validStmts);
+  }
+
   public visitExprStmt(stmt: ExprStmt): string {
     return stmt.expr.accept(this);
   }
@@ -134,7 +148,7 @@ export class AstPrinter implements ExprVisitor<string>, StmtVisitor<string> {
     return this.parenthesize(`let ${stmt.name.lexeme}`);
   }
 
-  private parenthesize(name: string, ...exprs: Expr[]) {
+  private parenthesize(name: string, ...exprs: Expr[]): string {
     const builder: string[] = [];
 
     builder.push("(", name);
@@ -143,6 +157,22 @@ export class AstPrinter implements ExprVisitor<string>, StmtVisitor<string> {
       builder.push(expr.accept(this));
     }
     builder.push(")");
+
+    return builder.join("");
+  }
+
+  private block(stmts: Stmt[]): string {
+    this.indentationLevel++;
+    const builder: string[] = [];
+
+    builder.push("{\n");
+    for (const stmt of stmts) {
+      for (let i = 0; i < this.indentationLevel; i++) builder.push("  ");
+      builder.push(stmt.accept(this), "\n");
+    }
+    this.indentationLevel--;
+    for (let i = 0; i < this.indentationLevel; i++) builder.push("  ");
+    builder.push("}");
 
     return builder.join("");
   }
