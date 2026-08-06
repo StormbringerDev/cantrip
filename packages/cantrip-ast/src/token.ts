@@ -73,11 +73,11 @@ export enum TokenType {
 
   // One or two characters
   Arrow, // ->
+  FatArrow, // =>
   Bang, // !
   BangEq, // !=
   Eq,
   EqEq,
-  FatArrow, // =>
   Greater,
   GreaterEq,
   Less,
@@ -150,6 +150,8 @@ function tokenTypeToString(type: TokenType): string {
       return "Semicolon";
     case TokenType.Arrow:
       return "Arrow";
+    case TokenType.FatArrow:
+      return "FatArrow";
     case TokenType.Bang:
       return "Bang";
     case TokenType.BangEq:
@@ -158,8 +160,6 @@ function tokenTypeToString(type: TokenType): string {
       return "Eq";
     case TokenType.EqEq:
       return "EqEq";
-    case TokenType.FatArrow:
-      return "FatArrow";
     case TokenType.Greater:
       return "Greater";
     case TokenType.GreaterEq:

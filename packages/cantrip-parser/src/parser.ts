@@ -7,6 +7,7 @@ import {
   ExprStmt,
   GetExpr,
   GroupingExpr,
+  IfExpr,
   IndexExpr,
   LetStmt,
   LiteralExpr,
@@ -134,6 +135,10 @@ export class Parser {
    * @returns The parsed statement.
    */
   private statement(): Stmt {
+    if (this.match(TokenType.If)) {
+      // Bypass to prevent requiring semicolon for if
+      return this.ifStatement();
+    }
     if (this.check(TokenType.LeftBrace)) {
       return this.blockStatement();
     }
@@ -156,6 +161,16 @@ export class Parser {
     const end = this.consume(TokenType.Semicolon, "Expect ';' after expression.").span
       .end;
     return new ExprStmt(expr, { start, end });
+  }
+
+  /**
+   * Bypass function to remove the requirement for semicolons after if expression.
+   *
+   * @returns An {@link IfStmt} wrapped in an {@link ExprStmt}.
+   */
+  private ifStatement(): Stmt {
+    const expr = this.ifExpression();
+    return new ExprStmt(expr, expr.span);
   }
 
   /**
@@ -391,6 +406,10 @@ export class Parser {
       return new GroupingExpr(expr, { start, end });
     }
 
+    if (this.match(TokenType.If)) {
+      return this.ifExpression();
+    }
+
     throw this.error(this.peek(), "Expect expression.");
   }
 
@@ -499,6 +518,37 @@ export class Parser {
     const end = this.consume(TokenType.RightBrace, "Expect '}' after object literal.")
       .span.end;
     return new LiteralExpr(obj, { start, end });
+  }
+
+  /**
+   * Parse an if expression.
+   *
+   * Grammar:
+   * ```
+   * if_expr = "if" expression block ( "else" (if_expr | block) )? ;
+   * ```
+   *
+   * @returns An {@link IfExpr} node.
+   */
+  private ifExpression(): Expr {
+    const start = this.previous().span.start;
+    const condition = this.expression();
+    this.consume(TokenType.LeftBrace, "Expect '{' after if condition.");
+
+    const thenBranch = this.blockExpression();
+    let end = thenBranch.span.end;
+    let elseBranch: Expr | null = null;
+    if (this.match(TokenType.Else)) {
+      if (this.match(TokenType.If)) {
+        elseBranch = this.ifExpression();
+      } else {
+        this.consume(TokenType.LeftBrace, "Expect '{' or 'if' after 'else'.");
+        elseBranch = this.blockExpression();
+      }
+      end = elseBranch.span.end;
+    }
+
+    return new IfExpr(condition, thenBranch, elseBranch, { start, end });
   }
 
   /**

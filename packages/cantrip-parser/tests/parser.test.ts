@@ -9,6 +9,7 @@ import {
   ExprStmt,
   GetExpr,
   GroupingExpr,
+  IfExpr,
   IndexExpr,
   LetStmt,
   LiteralExpr,
@@ -1193,6 +1194,104 @@ describe("Parser", () => {
         expect(
           (((ast[0] as ExprStmt).expr as GroupingExpr).expression as BlockExpr).value,
         ).toBeInstanceOf(BinaryExpr);
+      });
+    });
+
+    describe("if expressions", () => {
+      it("parses an if expression", () => {
+        const tokens = [
+          tok(TokenType.If, "if"),
+          tok(TokenType.Identifier, "flag", null, 3),
+          tok(TokenType.LeftBrace, "{", null, 8),
+          tok(TokenType.True, "true", null, 10),
+          tok(TokenType.RightBrace, "}", null, 15),
+          tok(TokenType.Eof, "", null, 16),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ExprStmt);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(IfExpr);
+        expect(((ast[0] as ExprStmt).expr as IfExpr).condition).toBeInstanceOf(VarExpr);
+        expect(((ast[0] as ExprStmt).expr as IfExpr).thenBranch).toBeInstanceOf(
+          BlockExpr,
+        );
+        expect(
+          (((ast[0] as ExprStmt).expr as IfExpr).thenBranch as BlockExpr).statements,
+        ).toHaveLength(0);
+        expect(
+          (((ast[0] as ExprStmt).expr as IfExpr).thenBranch as BlockExpr).value,
+        ).toBeInstanceOf(LiteralExpr);
+        expect(((ast[0] as ExprStmt).expr as IfExpr).elseBranch).toBeNull();
+      });
+
+      it("parses an if expression with an else clause", () => {
+        const tokens = [
+          tok(TokenType.If, "if"),
+          tok(TokenType.Identifier, "flag", null, 3),
+          tok(TokenType.LeftBrace, "{", null, 8),
+          tok(TokenType.True, "true", null, 10),
+          tok(TokenType.RightBrace, "}", null, 15),
+          tok(TokenType.Else, "else", null, 17),
+          tok(TokenType.LeftBrace, "{", null, 22),
+          tok(TokenType.False, "false", null, 24),
+          tok(TokenType.RightBrace, "}", null, 30),
+          tok(TokenType.Eof, "", null, 31),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ExprStmt);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(IfExpr);
+        expect(((ast[0] as ExprStmt).expr as IfExpr).condition).toBeInstanceOf(VarExpr);
+        expect(((ast[0] as ExprStmt).expr as IfExpr).thenBranch).toBeInstanceOf(
+          BlockExpr,
+        );
+        expect(
+          (((ast[0] as ExprStmt).expr as IfExpr).thenBranch as BlockExpr).statements,
+        ).toHaveLength(0);
+        expect(
+          (((ast[0] as ExprStmt).expr as IfExpr).thenBranch as BlockExpr).value,
+        ).toBeInstanceOf(LiteralExpr);
+        expect(((ast[0] as ExprStmt).expr as IfExpr).elseBranch).toBeInstanceOf(
+          BlockExpr,
+        );
+      });
+
+      it("parses an if expression with an else if clause", () => {
+        const tokens = [
+          tok(TokenType.If, "if"),
+          tok(TokenType.Identifier, "flag1", null, 3),
+          tok(TokenType.LeftBrace, "{", null, 9),
+          tok(TokenType.True, "true", null, 11),
+          tok(TokenType.RightBrace, "}", null, 16),
+          tok(TokenType.Else, "else", null, 18),
+          tok(TokenType.If, "if", null, 23),
+          tok(TokenType.Identifier, "flag2", null, 26),
+          tok(TokenType.LeftBrace, "{", null, 28),
+          tok(TokenType.False, "false", null, 30),
+          tok(TokenType.RightBrace, "}", null, 36),
+          tok(TokenType.Eof, "", null, 37),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ExprStmt);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(IfExpr);
+        expect(((ast[0] as ExprStmt).expr as IfExpr).condition).toBeInstanceOf(VarExpr);
+        expect(((ast[0] as ExprStmt).expr as IfExpr).thenBranch).toBeInstanceOf(
+          BlockExpr,
+        );
+        expect(
+          (((ast[0] as ExprStmt).expr as IfExpr).thenBranch as BlockExpr).statements,
+        ).toHaveLength(0);
+        expect(
+          (((ast[0] as ExprStmt).expr as IfExpr).thenBranch as BlockExpr).value,
+        ).toBeInstanceOf(LiteralExpr);
+        expect(((ast[0] as ExprStmt).expr as IfExpr).elseBranch).toBeInstanceOf(IfExpr);
       });
     });
   });

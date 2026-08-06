@@ -234,16 +234,11 @@ export class IfExpr extends Expr {
   /** Condition expression to check against. */
   public readonly condition: Expr;
   /** Block to be executed if {@link condition} is true. */
-  public readonly thenBranch: BlockExpr;
+  public readonly thenBranch: Expr;
   /** Optional else branch if condition is false. */
-  public readonly elseBranch: BlockExpr | IfExpr | null;
+  public readonly elseBranch: Expr | null;
 
-  constructor(
-    condition: Expr,
-    thenBranch: BlockExpr,
-    elseBranch: BlockExpr | IfExpr | null,
-    span: Span,
-  ) {
+  constructor(condition: Expr, thenBranch: Expr, elseBranch: Expr | null, span: Span) {
     super(span);
     this.condition = condition;
     this.thenBranch = thenBranch;
