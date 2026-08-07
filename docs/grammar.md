@@ -50,6 +50,7 @@ primary          = "true" | "false" | "nil"
                  | object | array
                  | "(" expression ")"
                  | if_expr
+                 | loop_expr
                  | block ;               (* block as expression *)
 
 object           = "{" ( field ( "," field )* ","? ) ? "}" ;
@@ -60,6 +61,8 @@ array            = "[" ( expression ( "," expression )* ","? )? "]" ;
 (* -- Expression forms ----------------------------------------------------- *)
 
 if_expr          = "if" expression block ( "else" ( if_expr | block ) )? ;
+
+loop_expr        = "loop" block ;
 
 block            = "{" declaration* "}" ;
 ```

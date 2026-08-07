@@ -52,6 +52,7 @@ export interface ExprVisitor<R> {
   visitIfExpr(expr: IfExpr): R;
   visitIndexExpr(expr: IndexExpr): R;
   visitLiteralExpr(expr: LiteralExpr): R;
+  visitLoopExpr(expr: LoopExpr): R;
   visitSetExpr(expr: SetExpr): R;
   visitUnaryExpr(expr: UnaryExpr): R;
   visitVarExpr(expr: VarExpr): R;
@@ -310,6 +311,35 @@ export class LiteralExpr extends Expr {
   /** @inheritdoc */
   public accept<R>(visitor: ExprVisitor<R>): R {
     return visitor.visitLiteralExpr(this);
+  }
+}
+
+/**
+ * Loop expression: `loop { ... }`; creates an infinite loop.
+ *
+ * @example
+ * ```cantrip
+ * loop {
+ *   print("RELEASE ME!");
+ * }
+ * ```
+ */
+export class LoopExpr extends Expr {
+  /** The loop block to be executed indefinitely. */
+  public readonly body: Expr;
+
+  /**
+   * @param body - The loop block.
+   * @param span - Source span of the entire loop.
+   */
+  constructor(body: Expr, span: Span) {
+    super(span);
+    this.body = body;
+  }
+
+  /** @inheritdoc */
+  public accept<R>(visitor: ExprVisitor<R>): R {
+    return visitor.visitLoopExpr(this);
   }
 }
 

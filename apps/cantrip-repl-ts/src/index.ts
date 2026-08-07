@@ -1,5 +1,4 @@
 import { TokenType } from "@cantrip/ast";
-import { AstPrinter } from "@cantrip/interpreter";
 import { Parser, ParseError, Scanner, ScannerError } from "@cantrip/parser";
 import type { Position } from "@cantrip/types";
 import { readFileSync } from "fs";
@@ -45,9 +44,6 @@ function run(source: string) {
     }
     return;
   }
-
-  const printer = new AstPrinter();
-  console.log(printer.print(ast));
 }
 
 function runFile(path: string) {

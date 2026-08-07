@@ -9,6 +9,7 @@ export {
   IfExpr,
   IndexExpr,
   LiteralExpr,
+  LoopExpr,
   SetExpr,
   UnaryExpr,
   VarExpr,

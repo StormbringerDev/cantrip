@@ -11,6 +11,7 @@ import {
   IndexExpr,
   LetStmt,
   LiteralExpr,
+  LoopExpr,
   SetExpr,
   type Stmt,
   type Token,
@@ -139,7 +140,11 @@ export class Parser {
       // Bypass to prevent requiring semicolon for if
       return this.ifStatement();
     }
-    if (this.check(TokenType.LeftBrace)) {
+    if (this.match(TokenType.Loop)) {
+      // Bypass to prevent requiring semicolon for loop
+      return this.loopStatement();
+    }
+    if (this.match(TokenType.LeftBrace)) {
       return this.blockStatement();
     }
     return this.exprStmt();
@@ -164,12 +169,22 @@ export class Parser {
   }
 
   /**
-   * Bypass function to remove the requirement for semicolons after if expression.
+   * Bypass function to remove the requirement for a semicolon after an if expression.
    *
-   * @returns An {@link IfStmt} wrapped in an {@link ExprStmt}.
+   * @returns An {@link IfExpr} wrapped in an {@link ExprStmt}.
    */
   private ifStatement(): Stmt {
     const expr = this.ifExpression();
+    return new ExprStmt(expr, expr.span);
+  }
+
+  /**
+   * Bypass function to remove the requirement for a semicolon after a loop expression.
+   *
+   * @returns A {@link LoopExpr} wrapped in an {@link ExprStmt}.
+   */
+  private loopStatement(): Stmt {
+    const expr = this.loopExpression();
     return new ExprStmt(expr, expr.span);
   }
 
@@ -179,7 +194,7 @@ export class Parser {
    * @returns A {@link BlockStmt} node.
    */
   private blockStatement(): Stmt {
-    const start = this.advance().span.start;
+    const start = this.previous().span.start;
     const { statements } = this.parseBlockBody();
     const end = this.previous().span.end;
     return new BlockStmt(statements, { start, end });
@@ -442,8 +457,13 @@ export class Parser {
       return new GroupingExpr(expr, { start, end });
     }
 
+    // Control flow
     if (this.match(TokenType.If)) {
       return this.ifExpression();
+    }
+
+    if (this.match(TokenType.Loop)) {
+      return this.loopExpression();
     }
 
     throw this.error(this.peek(), "Expect expression.");
@@ -585,6 +605,24 @@ export class Parser {
     }
 
     return new IfExpr(condition, thenBranch, elseBranch, { start, end });
+  }
+
+  /**
+   * Parse a loop expression.
+   *
+   * Grammar:
+   * ```
+   * loop_expr = "loop" block ;
+   * ```
+   *
+   * @returns A {@link LoopExpr} node.
+   */
+  private loopExpression(): Expr {
+    const start = this.previous().span.start;
+    this.consume(TokenType.LeftBrace, "Expect '{' after 'loop'.");
+
+    const body = this.blockExpression();
+    return new LoopExpr(body, { start, end: body.span.end });
   }
 
   /**

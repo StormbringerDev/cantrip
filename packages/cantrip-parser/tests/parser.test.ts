@@ -13,6 +13,7 @@ import {
   IndexExpr,
   LetStmt,
   LiteralExpr,
+  LoopExpr,
   SetExpr,
   Token,
   TokenType,
@@ -1343,6 +1344,29 @@ describe("Parser", () => {
           (((ast[0] as ExprStmt).expr as IfExpr).thenBranch as BlockExpr).value,
         ).toBeInstanceOf(LiteralExpr);
         expect(((ast[0] as ExprStmt).expr as IfExpr).elseBranch).toBeInstanceOf(IfExpr);
+      });
+    });
+
+    describe("loop expressions", () => {
+      it("parses a loop expression", () => {
+        const tokens = [
+          tok(TokenType.Loop, "loop"),
+          tok(TokenType.LeftBrace, "{", null, 5),
+          tok(TokenType.Let, "let", null, 7),
+          tok(TokenType.Identifier, "x", null, 11),
+          tok(TokenType.Eq, "=", null, 13),
+          tok(TokenType.Number, "42", 42, 15),
+          tok(TokenType.Semicolon, ";", null, 17),
+          tok(TokenType.RightBrace, "}", null, 19),
+          tok(TokenType.Eof, "", null, 20),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ExprStmt);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(LoopExpr);
+        expect(((ast[0] as ExprStmt).expr as LoopExpr).body).toBeInstanceOf(BlockExpr);
       });
     });
   });
