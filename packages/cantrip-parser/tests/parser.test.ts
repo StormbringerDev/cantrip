@@ -904,6 +904,57 @@ describe("Parser", () => {
           LiteralExpr,
         );
       });
+
+      // Logic expressions
+      it("parses an 'or' expression", () => {
+        const tokens = [
+          tok(TokenType.True, "true"),
+          tok(TokenType.Or, "or", null, 5),
+          tok(TokenType.False, "false", null, 8),
+          tok(TokenType.Semicolon, ";", null, 13),
+          tok(TokenType.Eof, "", null, 14),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ExprStmt);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(BinaryExpr);
+        expect(((ast[0] as ExprStmt).expr as BinaryExpr).left).toBeInstanceOf(
+          LiteralExpr,
+        );
+        expect(((ast[0] as ExprStmt).expr as BinaryExpr).operator.type).toBe(
+          TokenType.Or,
+        );
+        expect(((ast[0] as ExprStmt).expr as BinaryExpr).right).toBeInstanceOf(
+          LiteralExpr,
+        );
+      });
+
+      it("parses an 'and' expression", () => {
+        const tokens = [
+          tok(TokenType.True, "true"),
+          tok(TokenType.And, "and", null, 5),
+          tok(TokenType.False, "false", null, 9),
+          tok(TokenType.Semicolon, ";", null, 14),
+          tok(TokenType.Eof, "", null, 15),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ExprStmt);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(BinaryExpr);
+        expect(((ast[0] as ExprStmt).expr as BinaryExpr).left).toBeInstanceOf(
+          LiteralExpr,
+        );
+        expect(((ast[0] as ExprStmt).expr as BinaryExpr).operator.type).toBe(
+          TokenType.And,
+        );
+        expect(((ast[0] as ExprStmt).expr as BinaryExpr).right).toBeInstanceOf(
+          LiteralExpr,
+        );
+      });
     });
 
     describe("variable expressions", () => {

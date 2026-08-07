@@ -205,7 +205,7 @@ export class Parser {
    */
   private assignment(): Expr {
     const start = this.peek().span.start;
-    const expr = this.equality();
+    const expr = this.logicOr();
 
     if (
       this.match(
@@ -230,6 +230,42 @@ export class Parser {
       }
 
       this.error(operator, "Invalid assignment target.");
+    }
+
+    return expr;
+  }
+
+  /**
+   * Parse a logical `or` expression.
+   *
+   * @returns A {@link BinaryExpr} or a lower-precedence expression.
+   */
+  private logicOr(): Expr {
+    const start = this.peek().span.start;
+    let expr = this.logicAnd();
+
+    while (this.match(TokenType.Or)) {
+      const operator = this.previous();
+      const right = this.logicAnd();
+      expr = new BinaryExpr(expr, operator, right, { start, end: right.span.end });
+    }
+
+    return expr;
+  }
+
+  /**
+   * Parse a logical `and` expression.
+   *
+   * @returns A {@link BinaryExpr} or a lower-precedence expression.
+   */
+  private logicAnd(): Expr {
+    const start = this.peek().span.start;
+    let expr = this.equality();
+
+    while (this.match(TokenType.And)) {
+      const operator = this.previous();
+      const right = this.equality();
+      expr = new BinaryExpr(expr, operator, right, { start, end: right.span.end });
     }
 
     return expr;
