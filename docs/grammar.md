@@ -21,9 +21,13 @@ declaration      = let_decl
 let_decl         = "let" IDENTIFIER ( "=" expression )? ";" ;
 
 statement        = expr_stmt
+                 | break_stmt
+                 | continue_stmt
                  | block ;               (* bare block as statement *)
 
 expr_stmt        = expression ";" ;
+break_stmt       | "break" ";" ;
+continue_stmt    | "continue" ";" ;
 
 (* -- Expressions (ordered by precedence, lowest to highest) --------------- *)
 

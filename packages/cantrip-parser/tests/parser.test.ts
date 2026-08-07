@@ -5,6 +5,8 @@ import {
   BinaryExpr,
   BlockExpr,
   BlockStmt,
+  BreakStmt,
+  ContinueStmt,
   type Expr,
   ExprStmt,
   GetExpr,
@@ -1473,6 +1475,36 @@ describe("Parser", () => {
         expect(ast[0]).toBeInstanceOf(BlockStmt);
         expect((ast[0] as BlockStmt).statements).toHaveLength(1);
         expect((ast[0] as BlockStmt).statements[0]).toBeInstanceOf(LetStmt);
+      });
+    });
+
+    describe("break & continue statements", () => {
+      it("parses a break statement", () => {
+        const tokens = [
+          tok(TokenType.Break, "break"),
+          tok(TokenType.Semicolon, ";", null, 5),
+          tok(TokenType.Eof, "", null, 6),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(BreakStmt);
+        expect((ast[0] as BreakStmt).keyword.type).toBe(TokenType.Break);
+      });
+
+      it("parses a continue statement", () => {
+        const tokens = [
+          tok(TokenType.Continue, "continue"),
+          tok(TokenType.Semicolon, ";", null, 8),
+          tok(TokenType.Eof, "", null, 9),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ContinueStmt);
+        expect((ast[0] as ContinueStmt).keyword.type).toBe(TokenType.Continue);
       });
     });
   });

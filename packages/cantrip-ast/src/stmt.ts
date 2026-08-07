@@ -36,6 +36,8 @@ export abstract class Stmt {
  */
 export interface StmtVisitor<R> {
   visitBlockStmt(stmt: BlockStmt): R;
+  visitBreakStmt(stmt: BreakStmt): R;
+  visitContinueStmt(stmt: ContinueStmt): R;
   visitExprStmt(stmt: ExprStmt): R;
   visitLetStmt(stmt: LetStmt): R;
 }
@@ -69,6 +71,56 @@ export class BlockStmt extends Stmt {
   /** @inheritdoc */
   public accept<R>(visitor: StmtVisitor<R>): R {
     return visitor.visitBlockStmt(this);
+  }
+}
+
+/**
+ * Break statement - a statement to exit out of the current loop.
+ *
+ * In future versions, the break statement will allow the `loop` statement
+ * to return a value.
+ *
+ * @example
+ * ```cantrip
+ * loop {
+ *   break;
+ * }
+ * ```
+ */
+export class BreakStmt extends Stmt {
+  public readonly keyword: Token;
+
+  constructor(keyword: Token, span: Span) {
+    super(span);
+    this.keyword = keyword;
+  }
+
+  public accept<R>(visitor: StmtVisitor<R>): R {
+    return visitor.visitBreakStmt(this);
+  }
+}
+
+/**
+ * Continue statement - a statement to skip the current loop run and start
+ * the next.
+ *
+ * @example
+ * ```cantrip
+ * loop {
+ *   continue;
+ * }
+ * ```
+ */
+export class ContinueStmt extends Stmt {
+  public readonly keyword: Token;
+
+  constructor(keyword: Token, span: Span) {
+    super(span);
+    this.keyword = keyword;
+  }
+
+  public accept<R>(visitor: StmtVisitor<R>): R {
+    return visitor.visitBreakStmt(this);
   }
 }
 

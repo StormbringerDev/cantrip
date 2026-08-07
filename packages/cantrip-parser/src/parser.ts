@@ -3,6 +3,8 @@ import {
   BinaryExpr,
   BlockExpr,
   BlockStmt,
+  BreakStmt,
+  ContinueStmt,
   type Expr,
   ExprStmt,
   GetExpr,
@@ -136,6 +138,12 @@ export class Parser {
    * @returns The parsed statement.
    */
   private statement(): Stmt {
+    if (this.match(TokenType.Break)) {
+      return this.breakStatement();
+    }
+    if (this.match(TokenType.Continue)) {
+      return this.continueStatement();
+    }
     if (this.match(TokenType.If)) {
       // Bypass to prevent requiring semicolon for if
       return this.ifStatement();
@@ -166,6 +174,38 @@ export class Parser {
     const end = this.consume(TokenType.Semicolon, "Expect ';' after expression.").span
       .end;
     return new ExprStmt(expr, { start, end });
+  }
+
+  /**
+   * Parse a break statement.
+   *
+   * Grammar:
+   * ```
+   * break_stmt = "break" ";" ;
+   * ```
+   *
+   * @returns A {@link BreakStmt} node.
+   */
+  private breakStatement(): Stmt {
+    const keyword = this.previous();
+    const end = this.consume(TokenType.Semicolon, "Expect ';' after 'break'").span.end;
+    return new BreakStmt(keyword, { start: keyword.span.start, end });
+  }
+
+  /**
+   * Parse a continue statement.
+   *
+   * Grammar:
+   * ```
+   * continue_stmt = "continue" ";" ;
+   * ```
+   *
+   * @returns A {@link BreakStmt} node.
+   */
+  private continueStatement(): Stmt {
+    const keyword = this.previous();
+    const end = this.consume(TokenType.Semicolon, "Expect ';' after 'continue'").span.end;
+    return new ContinueStmt(keyword, { start: keyword.span.start, end });
   }
 
   /**

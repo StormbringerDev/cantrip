@@ -14,5 +14,13 @@ export {
   UnaryExpr,
   VarExpr,
 } from "./expr.js";
-export { BlockStmt, ExprStmt, LetStmt, Stmt, StmtVisitor } from "./stmt.js";
+export {
+  BlockStmt,
+  BreakStmt,
+  ContinueStmt,
+  ExprStmt,
+  LetStmt,
+  Stmt,
+  StmtVisitor,
+} from "./stmt.js";
 export { Token, TokenType } from "./token.js";
