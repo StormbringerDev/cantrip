@@ -50,8 +50,53 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     return null;
   }
 
+  /**
+   * Evaluates a binary expression (`+`, `-`, `*`, `/`, `%`, etc.).
+   *
+   * @param expr - The binary expression to be evaluated.
+   * @returns The result of the expression.
+   */
   public visitBinaryExpr(expr: BinaryExpr): RuntimeValue {
-    return null;
+    const left = this.evaluate(expr.left);
+
+    if (expr.operator.type === TokenType.Or) {
+      if (this.isTruthy(left)) return left;
+      return this.evaluate(expr.right);
+    } else if (expr.operator.type === TokenType.And) {
+      if (!this.isTruthy(left)) return left;
+      return this.evaluate(expr.right);
+    }
+
+    const right = this.evaluate(expr.right);
+
+    switch (expr.operator.type) {
+      case TokenType.BangEq:
+        return left !== right;
+      case TokenType.EqEq:
+        return left === right;
+      case TokenType.Greater:
+        return (left as number) > (right as number);
+      case TokenType.GreaterEq:
+        return (left as number) >= (right as number);
+      case TokenType.Less:
+        return (left as number) < (right as number);
+      case TokenType.LessEq:
+        return (left as number) <= (right as number);
+      case TokenType.Percent:
+        return (left as number) % (right as number);
+      case TokenType.Slash:
+        return (left as number) / (right as number);
+      case TokenType.Star:
+        return (left as number) * (right as number);
+      case TokenType.Minus:
+        return (left as number) - (right as number);
+      case TokenType.Plus:
+        if (typeof left === "string" || typeof right === "string")
+          return this.stringify(left) + this.stringify(right);
+        return (left as number) + (right as number);
+    }
+
+    return null; // Unreachable.
   }
 
   public visitBlockExpr(expr: BlockExpr): RuntimeValue {
@@ -164,5 +209,17 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     if (value === null) return false;
     if (typeof value === "boolean") return value;
     return true;
+  }
+
+  /**
+   * Converts a value into a string.
+   *
+   * @param value - The value to be stringified.
+   * @returns The value as a string, `"nil"` for `null`.
+   */
+  private stringify(value: RuntimeValue): string {
+    if (value === null) return "nil";
+
+    return value.toString();
   }
 }

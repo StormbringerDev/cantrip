@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Interpreter } from "../src/interpreter.js";
-import { Expr, LiteralExpr, Token, TokenType, UnaryExpr } from "@cantrip/ast";
+import { BinaryExpr, Expr, LiteralExpr, Token, TokenType, UnaryExpr } from "@cantrip/ast";
 import type { Span } from "@cantrip/types";
 
 /** Primative and structured literals passed around at runtime. */
@@ -115,6 +115,162 @@ describe("interpreter", () => {
           makeSpan(0, 5),
         );
         const result = interpreter.visitUnaryExpr(expr);
+        expect(result).toBe(false);
+      });
+    });
+
+    describe("binary expressions", () => {
+      it("evaluates an addition expression", () => {
+        const expr = new BinaryExpr(
+          new LiteralExpr(5, makeSpan(0, 1)),
+          tok(TokenType.Plus, "+", null, 2),
+          new LiteralExpr(5, makeSpan(4, 6)),
+          makeSpan(0, 6),
+        );
+        const result = interpreter.visitBinaryExpr(expr);
+        expect(result).toBe(10);
+      });
+
+      it("evaluates a concatenation expression", () => {
+        const expr = new BinaryExpr(
+          new LiteralExpr("Hello, ", makeSpan(0, 9)),
+          tok(TokenType.Plus, "+", null, 10),
+          new LiteralExpr("world!", makeSpan(12, 19)),
+          makeSpan(0, 19),
+        );
+        const result = interpreter.visitBinaryExpr(expr);
+        expect(result).toBe("Hello, world!");
+      });
+
+      it("evaluates a subtraction expression", () => {
+        const expr = new BinaryExpr(
+          new LiteralExpr(5, makeSpan(0, 1)),
+          tok(TokenType.Minus, "-", null, 3),
+          new LiteralExpr(2, makeSpan(5, 6)),
+          makeSpan(0, 6),
+        );
+        const result = interpreter.visitBinaryExpr(expr);
+        expect(result).toBe(3);
+      });
+
+      it("evaluates a multiplication expression", () => {
+        const expr = new BinaryExpr(
+          new LiteralExpr(5, makeSpan(0, 1)),
+          tok(TokenType.Star, "*", null, 3),
+          new LiteralExpr(5, makeSpan(5, 6)),
+          makeSpan(0, 6),
+        );
+        const result = interpreter.visitBinaryExpr(expr);
+        expect(result).toBe(25);
+      });
+
+      it("evaluates a division expression", () => {
+        const expr = new BinaryExpr(
+          new LiteralExpr(10, makeSpan(0, 2)),
+          tok(TokenType.Slash, "/", null, 4),
+          new LiteralExpr(2, makeSpan(6, 7)),
+          makeSpan(0, 7),
+        );
+        const result = interpreter.visitBinaryExpr(expr);
+        expect(result).toBe(5);
+      });
+
+      it("evaluates a modulo expression", () => {
+        const expr = new BinaryExpr(
+          new LiteralExpr(9, makeSpan(0, 1)),
+          tok(TokenType.Percent, "%", null, 3),
+          new LiteralExpr(2, makeSpan(5, 6)),
+          makeSpan(0, 6),
+        );
+        const result = interpreter.visitBinaryExpr(expr);
+        expect(result).toBe(1);
+      });
+
+      it("evaluates an equality expression", () => {
+        const expr = new BinaryExpr(
+          new LiteralExpr(7, makeSpan(0, 1)),
+          tok(TokenType.EqEq, "==", null, 3),
+          new LiteralExpr(3, makeSpan(6, 7)),
+          makeSpan(0, 7),
+        );
+        const result = interpreter.visitBinaryExpr(expr);
+        expect(result).toBe(false);
+      });
+
+      it("evaluates an inequality expression", () => {
+        const expr = new BinaryExpr(
+          new LiteralExpr(7, makeSpan(0, 1)),
+          tok(TokenType.BangEq, "!=", null, 3),
+          new LiteralExpr(3, makeSpan(6, 7)),
+          makeSpan(0, 7),
+        );
+        const result = interpreter.visitBinaryExpr(expr);
+        expect(result).toBe(true);
+      });
+
+      it("evaluates a greater than expression", () => {
+        const expr = new BinaryExpr(
+          new LiteralExpr(5, makeSpan(0, 1)),
+          tok(TokenType.Greater, ">", null, 3),
+          new LiteralExpr(3, makeSpan(5, 6)),
+          makeSpan(0, 6),
+        );
+        const result = interpreter.visitBinaryExpr(expr);
+        expect(result).toBe(true);
+      });
+
+      it("evaluates a greater or equal expression", () => {
+        const expr = new BinaryExpr(
+          new LiteralExpr(5, makeSpan(0, 1)),
+          tok(TokenType.GreaterEq, ">=", null, 3),
+          new LiteralExpr(3, makeSpan(6, 7)),
+          makeSpan(0, 7),
+        );
+        const result = interpreter.visitBinaryExpr(expr);
+        expect(result).toBe(true);
+      });
+
+      it("evaluates a less than expression", () => {
+        const expr = new BinaryExpr(
+          new LiteralExpr(5, makeSpan(0, 1)),
+          tok(TokenType.Less, "<", null, 3),
+          new LiteralExpr(3, makeSpan(5, 6)),
+          makeSpan(0, 6),
+        );
+        const result = interpreter.visitBinaryExpr(expr);
+        expect(result).toBe(false);
+      });
+
+      it("evaluates a less or equal expression", () => {
+        const expr = new BinaryExpr(
+          new LiteralExpr(5, makeSpan(0, 1)),
+          tok(TokenType.LessEq, "<=", null, 3),
+          new LiteralExpr(3, makeSpan(6, 7)),
+          makeSpan(0, 7),
+        );
+        const result = interpreter.visitBinaryExpr(expr);
+        expect(result).toBe(false);
+      });
+
+      it("evaluates a logical or expression", () => {
+        const expr = new BinaryExpr(
+          new LiteralExpr(true, makeSpan(0, 5)),
+          tok(TokenType.Or, "or", null, 6),
+          new LiteralExpr(false, makeSpan(9, 14)),
+          makeSpan(0, 14),
+        );
+        const result = interpreter.visitBinaryExpr(expr);
+        expect(result).toBe(true);
+      });
+
+      it("evaluates a logical and expression", () => {
+        const expr = new BinaryExpr(
+          new LiteralExpr(true, makeSpan(0, 5)),
+          tok(TokenType.And, "and", null, 6),
+          new LiteralExpr(false, makeSpan(10, 15)),
+          makeSpan(0, 15),
+        );
+        const result = interpreter.visitBinaryExpr(expr);
         expect(result).toBe(false);
       });
     });
