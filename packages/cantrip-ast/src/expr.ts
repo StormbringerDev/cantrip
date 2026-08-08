@@ -3,13 +3,13 @@ import type { Stmt } from "./stmt.js";
 import type { Token } from "./token.js";
 
 /** Primitive values that can appear in a Cantrip program. */
-export type CantripValue = number | string | boolean | null;
+type CantripValue = number | string | boolean | null;
 
 /** Array literal represented as a list of expressions. */
-export type CantripArray = Expr[];
+type CantripArray = Expr[];
 
 /** Object literal represented as a map from string keys to expressions. */
-export type CantripObject = Map<string, Expr>;
+type CantripObject = Map<string, Expr>;
 
 /**
  * Base class for every expression node in the Cantrip AST.

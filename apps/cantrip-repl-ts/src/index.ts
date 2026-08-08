@@ -1,11 +1,13 @@
 import { TokenType } from "@cantrip/ast";
 import { Parser, ParseError, Scanner, ScannerError } from "@cantrip/parser";
+import { Interpreter } from "@cantrip/interpreter";
 import type { Position } from "@cantrip/types";
 import { readFileSync } from "fs";
 import { join } from "path";
 import promptSync from "prompt-sync";
 
 let hadError = false;
+const interpreter = new Interpreter();
 
 function printUsage() {
   console.log("Usage: cantrip-ts [script]");
@@ -44,6 +46,9 @@ function run(source: string) {
     }
     return;
   }
+
+  const statements = ast.filter((s) => s !== null);
+  interpreter.interpret(statements);
 }
 
 function runFile(path: string) {
@@ -71,16 +76,12 @@ function runPrompt() {
   }
 }
 
-function main() {
-  const args: string[] = process.argv.slice(2);
-  if (args.length > 1) {
-    printUsage();
-    process.exit(64);
-  } else if (args.length == 1) {
-    runFile(args[0]);
-  } else {
-    runPrompt();
-  }
+const args: string[] = process.argv.slice(2);
+if (args.length > 1) {
+  printUsage();
+  process.exit(64);
+} else if (args.length == 1) {
+  runFile(args[0]);
+} else {
+  runPrompt();
 }
-
-main();
