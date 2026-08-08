@@ -42,7 +42,7 @@ type RuntimeObject = Map<string, RuntimeValue>;
  * compilation.
  */
 export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void> {
-  public interpret(ast: Stmt[]) {}
+  public interpret(statements: Stmt[]) {}
 
   public visitAssignExpr(expr: AssignExpr): RuntimeValue {
     return null;
@@ -73,7 +73,23 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
   }
 
   public visitLiteralExpr(expr: LiteralExpr): RuntimeValue {
-    return null;
+    if (Array.isArray(expr.value)) {
+      const array = [];
+      for (const value of expr.value) {
+        array.push(value.accept(this));
+      }
+      return array;
+    }
+
+    if (expr.value instanceof Map) {
+      const object = new Map<string, RuntimeValue>();
+      for (const [key, value] of expr.value) {
+        object.set(key, value.accept(this));
+      }
+      return object;
+    }
+
+    return expr.value;
   }
 
   public visitLoopExpr(expr: LoopExpr): RuntimeValue {
