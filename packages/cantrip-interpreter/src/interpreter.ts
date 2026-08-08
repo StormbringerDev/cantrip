@@ -1,3 +1,4 @@
+import { TokenType } from "@cantrip/ast";
 import type {
   AssignExpr,
   BinaryExpr,
@@ -5,6 +6,7 @@ import type {
   BlockStmt,
   BreakStmt,
   ContinueStmt,
+  Expr,
   ExprStmt,
   ExprVisitor,
   GetExpr,
@@ -72,6 +74,13 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     return null;
   }
 
+  /**
+   * Evaluates a literal expression (number, string, boolean, `nil`,
+   * arrays, and objects).
+   *
+   * @param expr - The literal expression to be evaluated.
+   * @returns The result of the expression.
+   */
   public visitLiteralExpr(expr: LiteralExpr): RuntimeValue {
     if (Array.isArray(expr.value)) {
       const array = [];
@@ -100,8 +109,23 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     return null;
   }
 
+  /**
+   * Evaluates a unary expression (`!`, `-`).
+   *
+   * @param expr - The unary expression to be evaluated.
+   * @returns The result of the expression.
+   */
   public visitUnaryExpr(expr: UnaryExpr): RuntimeValue {
-    return null;
+    const right = this.evaluate(expr.right);
+
+    switch (expr.operator.type) {
+      case TokenType.Bang:
+        return !this.isTruthy(right);
+      case TokenType.Minus:
+        return -(right as number);
+    }
+
+    return null; // Unreachable
   }
 
   public visitVarExpr(expr: VarExpr): RuntimeValue {
@@ -119,4 +143,26 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
   public visitLetStmt(stmt: LetStmt): void {}
 
   public visitWhileStmt(stmt: WhileStmt): void {}
+
+  /**
+   * Evaluates the given expression and returns the result.
+   *
+   * @param expr - The expression to be evaluated.
+   * @returns The result of the given expression.
+   */
+  private evaluate(expr: Expr): RuntimeValue {
+    return expr.accept(this);
+  }
+
+  /**
+   * Checks if a value is truthy.
+   *
+   * @param value - The value to be tested for truthiness.
+   * @returns `false` for `nil` and `false`, `true` for everything else.
+   */
+  private isTruthy(value: RuntimeValue): boolean {
+    if (value === null) return false;
+    if (typeof value === "boolean") return value;
+    return true;
+  }
 }
