@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { Interpreter } from "../src/interpreter.js";
-import { BinaryExpr, Expr, LiteralExpr, Token, TokenType, UnaryExpr } from "@cantrip/ast";
+import {
+  BinaryExpr,
+  Expr,
+  GroupingExpr,
+  LiteralExpr,
+  Token,
+  TokenType,
+  UnaryExpr,
+} from "@cantrip/ast";
 import type { Span } from "@cantrip/types";
 
 /** Primative and structured literals passed around at runtime. */
@@ -272,6 +280,22 @@ describe("interpreter", () => {
         );
         const result = interpreter.visitBinaryExpr(expr);
         expect(result).toBe(false);
+      });
+    });
+
+    describe("grouping expressions", () => {
+      it("evaluates a grouping expression", () => {
+        const expr = new GroupingExpr(
+          new BinaryExpr(
+            new LiteralExpr(5, makeSpan(1, 2)),
+            tok(TokenType.Plus, "+", null, 3),
+            new LiteralExpr(5, makeSpan(5, 6)),
+            makeSpan(1, 6),
+          ),
+          makeSpan(0, 7),
+        );
+        const result = interpreter.visitGroupingExpr(expr);
+        expect(result).toBe(10);
       });
     });
   });

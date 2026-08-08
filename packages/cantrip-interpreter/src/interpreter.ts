@@ -108,7 +108,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
   }
 
   public visitGroupingExpr(expr: GroupingExpr): RuntimeValue {
-    return null;
+    return this.evaluate(expr.expression);
   }
 
   public visitIfExpr(expr: IfExpr): RuntimeValue {
