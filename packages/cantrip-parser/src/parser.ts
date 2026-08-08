@@ -20,6 +20,7 @@ import {
   TokenType,
   UnaryExpr,
   VarExpr,
+  WhileStmt,
 } from "@cantrip/ast";
 
 /**
@@ -144,6 +145,9 @@ export class Parser {
     if (this.match(TokenType.Continue)) {
       return this.continueStatement();
     }
+    if (this.match(TokenType.While)) {
+      return this.whileStatement();
+    }
     if (this.match(TokenType.If)) {
       // Bypass to prevent requiring semicolon for if
       return this.ifStatement();
@@ -206,6 +210,24 @@ export class Parser {
     const keyword = this.previous();
     const end = this.consume(TokenType.Semicolon, "Expect ';' after 'continue'").span.end;
     return new ContinueStmt(keyword, { start: keyword.span.start, end });
+  }
+
+  /**
+   * Parse a while statement.
+   *
+   * Grammar:
+   * ```
+   * while_stmt = "while" expression block ;
+   * ```
+   *
+   * @returns A {@link WhileStmt} node.
+   */
+  private whileStatement(): Stmt {
+    const start = this.previous().span.start;
+    const condition = this.expression();
+    this.consume(TokenType.LeftBrace, "Expect '{' after loop condition.");
+    const body = this.blockStatement();
+    return new WhileStmt(condition, body, { start, end: body.span.end });
   }
 
   /**

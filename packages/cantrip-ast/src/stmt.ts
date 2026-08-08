@@ -40,6 +40,7 @@ export interface StmtVisitor<R> {
   visitContinueStmt(stmt: ContinueStmt): R;
   visitExprStmt(stmt: ExprStmt): R;
   visitLetStmt(stmt: LetStmt): R;
+  visitWhileStmt(stmt: WhileStmt): R;
 }
 
 /**
@@ -88,13 +89,19 @@ export class BlockStmt extends Stmt {
  * ```
  */
 export class BreakStmt extends Stmt {
+  /** The `break` keyword. Used for static analysis errors. */
   public readonly keyword: Token;
 
+  /**
+   * @param keyword - The `break` keyword.
+   * @param span - The source span of the entire statement.
+   */
   constructor(keyword: Token, span: Span) {
     super(span);
     this.keyword = keyword;
   }
 
+  /** @inheritdoc */
   public accept<R>(visitor: StmtVisitor<R>): R {
     return visitor.visitBreakStmt(this);
   }
@@ -112,13 +119,19 @@ export class BreakStmt extends Stmt {
  * ```
  */
 export class ContinueStmt extends Stmt {
+  /** The `continue` keyword. Used for static analysis errors. */
   public readonly keyword: Token;
 
+  /**
+   * @param keyword - The `continue` keyword.
+   * @param span - The source span of the entire statement.
+   */
   constructor(keyword: Token, span: Span) {
     super(span);
     this.keyword = keyword;
   }
 
+  /** @inheritdoc */
   public accept<R>(visitor: StmtVisitor<R>): R {
     return visitor.visitBreakStmt(this);
   }
@@ -189,5 +202,37 @@ export class LetStmt extends Stmt {
   /** @inheritdoc */
   public accept<R>(visitor: StmtVisitor<R>): R {
     return visitor.visitLetStmt(this);
+  }
+}
+
+/**
+ * While statement: `while expr { ... }`.
+ *
+ * @example
+ * ```cantrip
+ * while flag {
+ *   break;
+ * }
+ * ```
+ */
+export class WhileStmt extends Stmt {
+  /** The condition to check on each run of the loop. */
+  public readonly condition: Expr;
+  /** The block of code to loop through. */
+  public readonly body: Stmt;
+
+  /**
+   * @param condition - The loop condition.
+   * @param body - The loop block.
+   * @param span - The source span of the entire loop.
+   */
+  constructor(condition: Expr, body: Stmt, span: Span) {
+    super(span);
+    this.condition = condition;
+    this.body = body;
+  }
+
+  public accept<R>(visitor: StmtVisitor<R>): R {
+    return visitor.visitWhileStmt(this);
   }
 }

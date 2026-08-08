@@ -21,6 +21,7 @@ import {
   TokenType,
   UnaryExpr,
   VarExpr,
+  WhileStmt,
 } from "@cantrip/ast";
 import type { Span } from "@cantrip/types";
 
@@ -1505,6 +1506,31 @@ describe("Parser", () => {
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ContinueStmt);
         expect((ast[0] as ContinueStmt).keyword.type).toBe(TokenType.Continue);
+      });
+    });
+
+    describe("while loops", () => {
+      it("parses a while loop", () => {
+        const tokens = [
+          tok(TokenType.While, "while"),
+          tok(TokenType.Identifier, "flag", null, 6),
+          tok(TokenType.LeftBrace, "{", null, 8),
+          tok(TokenType.Let, "let", null, 10),
+          tok(TokenType.Identifier, "x", null, 14),
+          tok(TokenType.Eq, "=", null, 16),
+          tok(TokenType.Number, "42", 42, 18),
+          tok(TokenType.Semicolon, ";", null, 20),
+          tok(TokenType.RightBrace, "}", null, 22),
+          tok(TokenType.Eof, "", null, 23),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(WhileStmt);
+        expect((ast[0] as WhileStmt).condition).toBeInstanceOf(VarExpr);
+        expect((ast[0] as WhileStmt).body).toBeInstanceOf(BlockStmt);
+        expect(((ast[0] as WhileStmt).body as BlockStmt).statements).toHaveLength(1);
       });
     });
   });

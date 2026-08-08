@@ -22,5 +22,6 @@ export {
   LetStmt,
   Stmt,
   StmtVisitor,
+  WhileStmt,
 } from "./stmt.js";
 export { Token, TokenType } from "./token.js";
