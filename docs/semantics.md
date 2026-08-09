@@ -1,1 +1,170 @@
 # Cantrip Semantics
+
+> **Status**: Partial.
+> This document describes the evaluation rules of the current TypeScript tree-walking interpreter.
+> Only the constructs that are implemented and covered by tests are specified in detail.
+> Everything else is listed under "Not yet implemented".
+
+The interpreter (`packages/cantrip-interpreter`) is the source of truth for runtime behavior. This file must stay in sync with it.
+
+## Runtime Values
+
+At runtime every value belongs to one of these types:
+
+| Cantrip type | TypeScript representation   | Notes                            |
+| ------------ | --------------------------- | -------------------------------- |
+| `nil`        | `null`                      | The only falsy non-boolean value |
+| `bool`       | `boolean`                   | `true` / `false`                 |
+| `number`     | `number`                    | IEEE-754 double (JS number)      |
+| `string`     | `string`                    |                                  |
+| array        | `RuntimeValue[]`            | Dynamic, heterogeneous list      |
+| object       | `Map<string, RuntimeValue>` | String keys only                 |
+
+There is currently **no** distinction between integers and floats; both are just `number`.
+
+## Truthiness
+
+Used by `!`, `and`, and `or`:
+
+- `nil` (`null`) -> falsy
+- `false` -> falsy
+- Everything else (`true`, numbers including `0`, strings including `""`, arrays, objects) -> truthy
+
+```cantrip
+!nil        // true
+!false      // true
+!0          // false
+!""         // false
+![]         // false
+!{}         // false
+```
+
+## Stringification
+
+Used by the + operator when either operand is a string:
+
+- `nil` -> the string `"nil"`
+- all other values -> result of calling `.toString()` on them
+
+## Implemented Expressions
+
+### Literals
+
+| Form                 | Runtime result                           |
+| -------------------- | ---------------------------------------- |
+| `42`, `3.14`         | number                                   |
+| `"hello"`            | string                                   |
+| `true` / `false`     | boolean                                  |
+| `nil`                | `null`                                   |
+| `[expr, ...]`        | array (elements evaluated left-to-right) |
+| `{ key: expr, ... }` | object (`Map`)                           |
+
+Empty arrays `[]` and empty objects `{}` are valid.
+
+### Grouping
+
+`( expression )` simply evaluates the inner expression and returns its value.
+
+### Unary operators
+
+| Operator | Meaning          | Notes                     |
+| -------- | ---------------- | ------------------------- |
+| `!`      | Logical not      | `!isTruthy(operand)`      |
+| `-`      | Numeric negation | Operand is cast to number |
+
+### Binary operators
+
+Operators are left-associative and follow the precedence defined in the [grammar](./grammar.md).
+
+#### Arithmetic
+
+| Operator | Behavior                                                                                           |
+| -------- | -------------------------------------------------------------------------------------------------- |
+| `+`      | If either operand is a string -> string concatenation (via stringify). Otherwise numeric addition. |
+| `-`      | Numeric subtraction                                                                                |
+| `*`      | Numeric multiplication                                                                             |
+| `/`      | Numeric division                                                                                   |
+| `%`      | Numeric remainder                                                                                  |
+
+#### Comparison (numeric)
+
+| Operator | Behavior         |
+| -------- | ---------------- |
+| `>`      | greater than     |
+| `>=`     | greater or equal |
+| `<`      | less than        |
+| `<=`     | less or equal    |
+
+Operands are currently cast to number; non-numeric operands produce JS-style results and should be considered undefined behavior for now.
+
+#### Equality
+
+| Operator | Behavior                  |
+| -------- | ------------------------- |
+| `==`     | Strict equality (`===`)   |
+| `!=`     | Strict inequality (`!==`) |
+
+No type coercion is performed.
+
+#### Logical (short-circuit)
+
+| Operator | Behavior                                                                                   |
+| -------- | ------------------------------------------------------------------------------------------ |
+| `or`     | Evaluates left. If truthy, returns left without evaluating right. Otherwise returns right. |
+| `and`    | Evaluates left. If falsy, returns left without evaluating right. Otherwise returns right.  |
+
+Both operators return the actual operand value, **not** a coerced boolean.
+
+```cantrip
+false or 42          // 42
+nil or "hello"       // "hello"
+true and 0           // 0
+"hi" and false       // false
+```
+
+## Not yet implemented
+
+The following AST nodes exist but their visitor methods are currently stubs (they return `null` or do nothing):
+
+#### Expressions
+
+- Assignment (`=`, `+=`, `-=`, ...)
+- Variable reference
+- Property access (`obj.field`) and indexing (`arr[i]`)
+- Property / index assignment
+- `if` expressions
+- `loop` expressions
+- Blocks as expressions
+
+#### Statements
+
+- `let` declarations
+- Expression statements
+- `while` loops
+- `break` / `continue`
+- Block statements
+
+#### Other missing pieces
+
+- Environments / lexical scoping
+- Functions (`fn`)
+- `return`
+- `match`
+- Any standard library (`print`, etc.)
+- Runtime error reporting (type errors, undefined variables, ...)
+
+Until these are implemented, programs that use them will not execute correctly.
+
+## Evaluation model (current)
+
+1. The interpreter receives a list of statements from the parser.
+2. `interpret(statements)` is currently a no-op (the top-level driver is not finished).
+3. Individual expressions are evaluated by calling `accept(this)` on the AST node (visitor pattern).
+4. There is no persistent environment yet; only pure expression evaluation works.
+
+Source of truth
+
+- Implementation: `packages/cantrip-interpreter/src/interpreter.ts`
+- Tests: `packages/cantrip-interpreter/tests/interpreter.test.ts`
+
+When the interpreter gains new behaviour, update this document in the same change.
