@@ -24,15 +24,17 @@ import type {
   VarExpr,
   WhileStmt,
 } from "@cantrip/ast";
+import { Environment } from "./environment.js";
 
 /** Primative and structured literals passed around at runtime. */
-type RuntimeValue = number | string | boolean | null | RuntimeArray | RuntimeObject;
+export type RuntimeValue =
+  number | string | boolean | null | RuntimeArray | RuntimeObject;
 
 /** Runtime representation of a Cantrip array. */
-type RuntimeArray = RuntimeValue[];
+export type RuntimeArray = RuntimeValue[];
 
 /** Runtime representation of a Cantrip object. */
-type RuntimeObject = Map<string, RuntimeValue>;
+export type RuntimeObject = Map<string, RuntimeValue>;
 
 /**
  * Error thrown by interpreter functions and caught by the interpreter.
@@ -67,6 +69,9 @@ export class RuntimeError extends Error {
  * compilation.
  */
 export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void> {
+  /** The variable environment currently in scope. */
+  private environment = new Environment();
+
   /**
    * Executes statements one by one until the end of the array.
    *
@@ -82,8 +87,37 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     }
   }
 
+  /**
+   * Evaluates an assignment expression (`x = 42`).
+   *
+   * @param expr - The assignment expression to be evaluated.
+   * @returns The value being assigned.
+   */
   public visitAssignExpr(expr: AssignExpr): RuntimeValue {
-    return null;
+    let value = this.evaluate(expr.value);
+
+    switch (expr.operator.type) {
+      case TokenType.Eq:
+        break; // Continue as normal.
+      case TokenType.MinusEq:
+        value = this.environment.get(expr.name) - value;
+        break;
+      case TokenType.PlusEq:
+        value = this.environment.get(expr.name) + value;
+        break;
+      case TokenType.SlashEq:
+        value = this.environment.get(expr.name) / value;
+        break;
+      case TokenType.StarEq:
+        value = this.environment.get(expr.name) * value;
+        break;
+      case TokenType.PercentEq:
+        value = this.environment.get(expr.name) % value;
+        break;
+    }
+
+    this.environment.assign(expr.name, value);
+    return value;
   }
 
   /**
@@ -143,6 +177,12 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     return null;
   }
 
+  /**
+   * Evaluates an expression grouped by parentheses (`(expr)`).
+   *
+   * @param expr - The grouping expression to be evaluated
+   * @returns The result of the expression.
+   */
   public visitGroupingExpr(expr: GroupingExpr): RuntimeValue {
     return this.evaluate(expr.expression);
   }
@@ -209,8 +249,15 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     return null; // Unreachable
   }
 
+  /**
+   * Evaluates a variable expression and returns its value if present
+   * in the current scope.
+   *
+   * @param expr - The variable expression to be evaluated.
+   * @returns The value of the variable if it exists in scope.
+   */
   public visitVarExpr(expr: VarExpr): RuntimeValue {
-    return null;
+    return this.environment.get(expr.name);
   }
 
   public visitBlockStmt(stmt: BlockStmt): void {}
@@ -219,11 +266,30 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
 
   public visitContinueStmt(stmt: ContinueStmt): void {}
 
+  /**
+   * Evaluates the expression, produces applicable side effects
+   * and discards the expression result.
+   *
+   * @param stmt - The statement to be executed.
+   */
   public visitExprStmt(stmt: ExprStmt): void {
     this.evaluate(stmt.expr);
   }
 
-  public visitLetStmt(stmt: LetStmt): void {}
+  /**
+   * Executes a variable declaration and adds it to the current
+   * environment.
+   *
+   * @param stmt - The variable declaration statement.
+   */
+  public visitLetStmt(stmt: LetStmt): void {
+    let value: RuntimeValue | null = null;
+    if (stmt.initializer !== null) {
+      value = this.evaluate(stmt.initializer);
+    }
+
+    this.environment.define(stmt.name.lexeme, value);
+  }
 
   public visitWhileStmt(stmt: WhileStmt): void {}
 
@@ -276,8 +342,6 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * @param error - The error to be reported.
    */
   private runtimeError(error: RuntimeError): void {
-    console.error(
-      `${error.name}: ${error.message}\n[line ${error.token.span.start.line}]`,
-    );
+    console.error(`${error.message}\n[line ${error.token.span.start.line}]`);
   }
 }

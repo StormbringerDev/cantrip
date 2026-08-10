@@ -122,7 +122,32 @@ true and 0           // 0
 "hi" and false       // false
 ```
 
+### Variable reference
+
+Referencing a named variable will retrieve that variable's value if it exists in the current or an outer scope.
+
+### Assignment operators
+
+| Operator | Behavior                                                                                                |
+| -------- | ------------------------------------------------------------------------------------------------------- |
+| `=`      | Assigns the value on the right to the variable on the left if the variable has been previously declared |
+| `+=`     | Adds the right value to the variable value before assigning                                             |
+| `-=`     | Subtracts the right value from the variable before assigning                                            |
+| `*=`     | Multiplies the variable value by the right value before assigning                                       |
+| `/=`     | Divides the variable value by the right value before assigning                                          |
+| `%=`     | Divides the variable value by the right value and assigns the remainder                                 |
+
 ## Implemented Statements
+
+### Variable declarations
+
+Declares a variable in the current scope and assigns it a value or `nil` if the initializer is not present.  
+All variables are mutable.
+
+```cantrip
+let x = 42;
+let answers;
+```
 
 ### Expression statements
 
@@ -139,8 +164,6 @@ The following AST nodes exist but their visitor methods are currently stubs (the
 
 #### Expressions
 
-- Assignment (`=`, `+=`, `-=`, ...)
-- Variable reference
 - Property access (`obj.field`) and indexing (`arr[i]`)
 - Property / index assignment
 - `if` expressions
@@ -149,7 +172,6 @@ The following AST nodes exist but their visitor methods are currently stubs (the
 
 #### Statements
 
-- `let` declarations
 - `while` loops
 - `break` / `continue`
 - Block statements
