@@ -19,6 +19,7 @@ import type {
   SetExpr,
   Stmt,
   StmtVisitor,
+  Token,
   UnaryExpr,
   VarExpr,
   WhileStmt,
@@ -34,6 +35,28 @@ type RuntimeArray = RuntimeValue[];
 type RuntimeObject = Map<string, RuntimeValue>;
 
 /**
+ * Error thrown by interpreter functions and caught by the interpreter.
+ *
+ * Unlike {@link ParseError}s, runtime errors abort the execution of the
+ * interpreter.
+ */
+export class RuntimeError extends Error {
+  /** The token at which the error was detected. */
+  public readonly token: Token;
+
+  /**
+   *
+   * @param token - The token that triggered the error.
+   * @param message - Human-readable description of the problem.
+   */
+  constructor(token: Token, message: string) {
+    super(message);
+    this.name = "RuntimeError";
+    this.token = token;
+  }
+}
+
+/**
  * Tree-walking interpreter for Cantrip.
  *
  * Takes in the abstract syntax tree provided by the parser and
@@ -44,7 +67,20 @@ type RuntimeObject = Map<string, RuntimeValue>;
  * compilation.
  */
 export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void> {
-  public interpret(statements: Stmt[]) {}
+  /**
+   * Executes statements one by one until the end of the array.
+   *
+   * @param statements - The array of statements to be executed.
+   */
+  public interpret(statements: Stmt[]) {
+    try {
+      for (const statement of statements) {
+        this.execute(statement);
+      }
+    } catch (err) {
+      this.runtimeError(err as RuntimeError);
+    }
+  }
 
   public visitAssignExpr(expr: AssignExpr): RuntimeValue {
     return null;
@@ -183,7 +219,9 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
 
   public visitContinueStmt(stmt: ContinueStmt): void {}
 
-  public visitExprStmt(stmt: ExprStmt): void {}
+  public visitExprStmt(stmt: ExprStmt): void {
+    this.evaluate(stmt.expr);
+  }
 
   public visitLetStmt(stmt: LetStmt): void {}
 
@@ -197,6 +235,15 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    */
   private evaluate(expr: Expr): RuntimeValue {
     return expr.accept(this);
+  }
+
+  /**
+   * Executes the given statement.
+   *
+   * @param stmt - The statement to be executed.
+   */
+  private execute(stmt: Stmt): void {
+    stmt.accept(this);
   }
 
   /**
@@ -221,5 +268,16 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     if (value === null) return "nil";
 
     return value.toString();
+  }
+
+  /**
+   * Reports a {@link RuntimeError}.
+   *
+   * @param error - The error to be reported.
+   */
+  private runtimeError(error: RuntimeError): void {
+    console.error(
+      `${error.name}: ${error.message}\n[line ${error.token.span.start.line}]`,
+    );
   }
 }

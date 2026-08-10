@@ -1,8 +1,8 @@
 # Cantrip Semantics
 
-> **Status**: Partial.
-> This document describes the evaluation rules of the current TypeScript tree-walking interpreter.
-> Only the constructs that are implemented and covered by tests are specified in detail.
+> **Status**: Partial.  
+> This document describes the evaluation rules of the current TypeScript tree-walking interpreter.  
+> Only the constructs that are implemented and covered by tests are specified in detail.  
 > Everything else is listed under "Not yet implemented".
 
 The interpreter (`packages/cantrip-interpreter`) is the source of truth for runtime behavior. This file must stay in sync with it.
@@ -122,6 +122,17 @@ true and 0           // 0
 "hi" and false       // false
 ```
 
+## Implemented Statements
+
+### Expression statements
+
+These statements produce side-effects if applicable, and discard any returned values.
+
+```cantrip
+x = 42;
+print(x);
+```
+
 ## Not yet implemented
 
 The following AST nodes exist but their visitor methods are currently stubs (they return `null` or do nothing):
@@ -139,7 +150,6 @@ The following AST nodes exist but their visitor methods are currently stubs (the
 #### Statements
 
 - `let` declarations
-- Expression statements
 - `while` loops
 - `break` / `continue`
 - Block statements

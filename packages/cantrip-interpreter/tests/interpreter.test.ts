@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Interpreter } from "../src/interpreter.js";
 import {
   BinaryExpr,
   Expr,
+  ExprStmt,
   GroupingExpr,
   LiteralExpr,
   Token,
@@ -296,6 +297,27 @@ describe("interpreter", () => {
         );
         const result = interpreter.visitGroupingExpr(expr);
         expect(result).toBe(10);
+      });
+    });
+  });
+
+  describe("statements", () => {
+    describe("expression statements", () => {
+      it("executes an expression statement", () => {
+        const stmt = new ExprStmt(
+          new BinaryExpr(
+            new LiteralExpr(5, makeSpan(0, 1)),
+            tok(TokenType.Plus, "+", null, 2),
+            new LiteralExpr(5, makeSpan(4, 5)),
+            makeSpan(0, 5),
+          ),
+          makeSpan(0, 6),
+        );
+        const exprStmtSpy = vi.spyOn(interpreter, "visitExprStmt");
+        const binaryExprSpy = vi.spyOn(interpreter, "visitBinaryExpr");
+        interpreter.interpret([stmt]);
+        expect(exprStmtSpy).toHaveBeenCalled();
+        expect(binaryExprSpy).toHaveBeenCalled();
       });
     });
   });
