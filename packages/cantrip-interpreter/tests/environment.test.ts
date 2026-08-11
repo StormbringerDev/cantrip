@@ -46,6 +46,13 @@ describe("environment", () => {
     expect(environment.get(tok(TokenType.Identifier, "name"))).toBe("StormbringerDev");
   });
 
+  it("gets a variable's value from enclosing environment", () => {
+    const enclosing = new Environment();
+    enclosing.define("name", "StormbringerDev");
+    const environment = new Environment(enclosing);
+    expect(environment.get(tok(TokenType.Identifier, "name"))).toBe("StormbringerDev");
+  });
+
   it("throws a RuntimeError on get if variable is not found", () => {
     const environment = new Environment();
     expect(() => environment.get(tok(TokenType.Identifier, "name"))).toThrow(
@@ -59,6 +66,15 @@ describe("environment", () => {
     const name = tok(TokenType.Identifier, "x");
     environment.assign(name, 42);
     expect(environment.get(name)).toBe(42);
+  });
+
+  it("assigns a value to an outer variable", () => {
+    const enclosing = new Environment();
+    enclosing.define("x", 5);
+    const environment = new Environment(enclosing);
+    const name = tok(TokenType.Identifier, "x");
+    environment.assign(name, 10);
+    expect(enclosing.get(name)).toBe(10);
   });
 
   it("throws a RuntimeError on assign if variable is not found", () => {

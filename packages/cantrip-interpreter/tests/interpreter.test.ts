@@ -4,6 +4,8 @@ import type { RuntimeValue } from "../src/interpreter.js";
 import {
   AssignExpr,
   BinaryExpr,
+  BlockExpr,
+  BlockStmt,
   Expr,
   ExprStmt,
   GroupingExpr,
@@ -395,6 +397,24 @@ describe("interpreter", () => {
         expect(result).toBe(1);
       });
     });
+
+    describe("block expressions", () => {
+      it("evaluates a block expression", () => {
+        const interpreter = new Interpreter();
+        const name = tok(TokenType.Identifier, "x", null, 7);
+        const initializer = new LiteralExpr(5, makeSpan(11, 12));
+        const letDecl = new LetStmt(name, initializer, makeSpan(2, 13));
+        const value = new BinaryExpr(
+          new VarExpr(name, makeSpan(15, 16)),
+          tok(TokenType.Plus, "+", null, 18),
+          new LiteralExpr(5, makeSpan(20, 21)),
+          makeSpan(15, 21),
+        );
+        const expr = new BlockExpr([letDecl], value, makeSpan(0, 23));
+        const result = interpreter.visitBlockExpr(expr);
+        expect(result).toBe(10);
+      });
+    });
   });
 
   describe("statements", () => {
@@ -438,6 +458,21 @@ describe("interpreter", () => {
         interpreter.interpret([stmt]);
         expect(exprStmtSpy).toHaveBeenCalled();
         expect(binaryExprSpy).toHaveBeenCalled();
+      });
+    });
+
+    describe("block statements", () => {
+      it("executes a block statement", () => {
+        const interpreter = new Interpreter();
+        const name = tok(TokenType.Identifier, "x", null, 7);
+        const initializer = new LiteralExpr(5, makeSpan(11, 12));
+        const letDecl = new LetStmt(name, initializer, makeSpan(2, 13));
+        const stmt = new BlockStmt([letDecl], makeSpan(0, 23));
+        const blockStmtSpy = vi.spyOn(interpreter, "visitBlockStmt");
+        const letStmtSpy = vi.spyOn(interpreter, "visitLetStmt");
+        interpreter.interpret([stmt]);
+        expect(blockStmtSpy).toHaveBeenCalled();
+        expect(letStmtSpy).toHaveBeenCalled();
       });
     });
   });

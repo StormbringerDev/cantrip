@@ -170,7 +170,8 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
   }
 
   public visitBlockExpr(expr: BlockExpr): RuntimeValue {
-    return null;
+    const statements = expr.statements.filter((s) => s !== null);
+    return this.executeBlock(statements, expr.value, new Environment(this.environment));
   }
 
   public visitGetExpr(expr: GetExpr): RuntimeValue {
@@ -260,7 +261,10 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     return this.environment.get(expr.name);
   }
 
-  public visitBlockStmt(stmt: BlockStmt): void {}
+  public visitBlockStmt(stmt: BlockStmt): void {
+    const statements = stmt.statements.filter((s) => s !== null);
+    this.executeBlock(statements, null, new Environment(this.environment));
+  }
 
   public visitBreakStmt(stmt: BreakStmt): void {}
 
@@ -310,6 +314,35 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    */
   private execute(stmt: Stmt): void {
     stmt.accept(this);
+  }
+
+  /**
+   * Executes a block with a new scope.
+   *
+   * @param statements - The statements inside the block.
+   * @param value - The value of the block.
+   * @param environment - The new environment.
+   */
+  private executeBlock(
+    statements: Stmt[],
+    value: Expr | null,
+    environment: Environment,
+  ): RuntimeValue {
+    const previous = this.environment;
+    let blockValue: RuntimeValue = null;
+    try {
+      this.environment = environment;
+
+      for (const statement of statements) {
+        this.execute(statement);
+      }
+
+      if (value !== null) blockValue = this.evaluate(value);
+    } finally {
+      this.environment = previous;
+    }
+
+    return blockValue;
   }
 
   /**

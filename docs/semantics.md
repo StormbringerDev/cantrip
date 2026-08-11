@@ -22,6 +22,19 @@ At runtime every value belongs to one of these types:
 
 There is currently **no** distinction between integers and floats; both are just `number`.
 
+## Scoping
+
+Cantrip uses lexical scoping for variable resolution. Any variables declared inside blocks will take precedence for any expression inside the same block. If a variable with the same name exists in an outer scope, it is shadowed by the inner variable.
+
+```cantrip
+let x = 5;
+{
+  let x = 12;
+  print(x); // prints "12"
+}
+print(x); // prints "5"
+```
+
 ## Truthiness
 
 Used by `!`, `and`, and `or`:
@@ -137,6 +150,17 @@ Referencing a named variable will retrieve that variable's value if it exists in
 | `/=`     | Divides the variable value by the right value before assigning                                          |
 | `%=`     | Divides the variable value by the right value and assigns the remainder                                 |
 
+### Block expressions
+
+Blocks (`{ ... }`) create a lexical scope where local variables can be declared. If the final expression is not terminated by a semicolon (`;`), that expression's value is returned by the block.
+
+```cantrip
+let x = {
+  let y = 5;
+  y + 5 // The result is this block's returned value.
+};
+```
+
 ## Implemented Statements
 
 ### Variable declarations
@@ -147,6 +171,17 @@ All variables are mutable.
 ```cantrip
 let x = 42;
 let answers;
+```
+
+### Block statements
+
+Blocks (`{ ... }`) create a lexical scope where local variables can be declared. As statements, blocks discard the final expression's value regardless of its presence.
+
+```cantrip
+{
+  let x = 5;
+  x + 5 // As a statement, the value is discarded
+}
 ```
 
 ### Expression statements
@@ -168,17 +203,14 @@ The following AST nodes exist but their visitor methods are currently stubs (the
 - Property / index assignment
 - `if` expressions
 - `loop` expressions
-- Blocks as expressions
 
 #### Statements
 
 - `while` loops
 - `break` / `continue`
-- Block statements
 
 #### Other missing pieces
 
-- Environments / lexical scoping
 - Functions (`fn`)
 - `return`
 - `match`

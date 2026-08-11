@@ -6,8 +6,17 @@ import { RuntimeError, type RuntimeValue } from "./interpreter.js";
  * declared in the current and outer scopes.
  */
 export class Environment {
+  /** The enclosing environment */
+  public readonly enclosing: Environment | null;
   /** The variables and functions bound by identifier. */
   private values = new Map<string, RuntimeValue>();
+
+  /**
+   * @param enclosing - The environment that encloses the new one.
+   */
+  constructor(enclosing: Environment | null = null) {
+    this.enclosing = enclosing;
+  }
 
   /**
    * Retrieves a variable value if it exists in the environment.
@@ -20,6 +29,8 @@ export class Environment {
     if (this.values.has(name.lexeme)) {
       return this.values.get(name.lexeme)!;
     }
+
+    if (this.enclosing !== null) return this.enclosing.get(name);
 
     throw new RuntimeError(name, `Undefined variable '${name.lexeme}'.`);
   }
@@ -34,6 +45,11 @@ export class Environment {
   public assign(name: Token, value: RuntimeValue): void {
     if (this.values.has(name.lexeme)) {
       this.values.set(name.lexeme, value);
+      return;
+    }
+
+    if (this.enclosing !== null) {
+      this.enclosing.assign(name, value);
       return;
     }
 
