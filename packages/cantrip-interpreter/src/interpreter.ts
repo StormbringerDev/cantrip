@@ -226,6 +226,20 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
       return value;
     }
 
+    if (indexee instanceof Map) {
+      const index = this.evaluate(expr.index);
+      if (typeof index !== "string") {
+        throw new RuntimeError(expr.bracket, "Index must evaluate to a string.");
+      }
+      const value = indexee.get(index);
+
+      if (value === undefined) {
+        throw new RuntimeError(expr.bracket, "Object does not contain key.");
+      }
+
+      return value;
+    }
+
     throw new RuntimeError(expr.bracket, "Cannot index into a non-structured value.");
   }
 
@@ -240,6 +254,17 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
 
       const value = this.evaluate(expr.value);
       indexee[index] = value;
+      return value;
+    }
+
+    if (indexee instanceof Map) {
+      const index = this.evaluate(expr.index);
+      if (typeof index !== "string") {
+        throw new RuntimeError(expr.bracket, "Index must evaluate to a string.");
+      }
+
+      const value = this.evaluate(expr.value);
+      indexee.set(index, value);
       return value;
     }
 

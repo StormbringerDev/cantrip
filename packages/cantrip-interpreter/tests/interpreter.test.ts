@@ -471,9 +471,24 @@ describe("interpreter", () => {
         const result = interpreter.visitIndexExpr(expr);
         expect(result).toBe(2);
       });
+
+      it("retrieves a value from an object", () => {
+        const interpreter = new Interpreter();
+        const objValue = new Map<string, RuntimeValue>([
+          ["name", "Reyek"],
+          ["level", 3],
+        ]);
+        (interpreter as any).environment.define("reyek", objValue);
+        const indexee = new VarExpr(tok(TokenType.Identifier, "reyek"), makeSpan(0, 5));
+        const bracket = tok(TokenType.LeftBracket, "[", null, 5);
+        const index = new LiteralExpr("level", makeSpan(6, 12));
+        const expr = new IndexExpr(indexee, bracket, index, makeSpan(0, 13));
+        const result = interpreter.visitIndexExpr(expr);
+        expect(result).toBe(3);
+      });
     });
 
-    describe("index set expression", () => {
+    describe("index set expressions", () => {
       it("sets a value at array index", () => {
         const interpreter = new Interpreter();
         (interpreter as any).environment.define("numbers", [1, 2, 3]);
@@ -493,6 +508,35 @@ describe("interpreter", () => {
         const result = interpreter.visitIndexSetExpr(expr);
         expect(result).toBe(4);
         const expected = [1, 2, 3, 4];
+        expect((interpreter as any).environment.get(indexee.name)).toEqual(expected);
+      });
+
+      it("sets an object key", () => {
+        const interpreter = new Interpreter();
+        const objValue = new Map<string, RuntimeValue>([
+          ["name", "Reyek"],
+          ["level", 3],
+        ]);
+        (interpreter as any).environment.define("reyek", objValue);
+        const indexee = new VarExpr(tok(TokenType.Identifier, "reyek"), makeSpan(0, 5));
+        const bracket = tok(TokenType.LeftBracket, "[", null, 5);
+        const index = new LiteralExpr("level", makeSpan(6, 12));
+        const operator = tok(TokenType.Eq, "=", null, 14);
+        const value = new LiteralExpr(4, makeSpan(16, 17));
+        const expr = new IndexSetExpr(
+          indexee,
+          bracket,
+          index,
+          operator,
+          value,
+          makeSpan(0, 17),
+        );
+        const result = interpreter.visitIndexSetExpr(expr);
+        expect(result).toBe(4);
+        const expected = new Map<string, RuntimeValue>([
+          ["name", "Reyek"],
+          ["level", 4],
+        ]);
         expect((interpreter as any).environment.get(indexee.name)).toEqual(expected);
       });
     });

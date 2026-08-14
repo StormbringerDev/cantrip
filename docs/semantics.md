@@ -167,7 +167,8 @@ Get expressions (`object.field`) retrieves the value of the object's field.
 
 ### Set expressions
 
-Set expressions (`object.field = value`) sets the field to the value to the right of the operator. Planned to work with any compound assignment operator (`+=`, `-=`, etc.).
+Set expressions (`object.field = value`) sets the field to the value to the right of the operator.  
+Planned to work with any compound assignment operator (`+=`, `-=`, etc.).
 
 ### Index expression
 
@@ -175,7 +176,8 @@ Index expressions (`array[index]`) retrieves the array element at the given inde
 
 ### Index set expression
 
-Index set expressions (`array[index] = value`) sets the element at the given index to the given value. You can use this expression to assign an object field's value if the expression inside the brackets evaluates to a string of one of the object's keys. Planned to work with any compound assignment operator (`+=`, `-=`, etc.).
+Index set expressions (`array[index] = value`) sets the element at the given index to the given value. You can use this expression to assign an object field's value if the expression inside the brackets evaluates to a string of one of the object's keys.  
+Planned to work with any compound assignment operator (`+=`, `-=`, etc.).
 
 ## Implemented Statements
 
