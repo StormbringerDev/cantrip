@@ -3,7 +3,7 @@
 A lightweight, expressive scripting language.
 
 Cantrip is designed as a fast-to-build, enjoyable scripting language with a clean syntax.  
-It serves as a practical learning vehicle and a foundation that will later inform the more systems-oriented [Ward](https://github.com/StormbringerDev/ward-lang) language.
+It serves as a practical learning vehicle and a future scripting layer for the [Ritual](https://github.com/StormbringerDev/ritual) game engine.
 
 ### Implementation Roadmap
 
