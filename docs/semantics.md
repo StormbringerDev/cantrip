@@ -161,6 +161,14 @@ let x = {
 };
 ```
 
+### Get expressions
+
+Get expressions (`object.field`) retrieves the value of the object's field.
+
+### Set expressions
+
+Set expressions (`object.field = value`) set the field to the value to the right of the operator. Works with any compound assignment operator (`+=`, `-=`, etc.).
+
 ## Implemented Statements
 
 ### Variable declarations
@@ -199,8 +207,8 @@ The following AST nodes exist but their visitor methods are currently stubs (the
 
 #### Expressions
 
-- Property access (`obj.field`) and indexing (`arr[i]`)
-- Property / index assignment
+- Array indexing (`arr[i]`)
+- Index assignment
 - `if` expressions
 - `loop` expressions
 

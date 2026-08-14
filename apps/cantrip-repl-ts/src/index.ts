@@ -80,7 +80,7 @@ const args: string[] = process.argv.slice(2);
 if (args.length > 1) {
   printUsage();
   process.exit(64);
-} else if (args.length == 1) {
+} else if (args.length === 1) {
   runFile(args[0]);
 } else {
   runPrompt();

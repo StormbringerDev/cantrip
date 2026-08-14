@@ -48,7 +48,6 @@ export class RuntimeError extends Error {
   public readonly token: Token;
 
   /**
-   *
    * @param token - The token that triggered the error.
    * @param message - Human-readable description of the problem.
    */
@@ -249,8 +248,22 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     return null;
   }
 
+  /**
+   * Evaluates a set expression (`object.field = value`).
+   *
+   * @param expr - The set expression to be evaluated.
+   * @returns The value assigned to the target object field.
+   */
   public visitSetExpr(expr: SetExpr): RuntimeValue {
-    return null;
+    const object = this.evaluate(expr.object);
+
+    if (!(object instanceof Map)) {
+      throw new RuntimeError(expr.name, "Only object values have fields.");
+    }
+
+    const value = this.evaluate(expr.value);
+    object.set(expr.name.lexeme, value);
+    return value;
   }
 
   /**

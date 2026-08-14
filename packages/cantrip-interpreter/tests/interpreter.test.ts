@@ -12,6 +12,7 @@ import {
   GroupingExpr,
   LetStmt,
   LiteralExpr,
+  SetExpr,
   Token,
   TokenType,
   UnaryExpr,
@@ -430,6 +431,30 @@ describe("interpreter", () => {
         const expr = new GetExpr(object, name, makeSpan(0, 11));
         const result = interpreter.visitGetExpr(expr);
         expect(result).toBe(3);
+      });
+    });
+
+    describe("set expressions", () => {
+      it("sets an object property", () => {
+        const interpreter = new Interpreter();
+        const objValue = new Map<string, RuntimeValue>([
+          ["name", "Reyek"],
+          ["level", 3],
+        ]);
+        (interpreter as any).environment.define("reyek", objValue);
+        const varName = tok(TokenType.Identifier, "reyek");
+        const object = new VarExpr(varName, makeSpan(0, 5));
+        const name = tok(TokenType.Identifier, "level", null, 6);
+        const operator = tok(TokenType.Eq, "=", null, 13);
+        const value = new LiteralExpr(4, makeSpan(16, 17));
+        const expr = new SetExpr(object, name, operator, value, makeSpan(0, 17));
+        const result = interpreter.visitSetExpr(expr);
+        expect(result).toBe(4);
+        const expected = new Map<string, RuntimeValue>([
+          ["name", "Reyek"],
+          ["level", 4],
+        ]);
+        expect((interpreter as any).environment.get(varName)).toEqual(expected);
       });
     });
   });
