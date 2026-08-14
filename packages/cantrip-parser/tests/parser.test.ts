@@ -13,6 +13,7 @@ import {
   GroupingExpr,
   IfExpr,
   IndexExpr,
+  IndexSetExpr,
   LetStmt,
   LiteralExpr,
   LoopExpr,
@@ -1137,6 +1138,34 @@ describe("Parser", () => {
         expect(((ast[0] as ExprStmt).expr as SetExpr).name.lexeme).toBe("level");
         expect(((ast[0] as ExprStmt).expr as SetExpr).operator.type).toBe(TokenType.Eq);
         expect(((ast[0] as ExprStmt).expr as SetExpr).value).toBeInstanceOf(LiteralExpr);
+      });
+
+      it("parses an index set expression", () => {
+        const tokens = [
+          tok(TokenType.Identifier, "names"),
+          tok(TokenType.LeftBracket, "[", null, 5),
+          tok(TokenType.Number, "2", 2, 6),
+          tok(TokenType.RightBracket, "]", null, 7),
+          tok(TokenType.Eq, "=", null, 9),
+          tok(TokenType.String, '"Kara"', "Kara", 11),
+          tok(TokenType.Semicolon, ";", null, 17),
+          tok(TokenType.Eof, "", null, 18),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ExprStmt);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(IndexSetExpr);
+        expect(((ast[0] as ExprStmt).expr as IndexSetExpr).indexee).toBeInstanceOf(
+          IndexExpr,
+        );
+        expect(((ast[0] as ExprStmt).expr as IndexSetExpr).operator.type).toBe(
+          TokenType.Eq,
+        );
+        expect(((ast[0] as ExprStmt).expr as IndexSetExpr).value).toBeInstanceOf(
+          LiteralExpr,
+        );
       });
     });
 

@@ -13,6 +13,7 @@ import type {
   GroupingExpr,
   IfExpr,
   IndexExpr,
+  IndexSetExpr,
   LetStmt,
   LiteralExpr,
   LoopExpr,
@@ -100,19 +101,19 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
       case TokenType.Eq:
         break; // Continue as normal.
       case TokenType.MinusEq:
-        value = this.environment.get(expr.name) - value;
+        value = (this.environment.get(expr.name) as number) - (value as number);
         break;
       case TokenType.PlusEq:
         value = this.environment.get(expr.name) + value;
         break;
       case TokenType.SlashEq:
-        value = this.environment.get(expr.name) / value;
+        value = (this.environment.get(expr.name) as number) / (value as number);
         break;
       case TokenType.StarEq:
-        value = this.environment.get(expr.name) * value;
+        value = (this.environment.get(expr.name) as number) * (value as number);
         break;
       case TokenType.PercentEq:
-        value = this.environment.get(expr.name) % value;
+        value = (this.environment.get(expr.name) as number) % (value as number);
         break;
     }
 
@@ -169,13 +170,30 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     return null; // Unreachable.
   }
 
+  /**
+   * Evaluates a block expression (`{ ... }`).
+   *
+   * @param expr - The block expression to be evaluated.
+   * @returns The block's value expression result or `null`.
+   */
   public visitBlockExpr(expr: BlockExpr): RuntimeValue {
     const statements = expr.statements.filter((s) => s !== null);
     return this.executeBlock(statements, expr.value, new Environment(this.environment));
   }
 
+  /**
+   * Evaluates a get expression (`object.field`).
+   *
+   * @param expr - The get expression to be evaluated.
+   * @returns - The value of the target field.
+   */
   public visitGetExpr(expr: GetExpr): RuntimeValue {
-    return null;
+    const object = this.evaluate(expr.object);
+    if (object instanceof Map) {
+      return object.get(expr.name.lexeme)!;
+    }
+
+    throw new RuntimeError(expr.name, "Property not found.");
   }
 
   /**
@@ -193,6 +211,10 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
   }
 
   public visitIndexExpr(expr: IndexExpr): RuntimeValue {
+    return null;
+  }
+
+  public visitIndexSetExpr(expr: IndexSetExpr): RuntimeValue {
     return null;
   }
 
@@ -261,6 +283,11 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     return this.environment.get(expr.name);
   }
 
+  /**
+   * Executes a block statement (`{ ... }`).
+   *
+   * @param expr - The block statement to be executed.
+   */
   public visitBlockStmt(stmt: BlockStmt): void {
     const statements = stmt.statements.filter((s) => s !== null);
     this.executeBlock(statements, null, new Environment(this.environment));

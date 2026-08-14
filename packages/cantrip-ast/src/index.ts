@@ -8,6 +8,7 @@ export {
   GroupingExpr,
   IfExpr,
   IndexExpr,
+  IndexSetExpr,
   LiteralExpr,
   LoopExpr,
   SetExpr,

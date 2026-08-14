@@ -51,6 +51,7 @@ export interface ExprVisitor<R> {
   visitGroupingExpr(expr: GroupingExpr): R;
   visitIfExpr(expr: IfExpr): R;
   visitIndexExpr(expr: IndexExpr): R;
+  visitIndexSetExpr(expr: IndexSetExpr): R;
   visitLiteralExpr(expr: LiteralExpr): R;
   visitLoopExpr(expr: LoopExpr): R;
   visitSetExpr(expr: SetExpr): R;
@@ -284,6 +285,40 @@ export class IndexExpr extends Expr {
   /** @inheritdoc */
   public accept<R>(visitor: ExprVisitor<R>): R {
     return visitor.visitIndexExpr(this);
+  }
+}
+
+/**
+ * Index assignment: `indexee[index] = value`.
+ *
+ * @example
+ * ```cantrip
+ * names[2] = "Kara"
+ * ```
+ */
+export class IndexSetExpr extends Expr {
+  /** The target structure index. */
+  public readonly indexee: Expr;
+  /** Assignment operator. */
+  public readonly operator: Token;
+  /** Value being assigned. */
+  public readonly value: Expr;
+
+  /**
+   * @param indexee - Expression evaluating to target data structure index.
+   * @param operator - Assignment operator token.
+   * @param value - Expression providing the new value.
+   * @param span - Source span of the whole index set expression.
+   */
+  constructor(indexee: Expr, operator: Token, value: Expr, span: Span) {
+    super(span);
+    this.indexee = indexee;
+    this.operator = operator;
+    this.value = value;
+  }
+
+  public accept<R>(visitor: ExprVisitor<R>): R {
+    return visitor.visitIndexSetExpr(this);
   }
 }
 

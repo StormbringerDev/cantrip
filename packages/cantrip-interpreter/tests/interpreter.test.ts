@@ -8,6 +8,7 @@ import {
   BlockStmt,
   Expr,
   ExprStmt,
+  GetExpr,
   GroupingExpr,
   LetStmt,
   LiteralExpr,
@@ -413,6 +414,22 @@ describe("interpreter", () => {
         const expr = new BlockExpr([letDecl], value, makeSpan(0, 23));
         const result = interpreter.visitBlockExpr(expr);
         expect(result).toBe(10);
+      });
+    });
+
+    describe("get expressions", () => {
+      it("retrieves an object property", () => {
+        const interpreter = new Interpreter();
+        const objValue = new Map<string, RuntimeValue>([
+          ["name", "Reyek"],
+          ["level", 3],
+        ]);
+        (interpreter as any).environment.define("reyek", objValue);
+        const object = new VarExpr(tok(TokenType.Identifier, "reyek"), makeSpan(0, 5));
+        const name = tok(TokenType.Identifier, "level", null, 6);
+        const expr = new GetExpr(object, name, makeSpan(0, 11));
+        const result = interpreter.visitGetExpr(expr);
+        expect(result).toBe(3);
       });
     });
   });

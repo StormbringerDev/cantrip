@@ -222,9 +222,9 @@ Until these are implemented, programs that use them will not execute correctly.
 ## Evaluation model (current)
 
 1. The interpreter receives a list of statements from the parser.
-2. `interpret(statements)` is currently a no-op (the top-level driver is not finished).
-3. Individual expressions are evaluated by calling `accept(this)` on the AST node (visitor pattern).
-4. There is no persistent environment yet; only pure expression evaluation works.
+2. `interpret(statements)` walks through the list of statements and executes them one by one with `accept(this)` (visitor pattern).
+3. Individual expressions are evaluated by calling `accept(this)` on the AST node.
+4. The global environment is empty until variables are declared. Environments created by blocks contain a reference to the immediately enclosing environment.
 
 Source of truth
 

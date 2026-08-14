@@ -11,6 +11,7 @@ import {
   GroupingExpr,
   IfExpr,
   IndexExpr,
+  IndexSetExpr,
   LetStmt,
   LiteralExpr,
   LoopExpr,
@@ -304,6 +305,9 @@ export class Parser {
       } else if (expr instanceof GetExpr) {
         const end = value.span.end;
         return new SetExpr(expr.object, expr.name, operator, value, { start, end });
+      } else if (expr instanceof IndexExpr) {
+        const end = value.span.end;
+        return new IndexSetExpr(expr, operator, value, { start, end });
       }
 
       this.error(operator, "Invalid assignment target.");
