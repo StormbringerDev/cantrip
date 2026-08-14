@@ -99,4 +99,4 @@ pnpm dev
 
 ## License
 
-GNU General Public License v3.0
+GNU Lesser General Public License v3.0
