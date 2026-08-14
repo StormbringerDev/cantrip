@@ -206,6 +206,11 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
   }
 
   public visitIfExpr(expr: IfExpr): RuntimeValue {
+    if (this.isTruthy(this.evaluate(expr.condition))) {
+      return this.evaluate(expr.thenBranch);
+    } else if (expr.elseBranch !== null) {
+      return this.evaluate(expr.elseBranch);
+    }
     return null;
   }
 

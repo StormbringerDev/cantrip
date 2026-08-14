@@ -10,6 +10,7 @@ import {
   ExprStmt,
   GetExpr,
   GroupingExpr,
+  IfExpr,
   IndexExpr,
   IndexSetExpr,
   LetStmt,
@@ -538,6 +539,86 @@ describe("interpreter", () => {
           ["level", 4],
         ]);
         expect((interpreter as any).environment.get(indexee.name)).toEqual(expected);
+      });
+    });
+
+    describe("if expressions", () => {
+      it("evaluates an if expression", () => {
+        const interpreter = new Interpreter();
+        const condition = new LiteralExpr(true, makeSpan(4, 7));
+        const varName = tok(TokenType.Identifier, "x", null, 15);
+        const varInitializer = new LiteralExpr(5, makeSpan(19, 20));
+        const varDecl = new LetStmt(varName, varInitializer, makeSpan(11, 21));
+        const blockValue = new BinaryExpr(
+          new VarExpr(varName, makeSpan(22, 23)),
+          tok(TokenType.Plus, "+", null, 24),
+          new LiteralExpr(5, makeSpan(26, 27)),
+          makeSpan(22, 29),
+        );
+        const thenBranch = new BlockExpr([varDecl], blockValue, makeSpan(9, 29));
+        const expr = new IfExpr(condition, thenBranch, null, makeSpan(0, 29));
+        const result = interpreter.visitIfExpr(expr);
+        expect(result).toBe(10);
+      });
+
+      it("skips evaluation if condition is false", () => {
+        const interpreter = new Interpreter();
+        const condition = new LiteralExpr(false, makeSpan(4, 8));
+        const varName = tok(TokenType.Identifier, "x", null, 16);
+        const varInitializer = new LiteralExpr(5, makeSpan(20, 21));
+        const varDecl = new LetStmt(varName, varInitializer, makeSpan(12, 22));
+        const blockValue = new BinaryExpr(
+          new VarExpr(varName, makeSpan(23, 24)),
+          tok(TokenType.Plus, "+", null, 25),
+          new LiteralExpr(5, makeSpan(27, 28)),
+          makeSpan(23, 30),
+        );
+        const thenBranch = new BlockExpr([varDecl], blockValue, makeSpan(10, 30));
+        const expr = new IfExpr(condition, thenBranch, null, makeSpan(0, 30));
+        const result = interpreter.visitIfExpr(expr);
+        expect(result).toBe(null);
+      });
+
+      it("evaluates an if-else expression", () => {
+        const interpreter = new Interpreter();
+        const condition = new LiteralExpr(false, makeSpan(4, 8));
+        const varName = tok(TokenType.Identifier, "x", null, 16);
+        const varInitializer = new LiteralExpr(5, makeSpan(20, 21));
+        const varDecl = new LetStmt(varName, varInitializer, makeSpan(12, 22));
+        const thenValue = new BinaryExpr(
+          new VarExpr(varName, makeSpan(23, 24)),
+          tok(TokenType.Plus, "+", null, 25),
+          new LiteralExpr(5, makeSpan(27, 28)),
+          makeSpan(23, 30),
+        );
+        const thenBranch = new BlockExpr([varDecl], thenValue, makeSpan(10, 30));
+        const elseValue = new LiteralExpr(5, makeSpan(38, 55));
+        const elseBranch = new BlockExpr([], elseValue, makeSpan(36, 57));
+        const expr = new IfExpr(condition, thenBranch, elseBranch, makeSpan(0, 57));
+        const result = interpreter.visitIfExpr(expr);
+        expect(result).toBe(5);
+      });
+
+      it("evaluates an if-else-if expression", () => {
+        const interpreter = new Interpreter();
+        const condition = new LiteralExpr(false, makeSpan(4, 8));
+        const varName = tok(TokenType.Identifier, "x", null, 16);
+        const varInitializer = new LiteralExpr(5, makeSpan(20, 21));
+        const varDecl = new LetStmt(varName, varInitializer, makeSpan(12, 22));
+        const thenValue = new BinaryExpr(
+          new VarExpr(varName, makeSpan(23, 24)),
+          tok(TokenType.Plus, "+", null, 25),
+          new LiteralExpr(5, makeSpan(27, 28)),
+          makeSpan(23, 30),
+        );
+        const thenBranch = new BlockExpr([varDecl], thenValue, makeSpan(10, 30));
+        const elseCondition = new LiteralExpr(true, makeSpan(39, 42));
+        const elseValue = new LiteralExpr(5, makeSpan(38, 55));
+        const elseBlock = new BlockExpr([], elseValue, makeSpan(46, 63));
+        const elseBranch = new IfExpr(elseCondition, elseBlock, null, makeSpan(36, 64));
+        const expr = new IfExpr(condition, thenBranch, elseBranch, makeSpan(0, 64));
+        const result = interpreter.visitIfExpr(expr);
+        expect(result).toBe(5);
       });
     });
   });

@@ -179,6 +179,18 @@ Index expressions (`array[index]`) retrieves the array element at the given inde
 Index set expressions (`array[index] = value`) sets the element at the given index to the given value. You can use this expression to assign an object field's value if the expression inside the brackets evaluates to a string of one of the object's keys.  
 Planned to work with any compound assignment operator (`+=`, `-=`, etc.).
 
+### If expressions
+
+First, the condition following the `if` keyword gets evaluated. If it is truthy, the block expression following the condition is evaluated. Otherwise, the block gets skipped and if an else branch exists, either a block expression or another if expression, it gets evaluated. If statements return the result of the block expression that is evaluated.
+
+```cantrip
+if flag {
+  5 + 5 // This value gets returned if `flag` is truthy.
+} else {
+  2 + 2 // This value gets returned otherwise.
+}
+```
+
 ## Implemented Statements
 
 ### Variable declarations
@@ -217,9 +229,6 @@ The following AST nodes exist but their visitor methods are currently stubs (the
 
 #### Expressions
 
-- Array indexing (`arr[i]`)
-- Index assignment
-- `if` expressions
 - `loop` expressions
 
 #### Statements
