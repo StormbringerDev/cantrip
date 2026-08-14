@@ -1158,7 +1158,13 @@ describe("Parser", () => {
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(IndexSetExpr);
         expect(((ast[0] as ExprStmt).expr as IndexSetExpr).indexee).toBeInstanceOf(
-          IndexExpr,
+          VarExpr,
+        );
+        expect(((ast[0] as ExprStmt).expr as IndexSetExpr).bracket.type).toBe(
+          TokenType.LeftBracket,
+        );
+        expect(((ast[0] as ExprStmt).expr as IndexSetExpr).index).toBeInstanceOf(
+          LiteralExpr,
         );
         expect(((ast[0] as ExprStmt).expr as IndexSetExpr).operator.type).toBe(
           TokenType.Eq,

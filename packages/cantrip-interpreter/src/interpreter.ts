@@ -210,11 +210,40 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
   }
 
   public visitIndexExpr(expr: IndexExpr): RuntimeValue {
-    return null;
+    const indexee = this.evaluate(expr.indexee);
+
+    if (Array.isArray(indexee)) {
+      const index = this.evaluate(expr.index);
+      if (typeof index !== "number") {
+        throw new RuntimeError(expr.bracket, "Index must evaluate to a number.");
+      }
+      const value = indexee.at(index);
+
+      if (value === undefined) {
+        throw new RuntimeError(expr.bracket, "Array index out of bounds.");
+      }
+
+      return value;
+    }
+
+    throw new RuntimeError(expr.bracket, "Cannot index into a non-structured value.");
   }
 
   public visitIndexSetExpr(expr: IndexSetExpr): RuntimeValue {
-    return null;
+    const indexee = this.evaluate(expr.indexee);
+
+    if (Array.isArray(indexee)) {
+      const index = this.evaluate(expr.index);
+      if (typeof index !== "number") {
+        throw new RuntimeError(expr.bracket, "Index must evaluate to a number.");
+      }
+
+      const value = this.evaluate(expr.value);
+      indexee[index] = value;
+      return value;
+    }
+
+    throw new RuntimeError(expr.bracket, "Cannot index into a non-structured value.");
   }
 
   /**

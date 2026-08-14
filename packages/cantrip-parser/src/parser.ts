@@ -307,7 +307,10 @@ export class Parser {
         return new SetExpr(expr.object, expr.name, operator, value, { start, end });
       } else if (expr instanceof IndexExpr) {
         const end = value.span.end;
-        return new IndexSetExpr(expr, operator, value, { start, end });
+        return new IndexSetExpr(expr.indexee, expr.bracket, expr.index, operator, value, {
+          start,
+          end,
+        });
       }
 
       this.error(operator, "Invalid assignment target.");

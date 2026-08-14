@@ -297,22 +297,37 @@ export class IndexExpr extends Expr {
  * ```
  */
 export class IndexSetExpr extends Expr {
-  /** The target structure index. */
+  /** Expression being indexed. */
   public readonly indexee: Expr;
+  /** The opening bracket token (useful for error reporting). */
+  public readonly bracket: Token;
+  /** Index expression. */
+  public readonly index: Expr;
   /** Assignment operator. */
   public readonly operator: Token;
   /** Value being assigned. */
   public readonly value: Expr;
 
   /**
-   * @param indexee - Expression evaluating to target data structure index.
+   * @param indexee - Expression evaluating to target data structure.
+   * @param bracket - The `[` token.
+   * @param index - Expression evaluating to the target index or key.
    * @param operator - Assignment operator token.
    * @param value - Expression providing the new value.
    * @param span - Source span of the whole index set expression.
    */
-  constructor(indexee: Expr, operator: Token, value: Expr, span: Span) {
+  constructor(
+    indexee: Expr,
+    bracket: Token,
+    index: Expr,
+    operator: Token,
+    value: Expr,
+    span: Span,
+  ) {
     super(span);
     this.indexee = indexee;
+    this.bracket = bracket;
+    this.index = index;
     this.operator = operator;
     this.value = value;
   }

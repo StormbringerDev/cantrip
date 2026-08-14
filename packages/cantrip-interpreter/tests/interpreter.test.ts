@@ -10,6 +10,8 @@ import {
   ExprStmt,
   GetExpr,
   GroupingExpr,
+  IndexExpr,
+  IndexSetExpr,
   LetStmt,
   LiteralExpr,
   SetExpr,
@@ -455,6 +457,43 @@ describe("interpreter", () => {
           ["level", 4],
         ]);
         expect((interpreter as any).environment.get(varName)).toEqual(expected);
+      });
+    });
+
+    describe("index expressions", () => {
+      it("retrieves a value from an array", () => {
+        const interpreter = new Interpreter();
+        (interpreter as any).environment.define("numbers", [1, 2, 3]);
+        const indexee = new VarExpr(tok(TokenType.Identifier, "numbers"), makeSpan(0, 7));
+        const bracket = tok(TokenType.LeftBracket, "[", null, 7);
+        const index = new LiteralExpr(1, makeSpan(8, 9));
+        const expr = new IndexExpr(indexee, bracket, index, makeSpan(0, 10));
+        const result = interpreter.visitIndexExpr(expr);
+        expect(result).toBe(2);
+      });
+    });
+
+    describe("index set expression", () => {
+      it("sets a value at array index", () => {
+        const interpreter = new Interpreter();
+        (interpreter as any).environment.define("numbers", [1, 2, 3]);
+        const indexee = new VarExpr(tok(TokenType.Identifier, "numbers"), makeSpan(0, 7));
+        const bracket = tok(TokenType.LeftBracket, "[", null, 7);
+        const index = new LiteralExpr(3, makeSpan(8, 9));
+        const operator = tok(TokenType.Eq, "=", null, 11);
+        const value = new LiteralExpr(4, makeSpan(13, 14));
+        const expr = new IndexSetExpr(
+          indexee,
+          bracket,
+          index,
+          operator,
+          value,
+          makeSpan(0, 14),
+        );
+        const result = interpreter.visitIndexSetExpr(expr);
+        expect(result).toBe(4);
+        const expected = [1, 2, 3, 4];
+        expect((interpreter as any).environment.get(indexee.name)).toEqual(expected);
       });
     });
   });
