@@ -235,20 +235,11 @@ These statements exit out of the immediately enclosing loop. In the future, brea
 
 These statements skip the current run of the immediately enclosing loop. Unlike `break`, `continue` restarts the loop at the beginning.
 
+### While statements
+
+A while loop executes the block after the condition expression if the condition is truthy. On each iteration of the loop, the condition is evaluated for truthiness and the loop is exited if the condition is falsey.
+
 ## Not yet implemented
-
-The following AST nodes exist but their visitor methods are currently stubs (they return `null` or do nothing):
-
-#### Expressions
-
-- `loop` expressions
-
-#### Statements
-
-- `while` loops
-- `break` / `continue`
-
-#### Other missing pieces
 
 - Functions (`fn`)
 - `return`
