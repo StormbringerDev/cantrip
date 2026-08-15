@@ -17,6 +17,7 @@ import {
   LetStmt,
   LiteralExpr,
   LoopExpr,
+  MatchExpr,
   SetExpr,
   Token,
   TokenType,
@@ -1405,6 +1406,50 @@ describe("Parser", () => {
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(LoopExpr);
         expect(((ast[0] as ExprStmt).expr as LoopExpr).body).toBeInstanceOf(BlockExpr);
+      });
+    });
+
+    describe("parses a match expression", () => {
+      it("parses a match expression", () => {
+        const tokens = [
+          tok(TokenType.Match, "match"),
+          tok(TokenType.Identifier, "x"),
+          tok(TokenType.LeftBrace, "{"),
+          tok(TokenType.Number, "1", 1),
+          tok(TokenType.FatArrow, "=>"),
+          tok(TokenType.Number, "10", 10),
+          tok(TokenType.Comma, ","),
+          tok(TokenType.Number, "2", 2),
+          tok(TokenType.FatArrow, "=>"),
+          tok(TokenType.Number, "20", 20),
+          tok(TokenType.Comma, ","),
+          tok(TokenType.Number, "3", 3),
+          tok(TokenType.FatArrow, "=>"),
+          tok(TokenType.Number, "30", 30),
+          tok(TokenType.Comma, ","),
+          tok(TokenType.Identifier, "_"),
+          tok(TokenType.FatArrow, "=>"),
+          tok(TokenType.Number, "100", 100),
+          tok(TokenType.RightBrace, "}"),
+          tok(TokenType.Eof, ""),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ExprStmt);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(MatchExpr);
+        expect(((ast[0] as ExprStmt).expr as MatchExpr).matcher).toBeInstanceOf(VarExpr);
+        const expected = new Map<Expr, Expr>([
+          [new LiteralExpr(1, makeSpan(0, 1)), new LiteralExpr(10, makeSpan(0, 2))],
+          [new LiteralExpr(2, makeSpan(0, 1)), new LiteralExpr(20, makeSpan(0, 2))],
+          [new LiteralExpr(3, makeSpan(0, 1)), new LiteralExpr(30, makeSpan(0, 2))],
+          [
+            new VarExpr(tok(TokenType.Identifier, "_"), makeSpan(0, 1)),
+            new LiteralExpr(100, makeSpan(0, 3)),
+          ],
+        ]);
+        expect(((ast[0] as ExprStmt).expr as MatchExpr).branches).toEqual(expected);
       });
     });
   });

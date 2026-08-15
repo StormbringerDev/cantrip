@@ -54,6 +54,7 @@ export interface ExprVisitor<R> {
   visitIndexSetExpr(expr: IndexSetExpr): R;
   visitLiteralExpr(expr: LiteralExpr): R;
   visitLoopExpr(expr: LoopExpr): R;
+  visitMatchExpr(expr: MatchExpr): R;
   visitSetExpr(expr: SetExpr): R;
   visitUnaryExpr(expr: UnaryExpr): R;
   visitVarExpr(expr: VarExpr): R;
@@ -390,6 +391,42 @@ export class LoopExpr extends Expr {
   /** @inheritdoc */
   public accept<R>(visitor: ExprVisitor<R>): R {
     return visitor.visitLoopExpr(this);
+  }
+}
+
+/**
+ * Match expression: `match variable { value => returnVal, ... }`.
+ *
+ * @example
+ * ```cantrip
+ * match number {
+ *   1 => 10,
+ *   2 => 20,
+ *   3 => 30,
+ *   _ => 100,
+ * }
+ * ```
+ */
+export class MatchExpr extends Expr {
+  /** Expression to check the value of. */
+  public readonly matcher: Expr;
+  /** Values and their return values. */
+  public readonly branches: Map<Expr, Expr>;
+
+  /**
+   * @param matcher - The expression to be matched against.
+   * @param branches - The set of expected values and return values.
+   * @param span - The source span of the entire expression.
+   */
+  constructor(matcher: Expr, branches: Map<Expr, Expr>, span: Span) {
+    super(span);
+    this.matcher = matcher;
+    this.branches = branches;
+  }
+
+  /** @inheritdoc */
+  public accept<R>(visitor: ExprVisitor<R>): R {
+    return visitor.visitMatchExpr(this);
   }
 }
 

@@ -15,6 +15,7 @@ import {
   LetStmt,
   LiteralExpr,
   LoopExpr,
+  MatchExpr,
   SetExpr,
   type Stmt,
   type Token,
@@ -157,6 +158,10 @@ export class Parser {
       // Bypass to prevent requiring semicolon for loop
       return this.loopStatement();
     }
+    if (this.match(TokenType.Match)) {
+      // Bypass to prevent requiring semicolon for match
+      return this.matchStatement();
+    }
     if (this.match(TokenType.LeftBrace)) {
       return this.blockStatement();
     }
@@ -248,6 +253,16 @@ export class Parser {
    */
   private loopStatement(): Stmt {
     const expr = this.loopExpression();
+    return new ExprStmt(expr, expr.span);
+  }
+
+  /**
+   * Bypass function to remove the requirement for a semicolon after a match expression.
+   *
+   * @returns A {@link MatchExpr} wrapped in an {@link ExprStmt}.
+   */
+  private matchStatement(): Stmt {
+    const expr = this.matchExpression();
     return new ExprStmt(expr, expr.span);
   }
 
@@ -695,6 +710,39 @@ export class Parser {
   }
 
   /**
+   * Parse a match expression.
+   *
+   * Grammar (simplified):
+   * ```
+   * match_expr = "match" expression "{" expression "=>" expression "," ... ","? "}" ;
+   * ```
+   */
+  private matchExpression(): Expr {
+    const keyword = this.previous();
+    const start = keyword.span.start;
+    const matcher = this.expression();
+    this.consume(TokenType.LeftBrace, "Expect '{' after matching expression.");
+    const branches = new Map<Expr, Expr>();
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      const matchValue = this.expression();
+      this.consume(TokenType.FatArrow, "Expect '=>' after match value.");
+      const returnValue = this.expression();
+
+      // Push the match branch
+      branches.set(matchValue, returnValue);
+
+      // Check for trailing comma
+      if (this.match(TokenType.Comma)) {
+        if (this.peek().type === TokenType.RightBrace) break;
+      }
+    }
+    const end = this.consume(TokenType.RightBrace, "Expect '}' after match branches.")
+      .span.end;
+
+    return new MatchExpr(matcher, branches, { start, end });
+  }
+
+  /**
    * Parse a block expression.
    *
    * @returns A {@link BlockExpr} node.
@@ -729,9 +777,8 @@ export class Parser {
       // Check for semicolon or end of block
       if (this.match(TokenType.Semicolon)) {
         // If semicolon, push expression statement
-        statements.push(
-          new ExprStmt(expr, { start: expr.span.start, end: expr.span.end }),
-        );
+        const end = this.previous().span.end;
+        statements.push(new ExprStmt(expr, { start: expr.span.start, end }));
       } else {
         // Final value of block
         value = expr;

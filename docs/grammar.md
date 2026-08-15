@@ -70,6 +70,9 @@ if_expr          = "if" expression block ( "else" ( if_expr | block ) )? ;
 
 loop_expr        = "loop" block ;
 
+match_expr       = "match" expression "{" match_branch ( "," match_branch )* ","? "}" ;
+match_branch     = expression "=>" expression ;
+
 block            = "{" declaration* "}" ;
 ```
 

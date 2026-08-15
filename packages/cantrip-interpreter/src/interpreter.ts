@@ -1,5 +1,5 @@
 import { TokenType } from "@cantrip/ast";
-import type {
+import {
   AssignExpr,
   BinaryExpr,
   BlockExpr,
@@ -17,6 +17,7 @@ import type {
   LetStmt,
   LiteralExpr,
   LoopExpr,
+  MatchExpr,
   SetExpr,
   Stmt,
   StmtVisitor,
@@ -305,7 +306,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     if (Array.isArray(expr.value)) {
       const array = [];
       for (const value of expr.value) {
-        array.push(value.accept(this));
+        array.push(this.evaluate(value));
       }
       return array;
     }
@@ -313,7 +314,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     if (expr.value instanceof Map) {
       const object = new Map<string, RuntimeValue>();
       for (const [key, value] of expr.value) {
-        object.set(key, value.accept(this));
+        object.set(key, this.evaluate(value));
       }
       return object;
     }
@@ -337,6 +338,29 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
         else throw err;
       }
     }
+  }
+
+  /**
+   * Evaluates a match expression.
+   *
+   * @param expr - The match expression to be evaluated.
+   * @returns The expression result of the chosen branch.
+   */
+  public visitMatchExpr(expr: MatchExpr): RuntimeValue {
+    const matcher = this.evaluate(expr.matcher);
+    for (const [key, value] of expr.branches) {
+      // Check for underscore
+      if (key instanceof VarExpr && key.name.lexeme === "_") {
+        return this.evaluate(value);
+      }
+
+      const branch = this.evaluate(key);
+      if (branch === matcher) {
+        return this.evaluate(value);
+      }
+    }
+
+    return null;
   }
 
   /**

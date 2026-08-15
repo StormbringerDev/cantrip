@@ -11,6 +11,7 @@ export {
   IndexSetExpr,
   LiteralExpr,
   LoopExpr,
+  MatchExpr,
   SetExpr,
   UnaryExpr,
   VarExpr,

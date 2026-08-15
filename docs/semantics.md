@@ -195,6 +195,10 @@ if flag {
 
 A loop expression executes the block following the `loop` keyword repeatedly. These loops must be exited manually with a break statement. In the future, loop expressions will return a value via break statement.
 
+### Match expressions
+
+A match expression checks an expression's value to see if it matches one of the listed values. If a match is found, the result of the expression to the right of that value's arrow (`=>`) is returned by the match expression. If not, the default case (`_`) is returned. Until static analysis is implemented, match expressions are to be considered experimental.
+
 ## Implemented Statements
 
 ### Variable declarations
@@ -243,7 +247,6 @@ A while loop executes the block after the condition expression if the condition 
 
 - Functions (`fn`)
 - `return`
-- `match`
 - Any standard library (`print`, etc.)
 - Runtime error reporting (type errors, undefined variables, ...)
 

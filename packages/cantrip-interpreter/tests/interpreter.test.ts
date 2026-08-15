@@ -18,6 +18,7 @@ import {
   LetStmt,
   LiteralExpr,
   LoopExpr,
+  MatchExpr,
   SetExpr,
   Token,
   TokenType,
@@ -657,6 +658,68 @@ describe("interpreter", () => {
         expect(loopSpy).toHaveBeenCalledTimes(5);
       });
     });
+
+    describe("match expressions", () => {
+      it("takes the first branch", () => {
+        const interpreter = new Interpreter();
+        (interpreter as any).environment.define("x", 1);
+        const matcher = new VarExpr(
+          tok(TokenType.Identifier, "x", null, 7),
+          makeSpan(7, 8),
+        );
+        const branches = new Map<Expr, Expr>([
+          [new LiteralExpr(1, makeSpan(11, 12)), new LiteralExpr(10, makeSpan(16, 18))],
+          [new LiteralExpr(2, makeSpan(20, 21)), new LiteralExpr(20, makeSpan(25, 27))],
+          [
+            new VarExpr(tok(TokenType.Identifier, "_", null, 29), makeSpan(29, 30)),
+            new LiteralExpr(50, makeSpan(34, 36)),
+          ],
+        ]);
+        const expr = new MatchExpr(matcher, branches, makeSpan(0, 38));
+        const result = interpreter.visitMatchExpr(expr);
+        expect(result).toBe(10);
+      });
+
+      it("takes the second branch", () => {
+        const interpreter = new Interpreter();
+        (interpreter as any).environment.define("x", 2);
+        const matcher = new VarExpr(
+          tok(TokenType.Identifier, "x", null, 7),
+          makeSpan(7, 8),
+        );
+        const branches = new Map<Expr, Expr>([
+          [new LiteralExpr(1, makeSpan(11, 12)), new LiteralExpr(10, makeSpan(16, 18))],
+          [new LiteralExpr(2, makeSpan(20, 21)), new LiteralExpr(20, makeSpan(25, 27))],
+          [
+            new VarExpr(tok(TokenType.Identifier, "_", null, 29), makeSpan(29, 30)),
+            new LiteralExpr(50, makeSpan(34, 36)),
+          ],
+        ]);
+        const expr = new MatchExpr(matcher, branches, makeSpan(0, 38));
+        const result = interpreter.visitMatchExpr(expr);
+        expect(result).toBe(20);
+      });
+
+      it("takes the default branch", () => {
+        const interpreter = new Interpreter();
+        (interpreter as any).environment.define("x", 3);
+        const matcher = new VarExpr(
+          tok(TokenType.Identifier, "x", null, 7),
+          makeSpan(7, 8),
+        );
+        const branches = new Map<Expr, Expr>([
+          [new LiteralExpr(1, makeSpan(11, 12)), new LiteralExpr(10, makeSpan(16, 18))],
+          [new LiteralExpr(2, makeSpan(20, 21)), new LiteralExpr(20, makeSpan(25, 27))],
+          [
+            new VarExpr(tok(TokenType.Identifier, "_", null, 29), makeSpan(29, 30)),
+            new LiteralExpr(50, makeSpan(34, 36)),
+          ],
+        ]);
+        const expr = new MatchExpr(matcher, branches, makeSpan(0, 38));
+        const result = interpreter.visitMatchExpr(expr);
+        expect(result).toBe(50);
+      });
+    });
   });
 
   describe("statements", () => {
@@ -740,9 +803,6 @@ describe("interpreter", () => {
     describe("while statements", () => {
       it("executes a while loop", () => {
         const interpreter = new Interpreter();
-        `
-while i < 5 { i += 1; }
-`;
         (interpreter as any).environment.define("i", 0);
         const condition = new BinaryExpr(
           new VarExpr(tok(TokenType.Identifier, "i", null, 7), makeSpan(7, 8)),
