@@ -23,6 +23,7 @@ import {
   TokenType,
   UnaryExpr,
   VarExpr,
+  WhileStmt,
 } from "@cantrip/ast";
 import type { Span } from "@cantrip/types";
 
@@ -733,6 +734,36 @@ describe("interpreter", () => {
           makeSpan(0, 9),
         );
         expect(() => interpreter.visitContinueStmt(stmt)).toThrow(Continue);
+      });
+    });
+
+    describe("while statements", () => {
+      it("executes a while loop", () => {
+        const interpreter = new Interpreter();
+        `
+while i < 5 { i += 1; }
+`;
+        (interpreter as any).environment.define("i", 0);
+        const condition = new BinaryExpr(
+          new VarExpr(tok(TokenType.Identifier, "i", null, 7), makeSpan(7, 8)),
+          tok(TokenType.Less, "<", null, 9),
+          new LiteralExpr(5, makeSpan(11, 12)),
+          makeSpan(7, 12),
+        );
+        const increment = new AssignExpr(
+          tok(TokenType.Identifier, "i", null, 15),
+          tok(TokenType.PlusEq, "+=", null, 17),
+          new LiteralExpr(1, makeSpan(20, 21)),
+          makeSpan(15, 21),
+        );
+        const incrementStmt = new ExprStmt(increment, makeSpan(15, 22));
+        const body = new BlockStmt([incrementStmt], makeSpan(13, 24));
+        const stmt = new WhileStmt(condition, body, makeSpan(0, 24));
+        const whileLoopSpy = vi.spyOn(interpreter, "visitWhileStmt");
+        const incrementSpy = vi.spyOn(interpreter, "visitAssignExpr");
+        interpreter.interpret([stmt]);
+        expect(whileLoopSpy).toHaveBeenCalled();
+        expect(incrementSpy).toHaveBeenCalledTimes(5);
       });
     });
   });

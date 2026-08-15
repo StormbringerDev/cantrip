@@ -231,6 +231,10 @@ print(x);
 
 These statements exit out of the immediately enclosing loop. In the future, break statements will return values when the enclosing loop is a `loop` expression.
 
+### Continue statements
+
+These statements skip the current run of the immediately enclosing loop. Unlike `break`, `continue` restarts the loop at the beginning.
+
 ## Not yet implemented
 
 The following AST nodes exist but their visitor methods are currently stubs (they return `null` or do nothing):

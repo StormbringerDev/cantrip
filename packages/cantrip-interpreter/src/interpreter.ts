@@ -332,13 +332,9 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
       try {
         this.evaluate(expr.body);
       } catch (err) {
-        if (err instanceof Break) {
-          return null;
-        } else if (err instanceof Continue) {
-          continue;
-        } else {
-          throw err;
-        }
+        if (err instanceof Break) return null;
+        else if (err instanceof Continue) continue;
+        else throw err;
       }
     }
   }
@@ -401,10 +397,20 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     this.executeBlock(statements, null, new Environment(this.environment));
   }
 
+  /**
+   * Executes a break statement.
+   *
+   * @param _stmt - The break statement to be executed.
+   */
   public visitBreakStmt(_stmt: BreakStmt): void {
     throw new Break();
   }
 
+  /**
+   * Executes a continue statement.
+   *
+   * @param _stmt - The continue statement to be executed.
+   */
   public visitContinueStmt(_stmt: ContinueStmt): void {
     throw new Continue();
   }
@@ -434,7 +440,22 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     this.environment.define(stmt.name.lexeme, value);
   }
 
-  public visitWhileStmt(stmt: WhileStmt): void {}
+  /**
+   * Executes a while loop.
+   *
+   * @param stmt - The while loop to be executed.
+   */
+  public visitWhileStmt(stmt: WhileStmt): void {
+    while (this.isTruthy(this.evaluate(stmt.condition))) {
+      try {
+        this.execute(stmt.body);
+      } catch (err) {
+        if (err instanceof Break) break;
+        else if (err instanceof Continue) continue;
+        else throw err;
+      }
+    }
+  }
 
   /**
    * Evaluates the given expression and returns the result.
