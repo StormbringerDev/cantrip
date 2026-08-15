@@ -645,7 +645,13 @@ describe("interpreter", () => {
           makeSpan(19, 25),
         );
         const breakBranch = new BlockExpr(
-          [new BreakStmt(tok(TokenType.Break, "break", null, 28), makeSpan(28, 34))],
+          [
+            new BreakStmt(
+              tok(TokenType.Break, "break", null, 28),
+              null,
+              makeSpan(28, 34),
+            ),
+          ],
           null,
           makeSpan(26, 36),
         );
@@ -655,6 +661,42 @@ describe("interpreter", () => {
         const loopSpy = vi.spyOn(interpreter, "visitAssignExpr");
         const result = interpreter.visitLoopExpr(expr);
         expect(result).toBeNull();
+        expect(loopSpy).toHaveBeenCalledTimes(5);
+      });
+
+      it("evaluates an infinite loop expression that returns a value", () => {
+        const interpreter = new Interpreter();
+        (interpreter as any).environment.define("i", 0);
+        const incName = tok(TokenType.Identifier, "i", null, 8);
+        const incOperator = tok(TokenType.PlusEq, "+=", null, 10);
+        const incValue = new LiteralExpr(1, makeSpan(13, 14));
+        const increment = new ExprStmt(
+          new AssignExpr(incName, incOperator, incValue, makeSpan(8, 14)),
+          makeSpan(8, 15),
+        );
+        const breakCondition = new BinaryExpr(
+          new VarExpr(incName, makeSpan(19, 20)),
+          tok(TokenType.EqEq, "==", null, 21),
+          new LiteralExpr(5, makeSpan(24, 25)),
+          makeSpan(19, 25),
+        );
+        const breakBranch = new BlockExpr(
+          [
+            new BreakStmt(
+              tok(TokenType.Break, "break", null, 28),
+              new LiteralExpr(10, makeSpan(33, 35)),
+              makeSpan(28, 36),
+            ),
+          ],
+          null,
+          makeSpan(26, 36),
+        );
+        const breaker = new IfExpr(breakCondition, breakBranch, null, makeSpan(16, 36));
+        const body = new BlockExpr([increment], breaker, makeSpan(6, 40));
+        const expr = new LoopExpr(body, makeSpan(0, 40));
+        const loopSpy = vi.spyOn(interpreter, "visitAssignExpr");
+        const result = interpreter.visitLoopExpr(expr);
+        expect(result).toBe(10);
         expect(loopSpy).toHaveBeenCalledTimes(5);
       });
     });
@@ -784,7 +826,7 @@ describe("interpreter", () => {
     describe("break statements", () => {
       it("executes a break statement", () => {
         const interpreter = new Interpreter();
-        const stmt = new BreakStmt(tok(TokenType.Break, "break"), makeSpan(0, 6));
+        const stmt = new BreakStmt(tok(TokenType.Break, "break"), null, makeSpan(0, 6));
         expect(() => interpreter.visitBreakStmt(stmt)).toThrow(Break);
       });
     });

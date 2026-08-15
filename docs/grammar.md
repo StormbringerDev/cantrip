@@ -27,7 +27,7 @@ statement        = expr_stmt
                  | block ;               (* bare block as statement *)
 
 expr_stmt        = expression ";" ;
-break_stmt       = "break" ";" ;
+break_stmt       = "break" expression? ";" ;
 continue_stmt    = "continue" ";" ;
 while_stmt       = "while" expression block ;
 
@@ -98,7 +98,6 @@ block            = "{" declaration* "}" ;
 
 ### Open questions / deferred features
 
-- Value-carrying `break` (currently just `break;`)
 - `for` loops
 - First-class functions / closures
 - Pattern matching beyond simple `match` expressions

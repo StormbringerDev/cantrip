@@ -1572,6 +1572,23 @@ describe("Parser", () => {
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(BreakStmt);
         expect((ast[0] as BreakStmt).keyword.type).toBe(TokenType.Break);
+        expect((ast[0] as BreakStmt).value).toBeNull();
+      });
+
+      it("parses a break statement with a value", () => {
+        const tokens = [
+          tok(TokenType.Break, "break"),
+          tok(TokenType.Number, "10", 10, 6),
+          tok(TokenType.Semicolon, ";", null, 8),
+          tok(TokenType.Eof, "", null, 9),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(BreakStmt);
+        expect((ast[0] as BreakStmt).keyword.type).toBe(TokenType.Break);
+        expect((ast[0] as BreakStmt).value).toBeInstanceOf(LiteralExpr);
       });
 
       it("parses a continue statement", () => {

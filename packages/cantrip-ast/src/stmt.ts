@@ -91,14 +91,17 @@ export class BlockStmt extends Stmt {
 export class BreakStmt extends Stmt {
   /** The `break` keyword. Used for static analysis errors. */
   public readonly keyword: Token;
+  /** Optional value expression to return from a {@link LoopExpr}. */
+  public readonly value: Expr | null;
 
   /**
    * @param keyword - The `break` keyword.
    * @param span - The source span of the entire statement.
    */
-  constructor(keyword: Token, span: Span) {
+  constructor(keyword: Token, value: Expr | null, span: Span) {
     super(span);
     this.keyword = keyword;
+    this.value = value;
   }
 
   /** @inheritdoc */
@@ -133,7 +136,7 @@ export class ContinueStmt extends Stmt {
 
   /** @inheritdoc */
   public accept<R>(visitor: StmtVisitor<R>): R {
-    return visitor.visitBreakStmt(this);
+    return visitor.visitContinueStmt(this);
   }
 }
 

@@ -233,7 +233,7 @@ print(x);
 
 ### Break statements
 
-These statements exit out of the immediately enclosing loop. In the future, break statements will return values when the enclosing loop is a `loop` expression.
+These statements exit out of the immediately enclosing loop. Break statements can return values from `loop` expressions.
 
 ### Continue statements
 

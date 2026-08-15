@@ -34,7 +34,7 @@ statement        = expr_stmt
 
 expr_stmt        = expression ";" ;
 return_stmt      = "return" expression? ";" ;
-break_stmt       = "break" ";" ;         (* value-carrying break is deferred *)
+break_stmt       = "break" expression? ";" ;
 continue_stmt    = "continue" ";" ;
 while_stmt       = "while" expression block ;
 
@@ -107,13 +107,9 @@ block            = "{" declaration* "}" ;
 
 ### Open questions / deferred features
 
-- Value-carrying `break` (currently just `break;`)
 - `for` loops
-- Array / list literals
-- Map / object literals
 - First-class functions / closures
 - Pattern matching beyond simple `match` expressions
-- Trailing commas in more places
 
 ### Source of truth
 

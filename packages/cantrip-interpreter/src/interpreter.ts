@@ -332,7 +332,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
       try {
         this.evaluate(expr.body);
       } catch (err) {
-        if (err instanceof Break) return null;
+        if (err instanceof Break) return err.value;
         else if (err instanceof Continue) continue;
         else throw err;
       }
@@ -423,10 +423,13 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
   /**
    * Executes a break statement.
    *
-   * @param _stmt - The break statement to be executed.
+   * @param stmt - The break statement to be executed.
    */
-  public visitBreakStmt(_stmt: BreakStmt): void {
-    throw new Break();
+  public visitBreakStmt(stmt: BreakStmt): void {
+    let value = null;
+    if (stmt.value !== null) value = this.evaluate(stmt.value);
+
+    throw new Break(value);
   }
 
   /**
@@ -580,8 +583,18 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
 
 /**
  * A special error to bypass Node's call stack for loops.
+ *
+ * Carries a value as a payload.
  */
-export class Break extends Error {}
+export class Break extends Error {
+  /** The value payload. */
+  public readonly value: RuntimeValue;
+
+  constructor(value: RuntimeValue) {
+    super();
+    this.value = value;
+  }
+}
 /**
  * A special error to bypass Node's call stack for loops.
  */

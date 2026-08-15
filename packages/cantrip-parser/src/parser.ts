@@ -198,8 +198,12 @@ export class Parser {
    */
   private breakStatement(): Stmt {
     const keyword = this.previous();
-    const end = this.consume(TokenType.Semicolon, "Expect ';' after 'break'").span.end;
-    return new BreakStmt(keyword, { start: keyword.span.start, end });
+    let value = null;
+    if (this.peek().type !== TokenType.Semicolon) {
+      value = this.expression();
+    }
+    const end = this.consume(TokenType.Semicolon, "Expect ';' after statement.").span.end;
+    return new BreakStmt(keyword, value, { start: keyword.span.start, end });
   }
 
   /**
