@@ -191,6 +191,10 @@ if flag {
 }
 ```
 
+### Loop expressions
+
+A loop expression executes the block following the `loop` keyword repeatedly. These loops must be exited manually with a break statement. In the future, loop expressions will return a value via break statement.
+
 ## Implemented Statements
 
 ### Variable declarations
@@ -222,6 +226,10 @@ These statements produce side-effects if applicable, and discard any returned va
 x = 42;
 print(x);
 ```
+
+### Break statements
+
+These statements exit out of the immediately enclosing loop. In the future, break statements will return values when the enclosing loop is a `loop` expression.
 
 ## Not yet implemented
 

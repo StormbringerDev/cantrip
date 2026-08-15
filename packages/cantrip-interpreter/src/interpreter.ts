@@ -198,13 +198,19 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
   /**
    * Evaluates an expression grouped by parentheses (`(expr)`).
    *
-   * @param expr - The grouping expression to be evaluated
+   * @param expr - The grouping expression to be evaluated.
    * @returns The result of the expression.
    */
   public visitGroupingExpr(expr: GroupingExpr): RuntimeValue {
     return this.evaluate(expr.expression);
   }
 
+  /**
+   * Evaluates an if expression.
+   *
+   * @param expr - The if expression to be evaluated.
+   * @returns The result of the chosen branch.
+   */
   public visitIfExpr(expr: IfExpr): RuntimeValue {
     if (this.isTruthy(this.evaluate(expr.condition))) {
       return this.evaluate(expr.thenBranch);
@@ -214,6 +220,12 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     return null;
   }
 
+  /**
+   * Evaluates an index expression.
+   *
+   * @param expr - The index expression to be evaluated.
+   * @returns The array element at the given index.
+   */
   public visitIndexExpr(expr: IndexExpr): RuntimeValue {
     const indexee = this.evaluate(expr.indexee);
 
@@ -248,6 +260,12 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     throw new RuntimeError(expr.bracket, "Cannot index into a non-structured value.");
   }
 
+  /**
+   * Evaluates an index set expression.
+   *
+   * @param expr - The index set expression to be evaluated.
+   * @returns The value assigned to the structure index.
+   */
   public visitIndexSetExpr(expr: IndexSetExpr): RuntimeValue {
     const indexee = this.evaluate(expr.indexee);
 
@@ -303,8 +321,26 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     return expr.value;
   }
 
+  /**
+   * Evaluates a loop expression.
+   *
+   * @param expr - The loop expression to be evaluated.
+   * @returns `null` until value-carrying break is implemented.
+   */
   public visitLoopExpr(expr: LoopExpr): RuntimeValue {
-    return null;
+    while (true) {
+      try {
+        this.evaluate(expr.body);
+      } catch (err) {
+        if (err instanceof Break) {
+          return null;
+        } else if (err instanceof Continue) {
+          continue;
+        } else {
+          throw err;
+        }
+      }
+    }
   }
 
   /**
@@ -365,9 +401,13 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     this.executeBlock(statements, null, new Environment(this.environment));
   }
 
-  public visitBreakStmt(stmt: BreakStmt): void {}
+  public visitBreakStmt(_stmt: BreakStmt): void {
+    throw new Break();
+  }
 
-  public visitContinueStmt(stmt: ContinueStmt): void {}
+  public visitContinueStmt(_stmt: ContinueStmt): void {
+    throw new Continue();
+  }
 
   /**
    * Evaluates the expression, produces applicable side effects
@@ -477,3 +517,12 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     console.error(`${error.message}\n[line ${error.token.span.start.line}]`);
   }
 }
+
+/**
+ * A special error to bypass Node's call stack for loops.
+ */
+export class Break extends Error {}
+/**
+ * A special error to bypass Node's call stack for loops.
+ */
+export class Continue extends Error {}

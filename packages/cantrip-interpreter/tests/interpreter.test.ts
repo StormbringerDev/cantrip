@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
-import { Interpreter } from "../src/interpreter.js";
+import { Break, Continue, Interpreter } from "../src/interpreter.js";
 import type { RuntimeValue } from "../src/interpreter.js";
 import {
   AssignExpr,
   BinaryExpr,
   BlockExpr,
   BlockStmt,
+  BreakStmt,
+  ContinueStmt,
   Expr,
   ExprStmt,
   GetExpr,
@@ -15,6 +17,7 @@ import {
   IndexSetExpr,
   LetStmt,
   LiteralExpr,
+  LoopExpr,
   SetExpr,
   Token,
   TokenType,
@@ -621,6 +624,38 @@ describe("interpreter", () => {
         expect(result).toBe(5);
       });
     });
+
+    describe("loop expressions", () => {
+      it("evaluates an infinite loop expression", () => {
+        const interpreter = new Interpreter();
+        (interpreter as any).environment.define("i", 0);
+        const incName = tok(TokenType.Identifier, "i", null, 8);
+        const incOperator = tok(TokenType.PlusEq, "+=", null, 10);
+        const incValue = new LiteralExpr(1, makeSpan(13, 14));
+        const increment = new ExprStmt(
+          new AssignExpr(incName, incOperator, incValue, makeSpan(8, 14)),
+          makeSpan(8, 15),
+        );
+        const breakCondition = new BinaryExpr(
+          new VarExpr(incName, makeSpan(19, 20)),
+          tok(TokenType.EqEq, "==", null, 21),
+          new LiteralExpr(5, makeSpan(24, 25)),
+          makeSpan(19, 25),
+        );
+        const breakBranch = new BlockExpr(
+          [new BreakStmt(tok(TokenType.Break, "break", null, 28), makeSpan(28, 34))],
+          null,
+          makeSpan(26, 36),
+        );
+        const breaker = new IfExpr(breakCondition, breakBranch, null, makeSpan(16, 36));
+        const body = new BlockExpr([increment], breaker, makeSpan(6, 38));
+        const expr = new LoopExpr(body, makeSpan(0, 38));
+        const loopSpy = vi.spyOn(interpreter, "visitAssignExpr");
+        const result = interpreter.visitLoopExpr(expr);
+        expect(result).toBeNull();
+        expect(loopSpy).toHaveBeenCalledTimes(5);
+      });
+    });
   });
 
   describe("statements", () => {
@@ -679,6 +714,25 @@ describe("interpreter", () => {
         interpreter.interpret([stmt]);
         expect(blockStmtSpy).toHaveBeenCalled();
         expect(letStmtSpy).toHaveBeenCalled();
+      });
+    });
+
+    describe("break statements", () => {
+      it("executes a break statement", () => {
+        const interpreter = new Interpreter();
+        const stmt = new BreakStmt(tok(TokenType.Break, "break"), makeSpan(0, 6));
+        expect(() => interpreter.visitBreakStmt(stmt)).toThrow(Break);
+      });
+    });
+
+    describe("continue statements", () => {
+      it("executes a continue statement", () => {
+        const interpreter = new Interpreter();
+        const stmt = new ContinueStmt(
+          tok(TokenType.Continue, "continue"),
+          makeSpan(0, 9),
+        );
+        expect(() => interpreter.visitContinueStmt(stmt)).toThrow(Continue);
       });
     });
   });
