@@ -1,5 +1,5 @@
-import { TokenType } from "@cantrip/ast";
-import {
+import { TokenType, VarExpr } from "@cantrip/ast";
+import type {
   AssignExpr,
   BinaryExpr,
   BlockExpr,
@@ -23,7 +23,6 @@ import {
   StmtVisitor,
   Token,
   UnaryExpr,
-  VarExpr,
   WhileStmt,
 } from "@cantrip/ast";
 import { Environment } from "./environment.js";
@@ -544,13 +543,29 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
   /**
    * Converts a value into a string.
    *
-   * @param value - The value to be stringified.
+   * @param cantripValue - The value to be stringified.
    * @returns The value as a string, `"nil"` for `null`.
    */
-  private stringify(value: RuntimeValue): string {
-    if (value === null) return "nil";
+  private stringify(cantripValue: RuntimeValue): string {
+    if (cantripValue === null) return "nil";
 
-    return value.toString();
+    if (Array.isArray(cantripValue)) {
+      const builder: string[] = [];
+      for (const element of cantripValue) {
+        builder.push(this.stringify(element));
+      }
+      return `[${builder.join(", ")}]`;
+    }
+
+    if (cantripValue instanceof Map) {
+      const builder: string[] = [];
+      for (const [key, value] of cantripValue) {
+        builder.push(`${key}: ${this.stringify(value)}`);
+      }
+      return `{ ${builder.join(", ")} }`;
+    }
+
+    return cantripValue.toString();
   }
 
   /**
