@@ -35,6 +35,7 @@ import {
   type CantripNative,
   isCantripCallable,
 } from "./callables.js";
+import * as stdlib from "./stdlib.js";
 
 /** Primative and structured literals passed around at runtime. */
 export type CantripValue =
@@ -91,8 +92,15 @@ export class RuntimeError extends Error {
  * compilation.
  */
 export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void> {
+  /** The global environment where stdlib functions are defined. */
+  public readonly globals = new Environment();
   /** The variable environment currently in scope. */
-  private environment = new Environment();
+  private environment = this.globals;
+
+  constructor() {
+    this.globals.define("print", stdlib.print);
+    this.globals.define("time", stdlib.time);
+  }
 
   /**
    * Executes statements one by one until the end of the array.

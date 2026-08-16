@@ -65,6 +65,7 @@ primary          = "true" | "false" | "nil"
                  | "(" expression ")"
                  | if_expr
                  | loop_expr
+                 | match_expr
                  | block ;               (* block as expression *)
 
 object           = "{" ( field ( "," field )* ","? ) ? "}" ;

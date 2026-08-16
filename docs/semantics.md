@@ -273,7 +273,6 @@ A while loop executes the block after the condition expression if the condition 
 
 ## Not yet implemented
 
-- Any standard library (`print`, etc.)
 - Runtime error reporting (type errors, undefined variables, ...)
 
 Until these are implemented, programs that use them will not execute correctly.
