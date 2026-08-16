@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { Break, Continue, Interpreter, Unit } from "../src/interpreter.js";
+import { Break, Continue, Interpreter, Return, Unit } from "../src/interpreter.js";
 import type { CantripValue } from "../src/interpreter.js";
 import {
   AssignExpr,
@@ -21,6 +21,7 @@ import {
   LiteralExpr,
   LoopExpr,
   MatchExpr,
+  ReturnStmt,
   SetExpr,
   Token,
   TokenType,
@@ -923,6 +924,18 @@ describe("interpreter", () => {
         interpreter.interpret([stmt]);
         expect(whileLoopSpy).toHaveBeenCalled();
         expect(incrementSpy).toHaveBeenCalledTimes(5);
+      });
+    });
+
+    describe("return statements", () => {
+      it("executes a return statement", () => {
+        const interpreter = new Interpreter();
+        const stmt = new ReturnStmt(
+          tok(TokenType.Return, "return"),
+          null,
+          makeSpan(0, 7),
+        );
+        expect(() => interpreter.visitReturnStmt(stmt)).toThrow(Return);
       });
     });
   });

@@ -26,12 +26,14 @@ parameters       = IDENTIFIER ( "," IDENTIFIER )* ","? ;
 let_decl         = "let" IDENTIFIER ( "=" expression )? ";" ;
 
 statement        = expr_stmt
+                 | return_stmt
                  | break_stmt
                  | continue_stmt
                  | while_stmt
                  | block ;               (* bare block as statement *)
 
 expr_stmt        = expression ";" ;
+return_stmt      = "return" expression? ";" ;
 break_stmt       = "break" expression? ";" ;
 continue_stmt    = "continue" ";" ;
 while_stmt       = "while" expression block ;

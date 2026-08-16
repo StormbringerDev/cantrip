@@ -20,6 +20,7 @@ import type {
   LiteralExpr,
   LoopExpr,
   MatchExpr,
+  ReturnStmt,
   SetExpr,
   Stmt,
   StmtVisitor,
@@ -28,7 +29,12 @@ import type {
   WhileStmt,
 } from "@cantrip/ast";
 import { Environment } from "./environment.js";
-import { CantripCallable, CantripFunction, isCantripCallable } from "./callables.js";
+import {
+  type CantripCallable,
+  CantripFunction,
+  type CantripNative,
+  isCantripCallable,
+} from "./callables.js";
 
 /** Primative and structured literals passed around at runtime. */
 export type CantripValue =
@@ -38,7 +44,8 @@ export type CantripValue =
   | null
   | CantripArray
   | CantripObject
-  | CantripCallable
+  | CantripFunction
+  | CantripNative
   | UnitType;
 
 /** Runtime representation of a Cantrip array. */
@@ -195,6 +202,12 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
     return this.executeBlock(statements, expr.value, new Environment(this.environment));
   }
 
+  /**
+   * Evaluates a call expression (`function(args)`).
+   *
+   * @param expr - The call expression to be evaluated.
+   * @returns The return value of the function's body.
+   */
   public visitCallExpr(expr: CallExpr): CantripValue {
     const callee = this.evaluate(expr.callee);
 
@@ -461,6 +474,7 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
    * Executes a break statement.
    *
    * @param stmt - The break statement to be executed.
+   * @throws {Break} with a value payload that is caught by {@link visitLoopExpr}.
    */
   public visitBreakStmt(stmt: BreakStmt): void {
     let value: CantripValue = Unit;
@@ -473,6 +487,7 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
    * Executes a continue statement.
    *
    * @param _stmt - The continue statement to be executed.
+   * @throws {Continue} which is caught by {@link visitLoopExpr} or {@link visitWhileStmt}.
    */
   public visitContinueStmt(_stmt: ContinueStmt): void {
     throw new Continue();
@@ -506,12 +521,27 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
    * @param stmt - The variable declaration statement.
    */
   public visitLetStmt(stmt: LetStmt): void {
-    let value: CantripValue | null = null;
+    let value: CantripValue = null;
     if (stmt.initializer !== null) {
       value = this.evaluate(stmt.initializer);
     }
 
     this.environment.define(stmt.name.lexeme, value);
+  }
+
+  /**
+   * Executes a return statement.
+   *
+   * @param stmt - The return statement to be executed.
+   * @throws {Return} with a value payload that is caught by `CantripFunction.call`.
+   */
+  public visitReturnStmt(stmt: ReturnStmt): void {
+    let value: CantripValue = Unit;
+    if (stmt.value !== null) {
+      value = this.evaluate(stmt.value);
+    }
+
+    throw new Return(value);
   }
 
   /**
@@ -641,12 +671,34 @@ export class Break extends Error {
   /** The value payload. */
   public readonly value: CantripValue;
 
+  /**
+   * @param value - The value payload to return.
+   */
   constructor(value: CantripValue) {
     super();
     this.value = value;
   }
 }
+
 /**
  * A special error to bypass Node's call stack for loops.
  */
 export class Continue extends Error {}
+
+/**
+ * A special error to bypass Node's call stack for functions.
+ *
+ * Carries a value as a payload.
+ */
+export class Return extends Error {
+  /** The value payload. */
+  public readonly value: CantripValue;
+
+  /**
+   * @param value - The value payload to return.
+   */
+  constructor(value: CantripValue) {
+    super();
+    this.value = value;
+  }
+}

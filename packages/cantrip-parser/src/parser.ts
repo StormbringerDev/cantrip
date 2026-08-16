@@ -18,6 +18,7 @@ import {
   LiteralExpr,
   LoopExpr,
   MatchExpr,
+  ReturnStmt,
   SetExpr,
   type Stmt,
   type Token,
@@ -187,6 +188,9 @@ export class Parser {
    * @returns The parsed statement.
    */
   private statement(): Stmt {
+    if (this.match(TokenType.Return)) {
+      return this.returnStatement();
+    }
     if (this.match(TokenType.Break)) {
       return this.breakStatement();
     }
@@ -233,11 +237,33 @@ export class Parser {
   }
 
   /**
+   * Parse a return statement.
+   *
+   * Grammar:
+   * ```
+   * return_stmt = "return" expression? ";" ;
+   * ```
+   *
+   * @returns A {@link BreakStmt} node.
+   */
+  private returnStatement(): Stmt {
+    const keyword = this.previous();
+    let value = null;
+    if (!this.check(TokenType.Semicolon)) {
+      value = this.expression();
+    }
+
+    const end = this.consume(TokenType.Semicolon, "Expect ';' after return value.").span
+      .end;
+    return new ReturnStmt(keyword, value, { start: keyword.span.start, end });
+  }
+
+  /**
    * Parse a break statement.
    *
    * Grammar:
    * ```
-   * break_stmt = "break" ";" ;
+   * break_stmt = "break" expression? ";" ;
    * ```
    *
    * @returns A {@link BreakStmt} node.
@@ -852,7 +878,13 @@ export class Parser {
 
     while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
       // Check for keyword indicating a declaration or statement
-      if (this.check(TokenType.Let)) {
+      if (
+        this.check(TokenType.Fn) ||
+        this.check(TokenType.Let) ||
+        this.check(TokenType.Return) ||
+        this.check(TokenType.Break) ||
+        this.check(TokenType.Continue)
+      ) {
         statements.push(this.declaration());
         continue;
       }

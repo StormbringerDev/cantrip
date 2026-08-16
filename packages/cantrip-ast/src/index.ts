@@ -24,6 +24,7 @@ export {
   ExprStmt,
   FunctionStmt,
   LetStmt,
+  ReturnStmt,
   Stmt,
   StmtVisitor,
   WhileStmt,

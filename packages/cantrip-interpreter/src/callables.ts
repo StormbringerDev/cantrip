@@ -1,5 +1,5 @@
 import type { BlockExpr, FunctionStmt } from "@cantrip/ast";
-import type { Interpreter, CantripValue } from "./interpreter.js";
+import { type Interpreter, type CantripValue, Return } from "./interpreter.js";
 import { Environment } from "./environment.js";
 
 /**
@@ -74,11 +74,17 @@ export class CantripFunction implements CantripCallable {
       environment.define(this.declaration.params[i].lexeme, args[i]);
     }
 
-    const value = interpreter.executeBlock(
-      (this.declaration.body as BlockExpr).statements.filter((s) => s !== null),
-      (this.declaration.body as BlockExpr).value,
-      environment,
-    );
+    let value: CantripValue;
+    try {
+      value = interpreter.executeBlock(
+        (this.declaration.body as BlockExpr).statements.filter((s) => s !== null),
+        (this.declaration.body as BlockExpr).value,
+        environment,
+      );
+    } catch (err) {
+      if (err instanceof Return) return err.value;
+      else throw err;
+    }
     return value;
   }
 }
@@ -120,7 +126,7 @@ export class CantripNative implements CantripCallable {
 
   /**
    * Executes the native function and returns its result
-   * (`nil` if native function normally returns `void`).
+   * (unit type if native function normally returns `void`).
    *
    * @param _interpreter - An interpreter instance (not used).
    * @param args - The values passed to the function.

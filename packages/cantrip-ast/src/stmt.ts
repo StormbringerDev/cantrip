@@ -41,6 +41,7 @@ export interface StmtVisitor<R> {
   visitExprStmt(stmt: ExprStmt): R;
   visitFunctionStmt(stmt: FunctionStmt): R;
   visitLetStmt(stmt: LetStmt): R;
+  visitReturnStmt(stmt: ReturnStmt): R;
   visitWhileStmt(stmt: WhileStmt): R;
 }
 
@@ -236,6 +237,39 @@ export class LetStmt extends Stmt {
   /** @inheritdoc */
   public accept<R>(visitor: StmtVisitor<R>): R {
     return visitor.visitLetStmt(this);
+  }
+}
+
+/**
+ * Return statement - an explicit return from a function.
+ *
+ * @example
+ * ```cantrip
+ * fn add(a, b) {
+ *   return a + b;
+ * }
+ * ```
+ */
+export class ReturnStmt extends Stmt {
+  /** The `return` keyword. Used for static analysis errors. */
+  public readonly keyword: Token;
+  /** Optional value expression to return from a function. */
+  public readonly value: Expr | null;
+
+  /**
+   * @param keyword - The `return` keyword.
+   * @param value - The value being returned.
+   * @param span - The source span of the entire statement.
+   */
+  constructor(keyword: Token, value: Expr | null, span: Span) {
+    super(span);
+    this.keyword = keyword;
+    this.value = value;
+  }
+
+  /** @inheritdoc */
+  public accept<R>(visitor: StmtVisitor<R>): R {
+    return visitor.visitReturnStmt(this);
   }
 }
 

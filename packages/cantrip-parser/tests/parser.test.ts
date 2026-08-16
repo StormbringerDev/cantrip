@@ -20,6 +20,7 @@ import {
   LiteralExpr,
   LoopExpr,
   MatchExpr,
+  ReturnStmt,
   SetExpr,
   Token,
   TokenType,
@@ -1724,6 +1725,39 @@ describe("Parser", () => {
         expect((ast[0] as WhileStmt).condition).toBeInstanceOf(VarExpr);
         expect((ast[0] as WhileStmt).body).toBeInstanceOf(BlockStmt);
         expect(((ast[0] as WhileStmt).body as BlockStmt).statements).toHaveLength(1);
+      });
+    });
+
+    describe("return statements", () => {
+      it("parses a bare return statement", () => {
+        const tokens = [
+          tok(TokenType.Return, "return"),
+          tok(TokenType.Semicolon, ";", null, 6),
+          tok(TokenType.Eof, "", null, 7),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ReturnStmt);
+        expect((ast[0] as ReturnStmt).keyword.type).toBe(TokenType.Return);
+        expect((ast[0] as ReturnStmt).value).toBeNull();
+      });
+
+      it("parses a return statement with a value", () => {
+        const tokens = [
+          tok(TokenType.Return, "return"),
+          tok(TokenType.Number, "42", 42, 7),
+          tok(TokenType.Semicolon, ";", null, 8),
+          tok(TokenType.Eof, "", null, 9),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ReturnStmt);
+        expect((ast[0] as ReturnStmt).keyword.type).toBe(TokenType.Return);
+        expect((ast[0] as ReturnStmt).value).toBeInstanceOf(LiteralExpr);
       });
     });
   });

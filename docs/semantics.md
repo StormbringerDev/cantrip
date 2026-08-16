@@ -255,6 +255,10 @@ x = 42;
 print(x);
 ```
 
+### Return statements
+
+These statements end the execution of a function early and return the value following `return` if present or the unit type otherwise.
+
 ### Break statements
 
 These statements exit out of the immediately enclosing loop. Break statements can return values from `loop` expressions.
@@ -269,7 +273,6 @@ A while loop executes the block after the condition expression if the condition 
 
 ## Not yet implemented
 
-- `return`
 - Any standard library (`print`, etc.)
 - Runtime error reporting (type errors, undefined variables, ...)
 
