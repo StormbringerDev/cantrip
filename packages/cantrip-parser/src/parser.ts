@@ -4,9 +4,11 @@ import {
   BlockExpr,
   BlockStmt,
   BreakStmt,
+  CallExpr,
   ContinueStmt,
   type Expr,
   ExprStmt,
+  FunctionStmt,
   GetExpr,
   GroupingExpr,
   IfExpr,
@@ -24,6 +26,7 @@ import {
   VarExpr,
   WhileStmt,
 } from "@cantrip/ast";
+import type { Span } from "@cantrip/types";
 
 /**
  * Error thrown (and collected) when the parser encounters a syntax error.
@@ -97,6 +100,7 @@ export class Parser {
    */
   private declaration(): Stmt | null {
     try {
+      if (this.match(TokenType.Fn)) return this.functionDecl();
       if (this.match(TokenType.Let)) return this.letDecl();
 
       return this.statement();
@@ -104,6 +108,48 @@ export class Parser {
       this.synchronize();
       return null;
     }
+  }
+
+  /**
+   * Parse a function declaration.
+   *
+   * Grammar (simplified):
+   * ```
+   * fn_decl = "fn" IDENTIFIER "(" ( IDENTIFIER "," ... ","? )? ")" block ;
+   * ```
+   *
+   * @returns A {@link FunctionStmt} node.
+   */
+  private functionDecl(): Stmt {
+    const start = this.previous().span.start;
+    const name = this.consume(TokenType.Identifier, "Expect function name.");
+    this.consume(TokenType.LeftParen, "Expect '(' after function name.");
+    const parameters: Token[] = [];
+
+    // Parse identifiers until right paren is reached.
+    if (!this.check(TokenType.RightParen)) {
+      do {
+        if (parameters.length >= 255) {
+          this.error(this.peek(), "Can't have more than 255 parameters.");
+        }
+
+        parameters.push(this.consume(TokenType.Identifier, "Expect parameter name."));
+
+        // Check for trailing semicolon.
+        if (
+          this.check(TokenType.Comma) &&
+          this.peekNext().type === TokenType.RightParen
+        ) {
+          this.advance();
+          break;
+        }
+      } while (this.match(TokenType.Comma));
+    }
+    this.consume(TokenType.RightParen, "Expect ')' after parameters.");
+
+    this.consume(TokenType.LeftBrace, "Expect '{' before function body.");
+    const body = this.blockExpression();
+    return new FunctionStmt(name, parameters, body, { start, end: body.span.end });
   }
 
   /**
@@ -471,16 +517,18 @@ export class Parser {
   /**
    * Parse postfix call-like expressions: property access and indexing.
    *
-   * Handles chains such as `obj.prop[0].name`.
+   * Handles chains such as `obj.prop[0].name()`.
    *
-   * @returns A {@link GetExpr}, {@link IndexExpr}, or a primary expression.
+   * @returns A {@link CallExpr}, {@link GetExpr}, {@link IndexExpr}, or a primary expression.
    */
   private call(): Expr {
     const start = this.peek().span.start;
     let expr = this.primary();
 
     while (true) {
-      if (this.match(TokenType.LeftBracket)) {
+      if (this.match(TokenType.LeftParen)) {
+        expr = this.finishCall(expr);
+      } else if (this.match(TokenType.LeftBracket)) {
         const bracket = this.previous();
         const index = this.expression();
         const end = this.consume(
@@ -501,6 +549,40 @@ export class Parser {
     }
 
     return expr;
+  }
+
+  /**
+   * Parses the arguments of a function call.
+   *
+   * @param callee - The expression before the '('.
+   * @returns A {@link CallExpr}.
+   */
+  private finishCall(callee: Expr): Expr {
+    const args: Expr[] = [];
+
+    // Parse expressions until right paren is reached.
+    if (!this.check(TokenType.RightParen)) {
+      do {
+        if (args.length >= 255) {
+          this.error(this.peek(), "Can't have more than 255 arguments.");
+        }
+
+        args.push(this.expression());
+
+        // Check for trailing semicolon.
+        if (
+          this.check(TokenType.Comma) &&
+          this.peekNext().type === TokenType.RightParen
+        ) {
+          this.advance();
+          break;
+        }
+      } while (this.match(TokenType.Comma));
+    }
+    const paren = this.consume(TokenType.RightParen, "Expect ')' after parameters.");
+    const span: Span = { start: callee.span.start, end: paren.span.end };
+
+    return new CallExpr(callee, paren, args, span);
   }
 
   /**

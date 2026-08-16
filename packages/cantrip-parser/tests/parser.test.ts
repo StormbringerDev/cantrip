@@ -6,9 +6,11 @@ import {
   BlockExpr,
   BlockStmt,
   BreakStmt,
+  CallExpr,
   ContinueStmt,
   type Expr,
   ExprStmt,
+  FunctionStmt,
   GetExpr,
   GroupingExpr,
   IfExpr,
@@ -1409,7 +1411,7 @@ describe("Parser", () => {
       });
     });
 
-    describe("parses a match expression", () => {
+    describe("match expressions", () => {
       it("parses a match expression", () => {
         const tokens = [
           tok(TokenType.Match, "match"),
@@ -1452,6 +1454,53 @@ describe("Parser", () => {
         expect(((ast[0] as ExprStmt).expr as MatchExpr).branches).toEqual(expected);
       });
     });
+
+    describe("call expressions", () => {
+      it("parses a call expression with no arguments", () => {
+        const tokens = [
+          tok(TokenType.Identifier, "greetWorld"),
+          tok(TokenType.LeftParen, "(", null, 11),
+          tok(TokenType.RightParen, ")", null, 12),
+          tok(TokenType.Semicolon, ";", null, 13),
+          tok(TokenType.Eof, "", null, 14),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ExprStmt);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(CallExpr);
+        expect(((ast[0] as ExprStmt).expr as CallExpr).callee).toBeInstanceOf(VarExpr);
+        expect(((ast[0] as ExprStmt).expr as CallExpr).paren.type).toBe(
+          TokenType.RightParen,
+        );
+        expect(((ast[0] as ExprStmt).expr as CallExpr).args).toHaveLength(0);
+      });
+
+      it("parses a call expression with arguments", () => {
+        const tokens = [
+          tok(TokenType.Identifier, "add"),
+          tok(TokenType.LeftParen, "(", null, 4),
+          tok(TokenType.Number, "1", 1, 5),
+          tok(TokenType.Comma, ",", null, 6),
+          tok(TokenType.Number, "2", 2, 8),
+          tok(TokenType.RightParen, ")", null, 9),
+          tok(TokenType.Semicolon, ";", null, 10),
+          tok(TokenType.Eof, "", null, 11),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ExprStmt);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(CallExpr);
+        expect(((ast[0] as ExprStmt).expr as CallExpr).callee).toBeInstanceOf(VarExpr);
+        expect(((ast[0] as ExprStmt).expr as CallExpr).paren.type).toBe(
+          TokenType.RightParen,
+        );
+        expect(((ast[0] as ExprStmt).expr as CallExpr).args).toHaveLength(2);
+      });
+    });
   });
 
   describe("statements", () => {
@@ -1488,6 +1537,53 @@ describe("Parser", () => {
         expect(ast[0]).toBeInstanceOf(LetStmt);
         expect((ast[0] as LetStmt).name.lexeme).toBe("answer");
         expect((ast[0] as LetStmt).initializer).toBeInstanceOf(LiteralExpr);
+      });
+
+      it("parses a function declaration with no parameters", () => {
+        const tokens = [
+          tok(TokenType.Fn, "fn"),
+          tok(TokenType.Identifier, "five", null, 4),
+          tok(TokenType.LeftParen, "(", null, 8),
+          tok(TokenType.RightParen, ")", null, 9),
+          tok(TokenType.LeftBrace, "{", null, 11),
+          tok(TokenType.Number, "5", 5, 13),
+          tok(TokenType.RightBrace, "}", null, 15),
+          tok(TokenType.Eof, "", null, 16),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(FunctionStmt);
+        expect((ast[0] as FunctionStmt).name.lexeme).toBe("five");
+        expect((ast[0] as FunctionStmt).params).toHaveLength(0);
+        expect((ast[0] as FunctionStmt).body).toBeInstanceOf(BlockExpr);
+      });
+
+      it("parses a function declaration with parameters", () => {
+        const tokens = [
+          tok(TokenType.Fn, "fn"),
+          tok(TokenType.Identifier, "add", null, 4),
+          tok(TokenType.LeftParen, "(", null, 7),
+          tok(TokenType.Identifier, "a", null, 8),
+          tok(TokenType.Comma, ",", null, 9),
+          tok(TokenType.Identifier, "b", null, 11),
+          tok(TokenType.RightParen, ")", null, 12),
+          tok(TokenType.LeftBrace, "{", null, 14),
+          tok(TokenType.Identifier, "a", null, 16),
+          tok(TokenType.Plus, "+", null, 18),
+          tok(TokenType.Identifier, "b", null, 20),
+          tok(TokenType.RightBrace, "}", null, 22),
+          tok(TokenType.Eof, "", null, 23),
+        ];
+        const parser = new Parser(tokens);
+        const { ast } = parser.parse();
+
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(FunctionStmt);
+        expect((ast[0] as FunctionStmt).name.lexeme).toBe("add");
+        expect((ast[0] as FunctionStmt).params).toHaveLength(2);
+        expect((ast[0] as FunctionStmt).body).toBeInstanceOf(BlockExpr);
       });
     });
 

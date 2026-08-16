@@ -15,8 +15,13 @@ Cantrip mixes statements and expressions.
 ```ebnf
 program          = declaration* EOF ;
 
-declaration      = let_decl
+declaration      = fn_decl
+                 | let_decl
                  | statement ;
+
+fn_decl          = "fn" IDENTIFIER "(" parameters? ")" block ;
+
+parameters       = IDENTIFIER ( "," IDENTIFIER )* ","? ;
 
 let_decl         = "let" IDENTIFIER ( "=" expression )? ";" ;
 
@@ -48,7 +53,8 @@ factor           = unary ( ( "/" | "*" | "%" ) unary )* ;
 unary            = ( "!" | "-" ) unary
                  | call ;
 
-call             = primary ( "[" expression "]" | "." IDENTIFIER )* ;
+call             = primary ( "(" arguments? ")" | "[" expression "]" | "." IDENTIFIER )* ;
+arguments        = expression ( "," expression )* ","? ;
 
 primary          = "true" | "false" | "nil"
                  | NUMBER | STRING
@@ -87,7 +93,7 @@ block            = "{" declaration* "}" ;
 | `while`                     | yes        | no          | Statement only for now                  |
 | `match`                     | no         | yes         |                                         |
 | `block`                     | yes        | yes         | Last expression becomes the block value |
-| `fn`                        | yes (decl) | no          | Not first-class yet                     |
+| `fn`                        | yes (decl) | no          | First class values                      |
 | `let`                       | yes (decl) | no          |                                         |
 | `return`/`break`/`continue` | yes        | no          |                                         |
 
@@ -96,10 +102,11 @@ block            = "{" declaration* "}" ;
 | Array          | `[elements]`   | Dynamic list   | Can be initialized without elements |
 | Object         | `{key: value}` | Key-value pair | Can be initialized without fields   |
 
+Function declarations/calls can have up to 255 parameters/arguments and the parser will push a parse error if this limit is broken.
+
 ### Open questions / deferred features
 
 - `for` loops
-- First-class functions / closures
 - Pattern matching beyond simple `match` expressions
 
 ### Source of truth

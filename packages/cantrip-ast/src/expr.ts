@@ -3,13 +3,13 @@ import type { Stmt } from "./stmt.js";
 import type { Token } from "./token.js";
 
 /** Primitive values that can appear in a Cantrip program. */
-type CantripValue = number | string | boolean | null;
+type AstValue = number | string | boolean | null;
 
 /** Array literal represented as a list of expressions. */
-type CantripArray = Expr[];
+type AstArray = Expr[];
 
 /** Object literal represented as a map from string keys to expressions. */
-type CantripObject = Map<string, Expr>;
+type AstObject = Map<string, Expr>;
 
 /**
  * Base class for every expression node in the Cantrip AST.
@@ -47,6 +47,7 @@ export interface ExprVisitor<R> {
   visitAssignExpr(expr: AssignExpr): R;
   visitBinaryExpr(expr: BinaryExpr): R;
   visitBlockExpr(expr: BlockExpr): R;
+  visitCallExpr(expr: CallExpr): R;
   visitGetExpr(expr: GetExpr): R;
   visitGroupingExpr(expr: GroupingExpr): R;
   visitIfExpr(expr: IfExpr): R;
@@ -161,6 +162,41 @@ export class BlockExpr extends Expr {
   /** @inheritdoc */
   public accept<R>(visitor: ExprVisitor<R>): R {
     return visitor.visitBlockExpr(this);
+  }
+}
+
+/**
+ * Function call: `function(arguments)`.
+ *
+ * @example
+ * ```cantrip
+ * add(1, 2)
+ * ```
+ */
+export class CallExpr extends Expr {
+  /** The expression resolving to a function value. */
+  public readonly callee: Expr;
+  /** The right parenthesis; used for error reporting. */
+  public readonly paren: Token;
+  /** Argument expressions passed to the funciton. */
+  public readonly args: Expr[];
+
+  /**
+   * @param callee - The function value expression.
+   * @param paren - The right paren token.
+   * @param args - The list of argument expressions.
+   * @param span - The source span of the entire call expression.
+   */
+  constructor(callee: Expr, paren: Token, args: Expr[], span: Span) {
+    super(span);
+    this.callee = callee;
+    this.paren = paren;
+    this.args = args;
+  }
+
+  /** @inheritdoc */
+  public accept<R>(visitor: ExprVisitor<R>): R {
+    return visitor.visitCallExpr(this);
   }
 }
 
@@ -348,13 +384,13 @@ export class LiteralExpr extends Expr {
    * Arrays and objects are stored as their AST representation
    * (`Expr[]` and `Map<string, Expr>` respectively).
    */
-  public readonly value: CantripValue | CantripArray | CantripObject;
+  public readonly value: AstValue | AstArray | AstObject;
 
   /**
    * @param value - The literal value or nested expression structure.
    * @param span - Source span of the literal.
    */
-  constructor(value: CantripValue | CantripArray | CantripObject, span: Span) {
+  constructor(value: AstValue | AstArray | AstObject, span: Span) {
     super(span);
     this.value = value;
   }

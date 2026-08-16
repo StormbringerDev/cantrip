@@ -5,10 +5,12 @@ import type {
   BlockExpr,
   BlockStmt,
   BreakStmt,
+  CallExpr,
   ContinueStmt,
   Expr,
   ExprStmt,
   ExprVisitor,
+  FunctionStmt,
   GetExpr,
   GroupingExpr,
   IfExpr,
@@ -26,16 +28,29 @@ import type {
   WhileStmt,
 } from "@cantrip/ast";
 import { Environment } from "./environment.js";
+import { CantripCallable, CantripFunction, isCantripCallable } from "./callables.js";
 
 /** Primative and structured literals passed around at runtime. */
-export type RuntimeValue =
-  number | string | boolean | null | RuntimeArray | RuntimeObject;
+export type CantripValue =
+  | number
+  | string
+  | boolean
+  | null
+  | CantripArray
+  | CantripObject
+  | CantripCallable
+  | UnitType;
 
 /** Runtime representation of a Cantrip array. */
-export type RuntimeArray = RuntimeValue[];
+export type CantripArray = CantripValue[];
 
 /** Runtime representation of a Cantrip object. */
-export type RuntimeObject = Map<string, RuntimeValue>;
+export type CantripObject = Map<string, CantripValue>;
+
+/** Unit type for functions that do not return a meaningful value. */
+export const Unit = Symbol.for("cantrip.unit");
+/** Type alias for unit type. */
+export type UnitType = typeof Unit;
 
 /**
  * Error thrown by interpreter functions and caught by the interpreter.
@@ -68,7 +83,7 @@ export class RuntimeError extends Error {
  * Its semantics will inform the bytecode interpreter and later JIT
  * compilation.
  */
-export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void> {
+export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void> {
   /** The variable environment currently in scope. */
   private environment = new Environment();
 
@@ -93,7 +108,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * @param expr - The assignment expression to be evaluated.
    * @returns The value being assigned.
    */
-  public visitAssignExpr(expr: AssignExpr): RuntimeValue {
+  public visitAssignExpr(expr: AssignExpr): CantripValue {
     let value = this.evaluate(expr.value);
 
     switch (expr.operator.type) {
@@ -126,7 +141,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * @param expr - The binary expression to be evaluated.
    * @returns The result of the expression.
    */
-  public visitBinaryExpr(expr: BinaryExpr): RuntimeValue {
+  public visitBinaryExpr(expr: BinaryExpr): CantripValue {
     const left = this.evaluate(expr.left);
 
     if (expr.operator.type === TokenType.Or) {
@@ -173,11 +188,33 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * Evaluates a block expression (`{ ... }`).
    *
    * @param expr - The block expression to be evaluated.
-   * @returns The block's value expression result or `null`.
+   * @returns The block's value expression result or `Unit`.
    */
-  public visitBlockExpr(expr: BlockExpr): RuntimeValue {
+  public visitBlockExpr(expr: BlockExpr): CantripValue {
     const statements = expr.statements.filter((s) => s !== null);
     return this.executeBlock(statements, expr.value, new Environment(this.environment));
+  }
+
+  public visitCallExpr(expr: CallExpr): CantripValue {
+    const callee = this.evaluate(expr.callee);
+
+    const args: CantripValue[] = [];
+    for (const arg of expr.args) {
+      args.push(this.evaluate(arg));
+    }
+
+    if (!isCantripCallable(callee)) {
+      throw new RuntimeError(expr.paren, "Can only call functions.");
+    }
+
+    const func = callee as CantripCallable;
+    if (args.length !== func.arity()) {
+      throw new RuntimeError(
+        expr.paren,
+        `Expected ${func.arity()} arguments but got ${args.length}.`,
+      );
+    }
+    return func.call(this, args);
   }
 
   /**
@@ -186,7 +223,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * @param expr - The get expression to be evaluated.
    * @returns - The value of the target field.
    */
-  public visitGetExpr(expr: GetExpr): RuntimeValue {
+  public visitGetExpr(expr: GetExpr): CantripValue {
     const object = this.evaluate(expr.object);
     if (object instanceof Map) {
       return object.get(expr.name.lexeme)!;
@@ -201,7 +238,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * @param expr - The grouping expression to be evaluated.
    * @returns The result of the expression.
    */
-  public visitGroupingExpr(expr: GroupingExpr): RuntimeValue {
+  public visitGroupingExpr(expr: GroupingExpr): CantripValue {
     return this.evaluate(expr.expression);
   }
 
@@ -211,7 +248,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * @param expr - The if expression to be evaluated.
    * @returns The result of the chosen branch.
    */
-  public visitIfExpr(expr: IfExpr): RuntimeValue {
+  public visitIfExpr(expr: IfExpr): CantripValue {
     if (this.isTruthy(this.evaluate(expr.condition))) {
       return this.evaluate(expr.thenBranch);
     } else if (expr.elseBranch !== null) {
@@ -226,7 +263,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * @param expr - The index expression to be evaluated.
    * @returns The array element at the given index.
    */
-  public visitIndexExpr(expr: IndexExpr): RuntimeValue {
+  public visitIndexExpr(expr: IndexExpr): CantripValue {
     const indexee = this.evaluate(expr.indexee);
 
     if (Array.isArray(indexee)) {
@@ -266,7 +303,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * @param expr - The index set expression to be evaluated.
    * @returns The value assigned to the structure index.
    */
-  public visitIndexSetExpr(expr: IndexSetExpr): RuntimeValue {
+  public visitIndexSetExpr(expr: IndexSetExpr): CantripValue {
     const indexee = this.evaluate(expr.indexee);
 
     if (Array.isArray(indexee)) {
@@ -301,7 +338,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * @param expr - The literal expression to be evaluated.
    * @returns The result of the expression.
    */
-  public visitLiteralExpr(expr: LiteralExpr): RuntimeValue {
+  public visitLiteralExpr(expr: LiteralExpr): CantripValue {
     if (Array.isArray(expr.value)) {
       const array = [];
       for (const value of expr.value) {
@@ -311,7 +348,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
     }
 
     if (expr.value instanceof Map) {
-      const object = new Map<string, RuntimeValue>();
+      const object = new Map<string, CantripValue>();
       for (const [key, value] of expr.value) {
         object.set(key, this.evaluate(value));
       }
@@ -327,7 +364,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * @param expr - The loop expression to be evaluated.
    * @returns `null` until value-carrying break is implemented.
    */
-  public visitLoopExpr(expr: LoopExpr): RuntimeValue {
+  public visitLoopExpr(expr: LoopExpr): CantripValue {
     while (true) {
       try {
         this.evaluate(expr.body);
@@ -345,7 +382,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * @param expr - The match expression to be evaluated.
    * @returns The expression result of the chosen branch.
    */
-  public visitMatchExpr(expr: MatchExpr): RuntimeValue {
+  public visitMatchExpr(expr: MatchExpr): CantripValue {
     const matcher = this.evaluate(expr.matcher);
     for (const [key, value] of expr.branches) {
       // Check for underscore
@@ -368,7 +405,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * @param expr - The set expression to be evaluated.
    * @returns The value assigned to the target object field.
    */
-  public visitSetExpr(expr: SetExpr): RuntimeValue {
+  public visitSetExpr(expr: SetExpr): CantripValue {
     const object = this.evaluate(expr.object);
 
     if (!(object instanceof Map)) {
@@ -386,7 +423,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * @param expr - The unary expression to be evaluated.
    * @returns The result of the expression.
    */
-  public visitUnaryExpr(expr: UnaryExpr): RuntimeValue {
+  public visitUnaryExpr(expr: UnaryExpr): CantripValue {
     const right = this.evaluate(expr.right);
 
     switch (expr.operator.type) {
@@ -406,7 +443,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * @param expr - The variable expression to be evaluated.
    * @returns The value of the variable if it exists in scope.
    */
-  public visitVarExpr(expr: VarExpr): RuntimeValue {
+  public visitVarExpr(expr: VarExpr): CantripValue {
     return this.environment.get(expr.name);
   }
 
@@ -426,7 +463,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * @param stmt - The break statement to be executed.
    */
   public visitBreakStmt(stmt: BreakStmt): void {
-    let value = null;
+    let value: CantripValue = Unit;
     if (stmt.value !== null) value = this.evaluate(stmt.value);
 
     throw new Break(value);
@@ -452,13 +489,24 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
   }
 
   /**
+   * Executes a function declaration and adds it to the current
+   * environment.
+   *
+   * @param stmt - The function declaration statement.
+   */
+  public visitFunctionStmt(stmt: FunctionStmt): void {
+    const func = new CantripFunction(stmt, this.environment);
+    this.environment.define(stmt.name.lexeme, func);
+  }
+
+  /**
    * Executes a variable declaration and adds it to the current
    * environment.
    *
    * @param stmt - The variable declaration statement.
    */
   public visitLetStmt(stmt: LetStmt): void {
-    let value: RuntimeValue | null = null;
+    let value: CantripValue | null = null;
     if (stmt.initializer !== null) {
       value = this.evaluate(stmt.initializer);
     }
@@ -489,7 +537,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * @param expr - The expression to be evaluated.
    * @returns The result of the given expression.
    */
-  private evaluate(expr: Expr): RuntimeValue {
+  private evaluate(expr: Expr): CantripValue | typeof Unit {
     return expr.accept(this);
   }
 
@@ -509,13 +557,13 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * @param value - The value of the block.
    * @param environment - The new environment.
    */
-  private executeBlock(
+  public executeBlock(
     statements: Stmt[],
     value: Expr | null,
     environment: Environment,
-  ): RuntimeValue {
+  ): CantripValue {
     const previous = this.environment;
-    let blockValue: RuntimeValue = null;
+    let blockValue: CantripValue = Unit;
     try {
       this.environment = environment;
 
@@ -537,8 +585,9 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * @param value - The value to be tested for truthiness.
    * @returns `false` for `nil` and `false`, `true` for everything else.
    */
-  private isTruthy(value: RuntimeValue): boolean {
+  private isTruthy(value: CantripValue): boolean {
     if (value === null) return false;
+    if (value === Unit) return false;
     if (typeof value === "boolean") return value;
     return true;
   }
@@ -549,7 +598,7 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
    * @param cantripValue - The value to be stringified.
    * @returns The value as a string, `"nil"` for `null`.
    */
-  private stringify(cantripValue: RuntimeValue): string {
+  private stringify(cantripValue: CantripValue): string {
     if (cantripValue === null) return "nil";
 
     if (Array.isArray(cantripValue)) {
@@ -559,6 +608,8 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
       }
       return `[${builder.join(", ")}]`;
     }
+
+    if (cantripValue === Unit) return "()";
 
     if (cantripValue instanceof Map) {
       const builder: string[] = [];
@@ -588,9 +639,9 @@ export class Interpreter implements ExprVisitor<RuntimeValue>, StmtVisitor<void>
  */
 export class Break extends Error {
   /** The value payload. */
-  public readonly value: RuntimeValue;
+  public readonly value: CantripValue;
 
-  constructor(value: RuntimeValue) {
+  constructor(value: CantripValue) {
     super();
     this.value = value;
   }

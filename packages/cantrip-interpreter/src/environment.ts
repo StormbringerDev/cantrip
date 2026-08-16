@@ -1,5 +1,5 @@
 import type { Token } from "@cantrip/ast";
-import { RuntimeError, type RuntimeValue } from "./interpreter.js";
+import { RuntimeError, type CantripValue } from "./interpreter.js";
 
 /**
  * An environment containing any variables and functions
@@ -9,7 +9,7 @@ export class Environment {
   /** The enclosing environment */
   public readonly enclosing: Environment | null;
   /** The variables and functions bound by identifier. */
-  private values = new Map<string, RuntimeValue>();
+  private values = new Map<string, CantripValue>();
 
   /**
    * @param enclosing - The environment that encloses the new one.
@@ -25,7 +25,7 @@ export class Environment {
    * @returns The value associated with the name.
    * @throws {RuntimeError} if the name is not in the environment.
    */
-  public get(name: Token): RuntimeValue {
+  public get(name: Token): CantripValue {
     if (this.values.has(name.lexeme)) {
       return this.values.get(name.lexeme)!;
     }
@@ -42,7 +42,7 @@ export class Environment {
    * @param value - The value being assigned.
    * @throws {RuntimeError} if the name is not in the environment.
    */
-  public assign(name: Token, value: RuntimeValue): void {
+  public assign(name: Token, value: CantripValue): void {
     if (this.values.has(name.lexeme)) {
       this.values.set(name.lexeme, value);
       return;
@@ -63,7 +63,7 @@ export class Environment {
    * @param name - The name of the variable to be defined.
    * @param value - The value of the variable.
    */
-  public define(name: string, value: RuntimeValue): void {
+  public define(name: string, value: CantripValue): void {
     this.values.set(name, value);
   }
 }

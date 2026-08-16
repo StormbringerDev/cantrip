@@ -21,7 +21,7 @@ declaration      = fn_decl
 
 fn_decl          = "fn" IDENTIFIER "(" parameters? ")" block ;
 
-parameters       = IDENTIFIER ( "," IDENTIFIER )* ;
+parameters       = IDENTIFIER ( "," IDENTIFIER )* ","? ;
 
 let_decl         = "let" IDENTIFIER ( "=" expression )? ";" ;
 
@@ -55,8 +55,8 @@ factor           = unary ( ( "/" | "*" | "%" ) unary )* ;
 unary            = ( "!" | "-" ) unary
                  | call ;
 
-call             = primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
-arguments        = expression ( "," expression )* ;
+call             = primary ( "(" arguments? ")" | "[" expression "]" | "." IDENTIFIER )* ;
+arguments        = expression ( "," expression )* ","? ;
 
 primary          = "true" | "false" | "nil"
                  | NUMBER | STRING
@@ -105,10 +105,11 @@ block            = "{" declaration* "}" ;
 | Array          | `[elements]`   | Dynamic list   | Can be initialized without elements |
 | Object         | `{key: value}` | Key-value pair | Can be initialized without fields   |
 
+Function declarations/calls can have up to 255 parameters/arguments and the parser will push a parse error if this limit is broken.
+
 ### Open questions / deferred features
 
 - `for` loops
-- First-class functions / closures
 - Pattern matching beyond simple `match` expressions
 
 ### Source of truth

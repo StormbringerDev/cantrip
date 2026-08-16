@@ -39,6 +39,7 @@ export interface StmtVisitor<R> {
   visitBreakStmt(stmt: BreakStmt): R;
   visitContinueStmt(stmt: ContinueStmt): R;
   visitExprStmt(stmt: ExprStmt): R;
+  visitFunctionStmt(stmt: FunctionStmt): R;
   visitLetStmt(stmt: LetStmt): R;
   visitWhileStmt(stmt: WhileStmt): R;
 }
@@ -167,6 +168,36 @@ export class ExprStmt extends Stmt {
   /** @inheritdoc */
   public accept<R>(visitor: StmtVisitor<R>): R {
     return visitor.visitExprStmt(this);
+  }
+}
+
+/**
+ * Function declaration: `fn name(params) { ... }`.
+ *
+ * @example
+ * ```cantrip
+ * fn add(a, b) {
+ *   a + b
+ * }
+ * ```
+ */
+export class FunctionStmt extends Stmt {
+  /** The name of the function being declared. */
+  public readonly name: Token;
+  /** The parameters of the function. */
+  public readonly params: Token[];
+  /** The block body of the function. */
+  public readonly body: Expr;
+
+  constructor(name: Token, params: Token[], body: Expr, span: Span) {
+    super(span);
+    this.name = name;
+    this.params = params;
+    this.body = body;
+  }
+
+  public accept<R>(visitor: StmtVisitor<R>): R {
+    return visitor.visitFunctionStmt(this);
   }
 }
 

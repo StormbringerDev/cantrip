@@ -1,15 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
-import { Break, Continue, Interpreter } from "../src/interpreter.js";
-import type { RuntimeValue } from "../src/interpreter.js";
+import { Break, Continue, Interpreter, Unit } from "../src/interpreter.js";
+import type { CantripValue } from "../src/interpreter.js";
 import {
   AssignExpr,
   BinaryExpr,
   BlockExpr,
   BlockStmt,
   BreakStmt,
+  CallExpr,
   ContinueStmt,
   Expr,
   ExprStmt,
+  FunctionStmt,
   GetExpr,
   GroupingExpr,
   IfExpr,
@@ -27,6 +29,7 @@ import {
   WhileStmt,
 } from "@cantrip/ast";
 import type { Span } from "@cantrip/types";
+import { CantripFunction } from "../src/callables.js";
 
 /** Create single-line Span from start/end offsets (column == offset) */
 function makeSpan(start: number, end: number): Span {
@@ -110,7 +113,7 @@ describe("interpreter", () => {
           makeSpan(0, 27),
         );
         const result = interpreter.visitLiteralExpr(expr);
-        const expected = new Map<string, RuntimeValue>([
+        const expected = new Map<string, CantripValue>([
           ["name", "Reyek"],
           ["level", 3],
         ]);
@@ -343,7 +346,7 @@ describe("interpreter", () => {
     describe("assignment expressions", () => {
       it("evaluates an assignment expression", () => {
         const interpreter = new Interpreter();
-        (interpreter as any).environment.define("x", null);
+        (interpreter as any).environment.define("x", Unit);
         const name = tok(TokenType.Identifier, "x");
         const operator = tok(TokenType.Eq, "=", null, 3);
         const value = new LiteralExpr(42, makeSpan(5, 7));
@@ -429,7 +432,7 @@ describe("interpreter", () => {
     describe("get expressions", () => {
       it("retrieves an object property", () => {
         const interpreter = new Interpreter();
-        const objValue = new Map<string, RuntimeValue>([
+        const objValue = new Map<string, CantripValue>([
           ["name", "Reyek"],
           ["level", 3],
         ]);
@@ -445,7 +448,7 @@ describe("interpreter", () => {
     describe("set expressions", () => {
       it("sets an object property", () => {
         const interpreter = new Interpreter();
-        const objValue = new Map<string, RuntimeValue>([
+        const objValue = new Map<string, CantripValue>([
           ["name", "Reyek"],
           ["level", 3],
         ]);
@@ -458,7 +461,7 @@ describe("interpreter", () => {
         const expr = new SetExpr(object, name, operator, value, makeSpan(0, 17));
         const result = interpreter.visitSetExpr(expr);
         expect(result).toBe(4);
-        const expected = new Map<string, RuntimeValue>([
+        const expected = new Map<string, CantripValue>([
           ["name", "Reyek"],
           ["level", 4],
         ]);
@@ -480,7 +483,7 @@ describe("interpreter", () => {
 
       it("retrieves a value from an object", () => {
         const interpreter = new Interpreter();
-        const objValue = new Map<string, RuntimeValue>([
+        const objValue = new Map<string, CantripValue>([
           ["name", "Reyek"],
           ["level", 3],
         ]);
@@ -519,7 +522,7 @@ describe("interpreter", () => {
 
       it("sets an object key", () => {
         const interpreter = new Interpreter();
-        const objValue = new Map<string, RuntimeValue>([
+        const objValue = new Map<string, CantripValue>([
           ["name", "Reyek"],
           ["level", 3],
         ]);
@@ -539,7 +542,7 @@ describe("interpreter", () => {
         );
         const result = interpreter.visitIndexSetExpr(expr);
         expect(result).toBe(4);
-        const expected = new Map<string, RuntimeValue>([
+        const expected = new Map<string, CantripValue>([
           ["name", "Reyek"],
           ["level", 4],
         ]);
@@ -660,7 +663,7 @@ describe("interpreter", () => {
         const expr = new LoopExpr(body, makeSpan(0, 38));
         const loopSpy = vi.spyOn(interpreter, "visitAssignExpr");
         const result = interpreter.visitLoopExpr(expr);
-        expect(result).toBeNull();
+        expect(result).toBe(Unit);
         expect(loopSpy).toHaveBeenCalledTimes(5);
       });
 
@@ -762,6 +765,36 @@ describe("interpreter", () => {
         expect(result).toBe(50);
       });
     });
+
+    describe("call expressions", () => {
+      it("executes a function call", () => {
+        const interpreter = new Interpreter();
+        const name = tok(TokenType.Identifier, "add", null, 4);
+        const params = [
+          tok(TokenType.Identifier, "a", null, 8),
+          tok(TokenType.Identifier, "b", null, 11),
+        ];
+        const returnValue = new BinaryExpr(
+          new VarExpr(tok(TokenType.Identifier, "a", null, 16), makeSpan(16, 17)),
+          tok(TokenType.Plus, "+", null, 18),
+          new VarExpr(tok(TokenType.Identifier, "b", null, 20), makeSpan(20, 21)),
+          makeSpan(16, 21),
+        );
+        const body = new BlockExpr([], returnValue, makeSpan(14, 23));
+        const func = new FunctionStmt(name, params, body, makeSpan(0, 23));
+        const funcValue = new CantripFunction(func, (interpreter as any).environment);
+        (interpreter as any).environment.define("add", funcValue);
+        const callee = new VarExpr(tok(TokenType.Identifier, "add"), makeSpan(0, 4));
+        const paren = tok(TokenType.RightParen, ")", null, 9);
+        const args = [
+          new LiteralExpr(1, makeSpan(5, 6)),
+          new LiteralExpr(2, makeSpan(8, 9)),
+        ];
+        const expr = new CallExpr(callee, paren, args, makeSpan(0, 10));
+        const result = interpreter.visitCallExpr(expr);
+        expect(result).toBe(3);
+      });
+    });
   });
 
   describe("statements", () => {
@@ -785,6 +818,30 @@ describe("interpreter", () => {
         interpreter.interpret([stmt]);
         expect(letStmtSpy).toHaveBeenCalled();
         expect((interpreter as any).environment.get(name)).toBe(42);
+      });
+    });
+
+    describe("function declarations", () => {
+      it("declares a function", () => {
+        const interpreter = new Interpreter();
+        const name = tok(TokenType.Identifier, "add", null, 4);
+        const params = [
+          tok(TokenType.Identifier, "a", null, 8),
+          tok(TokenType.Identifier, "b", null, 11),
+        ];
+        const returnValue = new BinaryExpr(
+          new VarExpr(tok(TokenType.Identifier, "a", null, 16), makeSpan(16, 17)),
+          tok(TokenType.Plus, "+", null, 18),
+          new VarExpr(tok(TokenType.Identifier, "b", null, 20), makeSpan(20, 21)),
+          makeSpan(16, 21),
+        );
+        const body = new BlockExpr([], returnValue, makeSpan(14, 23));
+        const stmt = new FunctionStmt(name, params, body, makeSpan(0, 23));
+        const fnStmtSpy = vi.spyOn(interpreter, "visitFunctionStmt");
+        interpreter.interpret([stmt]);
+        expect(fnStmtSpy).toHaveBeenCalled();
+        const expected = new CantripFunction(stmt, (interpreter as any).environment);
+        expect((interpreter as any).environment.get(name)).toEqual(expected);
       });
     });
 

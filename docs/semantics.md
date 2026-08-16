@@ -11,14 +11,15 @@ The interpreter (`packages/cantrip-interpreter`) is the source of truth for runt
 
 At runtime every value belongs to one of these types:
 
-| Cantrip type | TypeScript representation   | Notes                            |
-| ------------ | --------------------------- | -------------------------------- |
-| `nil`        | `null`                      | The only falsy non-boolean value |
-| `bool`       | `boolean`                   | `true` / `false`                 |
-| `number`     | `number`                    | IEEE-754 double (JS number)      |
-| `string`     | `string`                    |                                  |
-| array        | `RuntimeValue[]`            | Dynamic, heterogeneous list      |
-| object       | `Map<string, RuntimeValue>` | String keys only                 |
+| Cantrip type     | TypeScript representation    | Notes                                                          |
+| ---------------- | ---------------------------- | -------------------------------------------------------------- |
+| `nil`            | `null`                       | The only falsy non-boolean value                               |
+| `bool`           | `boolean`                    | `true` / `false`                                               |
+| `number`         | `number`                     | IEEE-754 double (JS number)                                    |
+| `string`         | `string`                     |                                                                |
+| array            | `RuntimeValue[]`             | Dynamic, heterogeneous list                                    |
+| object           | `Map<string, RuntimeValue>`  | String keys only                                               |
+| unit type (`()`) | `Symbol.for("cantrip.unit")` | Returned implicitly when no value is produced by an expression |
 
 There is currently **no** distinction between integers and floats; both are just `number`.
 
@@ -40,12 +41,14 @@ print(x); // prints "5"
 Used by `!`, `and`, and `or`:
 
 - `nil` (`null`) -> falsy
+- unit type (`()`) -> falsey
 - `false` -> falsy
 - Everything else (`true`, numbers including `0`, strings including `""`, arrays, objects) -> truthy
 
 ```cantrip
 !nil        // true
 !false      // true
+!()         // true
 !0          // false
 !""         // false
 ![]         // false
@@ -57,6 +60,9 @@ Used by `!`, `and`, and `or`:
 Used by the + operator when either operand is a string:
 
 - `nil` -> the string `"nil"`
+- arrays -> `[stringified value, ...]` or `[]`
+- objects -> `{ key: stringified value, ... }` or `{}`
+- unit type -> `()`
 - all other values -> result of calling `.toString()` on them
 
 ## Implemented Expressions
@@ -152,32 +158,40 @@ Referencing a named variable will retrieve that variable's value if it exists in
 
 ### Block expressions
 
-Blocks (`{ ... }`) create a lexical scope where local variables can be declared. If the final expression is not terminated by a semicolon (`;`), that expression's value is returned by the block.
+Blocks (`{ ... }`) create a lexical scope where local variables can be declared. If the final expression is not terminated by a semicolon (`;`), that expression's value is returned by the block. If there is no final expression, the block implicitly returns a unit type.
 
 ```cantrip
 let x = {
   let y = 5;
   y + 5 // The result is this block's returned value.
 };
+
+let y = {
+  "Value discarded"; // Absence of final expression returns unit type.
+}
 ```
 
 ### Get expressions
 
-Get expressions (`object.field`) retrieves the value of the object's field.
+A get expression (`object.field`) retrieves the value of the object's field.
 
 ### Set expressions
 
-Set expressions (`object.field = value`) sets the field to the value to the right of the operator.  
+A set expression (`object.field = value`) sets the field to the value to the right of the operator.  
 Planned to work with any compound assignment operator (`+=`, `-=`, etc.).
 
 ### Index expression
 
-Index expressions (`array[index]`) retrieves the array element at the given index. You can use this expression to retrieve an object field's value if the expression inside the brackets evaluates to a string of one of the object's keys.
+An index expression (`array[index]`) retrieves the array element at the given index. You can use this expression to retrieve an object field's value if the expression inside the brackets evaluates to a string of one of the object's keys.
 
 ### Index set expression
 
-Index set expressions (`array[index] = value`) sets the element at the given index to the given value. You can use this expression to assign an object field's value if the expression inside the brackets evaluates to a string of one of the object's keys.  
+An index set expression (`array[index] = value`) sets the element at the given index to the given value. You can use this expression to assign an object field's value if the expression inside the brackets evaluates to a string of one of the object's keys.  
 Planned to work with any compound assignment operator (`+=`, `-=`, etc.).
+
+### Call expressions
+
+A call expression (`function(args)`) retrieves a function from the environment (either current or an enclosing environment), assigns the arguments to each parameter in the same order the parameters were previously declared, and executes the function body.
 
 ### If expressions
 
@@ -209,6 +223,16 @@ All variables are mutable.
 ```cantrip
 let x = 42;
 let answers;
+```
+
+### Function declarations
+
+Declares a function in the current scope. The function's body follows the semantics of block expressions and the function will implicitly return the returned value of the body. The parameters are scoped to the function body.
+
+```cantrip
+fn add(a, b) {
+  a + b // Implicitly returns the result
+}
 ```
 
 ### Block statements
@@ -245,7 +269,6 @@ A while loop executes the block after the condition expression if the condition 
 
 ## Not yet implemented
 
-- Functions (`fn`)
 - `return`
 - Any standard library (`print`, etc.)
 - Runtime error reporting (type errors, undefined variables, ...)
