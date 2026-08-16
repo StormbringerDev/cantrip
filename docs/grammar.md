@@ -89,16 +89,16 @@ block            = "{" declaration* "}" ;
 
 ### Design decisions (current)
 
-| Construct                   | Statement? | Expression? | Notes                                   |
-| --------------------------- | ---------- | ----------- | --------------------------------------- |
-| `if`                        | no         | yes         | Value of the taken branch               |
-| `loop`                      | no         | yes         | Infinite loop; value from `break` later |
-| `while`                     | yes        | no          | Statement only for now                  |
-| `match`                     | no         | yes         |                                         |
-| `block`                     | yes        | yes         | Last expression becomes the block value |
-| `fn`                        | yes (decl) | no          | First class values                      |
-| `let`                       | yes (decl) | no          |                                         |
-| `return`/`break`/`continue` | yes        | no          |                                         |
+| Construct                   | Statement? | Expression? | Notes                                                                     |
+| --------------------------- | ---------- | ----------- | ------------------------------------------------------------------------- |
+| `if`                        | no         | yes         | Value of the taken branch                                                 |
+| `loop`                      | no         | yes         | Value produced by a `break` expression (or unit if the loop never breaks) |
+| `while`                     | yes        | no          | Statement only for now                                                    |
+| `match`                     | no         | yes         |                                                                           |
+| `block`                     | yes        | yes         | Last expression becomes the block value                                   |
+| `fn`                        | yes (decl) | no          | Declaration that produces a first-class value (closure)                   |
+| `let`                       | yes (decl) | no          |                                                                           |
+| `return`/`break`/`continue` | yes        | no          |                                                                           |
 
 | Data Structure | Syntax         | Type           | Notes                               |
 | -------------- | -------------- | -------------- | ----------------------------------- |
@@ -110,7 +110,9 @@ Function declarations/calls can have up to 255 parameters/arguments and the pars
 ### Open questions / deferred features
 
 - `for` loops
-- Pattern matching beyond simple `match` expressions
+- Pattern matching beyond simple `match` expressions (guards, destructuring, exhaustiveness)
+- Anonymous / lambda functions (currently only named `fn` declarations)
+- Multi-line and raw strings
 
 ### Source of truth
 

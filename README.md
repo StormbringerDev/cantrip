@@ -7,11 +7,11 @@ It serves as a practical learning vehicle and a future scripting layer for the [
 
 ### Implementation Roadmap
 
-| Stage                                  | Status        | Description                            |
-| -------------------------------------- | ------------- | -------------------------------------- |
-| 1. TypeScript Tree-Walking Interpreter | 🏗️ Building   | Fast iteration on syntax & semantics   |
-| 2. Rust Bytecode VM                    | 🚧 Scaffolded | Portable, efficient execution          |
-| 3. Rust JIT                            | 🚧 Scaffolded | Native performance (Cranelift planned) |
+| Stage                                  | Status              | Description                            |
+| -------------------------------------- | ------------------- | -------------------------------------- |
+| 1. TypeScript Tree-Walking Interpreter | ✅ Feature-complete | Fast iteration on syntax & semantics   |
+| 2. Rust Bytecode VM                    | 🚧 Scaffolded       | Portable, efficient execution          |
+| 3. Rust JIT                            | 🚧 Scaffolded       | Native performance (Cranelift planned) |
 
 ---
 
