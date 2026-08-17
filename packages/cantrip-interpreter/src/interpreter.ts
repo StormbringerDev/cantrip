@@ -32,10 +32,9 @@ import { Environment } from "./environment.js";
 import {
   type CantripCallable,
   CantripFunction,
-  type CantripNative,
+  CantripNative,
   isCantripCallable,
 } from "./callables.js";
-import * as stdlib from "./stdlib.js";
 
 /** Primative and structured literals passed around at runtime. */
 export type CantripValue =
@@ -98,8 +97,14 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
   private environment = this.globals;
 
   constructor() {
-    this.globals.define("print", stdlib.print);
-    this.globals.define("time", stdlib.time);
+    this.globals.define(
+      "print",
+      new CantripNative((args) => {
+        console.log(this.stringify(args[0]));
+        return Unit;
+      }, 1),
+    );
+    this.globals.define("time", new CantripNative((_args) => Date.now(), 0));
   }
 
   /**
@@ -124,28 +129,7 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
    * @returns The value being assigned.
    */
   public visitAssignExpr(expr: AssignExpr): CantripValue {
-    let value = this.evaluate(expr.value);
-
-    switch (expr.operator.type) {
-      case TokenType.Eq:
-        break; // Continue as normal.
-      case TokenType.MinusEq:
-        value = (this.environment.get(expr.name) as number) - (value as number);
-        break;
-      case TokenType.PlusEq:
-        value = this.environment.get(expr.name) + value;
-        break;
-      case TokenType.SlashEq:
-        value = (this.environment.get(expr.name) as number) / (value as number);
-        break;
-      case TokenType.StarEq:
-        value = (this.environment.get(expr.name) as number) * (value as number);
-        break;
-      case TokenType.PercentEq:
-        value = (this.environment.get(expr.name) as number) % (value as number);
-        break;
-    }
-
+    const value = this.evaluate(expr.value);
     this.environment.assign(expr.name, value);
     return value;
   }

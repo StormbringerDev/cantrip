@@ -999,9 +999,6 @@ describe("Parser", () => {
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(AssignExpr);
         expect(((ast[0] as ExprStmt).expr as AssignExpr).name.lexeme).toBe("answer");
-        expect(((ast[0] as ExprStmt).expr as AssignExpr).operator.type).toBe(
-          TokenType.Eq,
-        );
         expect(((ast[0] as ExprStmt).expr as AssignExpr).value).toEqual(
           new LiteralExpr(42, makeSpan(7, 9)),
         );
@@ -1022,11 +1019,13 @@ describe("Parser", () => {
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(AssignExpr);
         expect(((ast[0] as ExprStmt).expr as AssignExpr).name.lexeme).toBe("counter");
-        expect(((ast[0] as ExprStmt).expr as AssignExpr).operator.type).toBe(
-          TokenType.PlusEq,
-        );
         expect(((ast[0] as ExprStmt).expr as AssignExpr).value).toEqual(
-          new LiteralExpr(1, makeSpan(8, 9)),
+          new BinaryExpr(
+            new VarExpr(tok(TokenType.Identifier, "counter"), makeSpan(0, 7)),
+            tok(TokenType.Plus, "+"),
+            new LiteralExpr(1, makeSpan(8, 9)),
+            makeSpan(8, 9),
+          ),
         );
       });
 
@@ -1045,11 +1044,13 @@ describe("Parser", () => {
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(AssignExpr);
         expect(((ast[0] as ExprStmt).expr as AssignExpr).name.lexeme).toBe("health");
-        expect(((ast[0] as ExprStmt).expr as AssignExpr).operator.type).toBe(
-          TokenType.MinusEq,
-        );
         expect(((ast[0] as ExprStmt).expr as AssignExpr).value).toEqual(
-          new LiteralExpr(5, makeSpan(8, 9)),
+          new BinaryExpr(
+            new VarExpr(tok(TokenType.Identifier, "health"), makeSpan(0, 6)),
+            tok(TokenType.Minus, "-"),
+            new LiteralExpr(5, makeSpan(8, 9)),
+            makeSpan(8, 9),
+          ),
         );
       });
 
@@ -1068,11 +1069,13 @@ describe("Parser", () => {
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(AssignExpr);
         expect(((ast[0] as ExprStmt).expr as AssignExpr).name.lexeme).toBe("factor");
-        expect(((ast[0] as ExprStmt).expr as AssignExpr).operator.type).toBe(
-          TokenType.StarEq,
-        );
         expect(((ast[0] as ExprStmt).expr as AssignExpr).value).toEqual(
-          new LiteralExpr(5, makeSpan(8, 9)),
+          new BinaryExpr(
+            new VarExpr(tok(TokenType.Identifier, "factor"), makeSpan(0, 6)),
+            tok(TokenType.Star, "*"),
+            new LiteralExpr(5, makeSpan(8, 9)),
+            makeSpan(8, 9),
+          ),
         );
       });
 
@@ -1091,11 +1094,13 @@ describe("Parser", () => {
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(AssignExpr);
         expect(((ast[0] as ExprStmt).expr as AssignExpr).name.lexeme).toBe("half");
-        expect(((ast[0] as ExprStmt).expr as AssignExpr).operator.type).toBe(
-          TokenType.SlashEq,
-        );
         expect(((ast[0] as ExprStmt).expr as AssignExpr).value).toEqual(
-          new LiteralExpr(2, makeSpan(6, 7)),
+          new BinaryExpr(
+            new VarExpr(tok(TokenType.Identifier, "half"), makeSpan(0, 4)),
+            tok(TokenType.Slash, "/"),
+            new LiteralExpr(2, makeSpan(6, 7)),
+            makeSpan(6, 7),
+          ),
         );
       });
 
@@ -1114,11 +1119,13 @@ describe("Parser", () => {
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(AssignExpr);
         expect(((ast[0] as ExprStmt).expr as AssignExpr).name.lexeme).toBe("remainder");
-        expect(((ast[0] as ExprStmt).expr as AssignExpr).operator.type).toBe(
-          TokenType.PercentEq,
-        );
         expect(((ast[0] as ExprStmt).expr as AssignExpr).value).toEqual(
-          new LiteralExpr(3, makeSpan(11, 12)),
+          new BinaryExpr(
+            new VarExpr(tok(TokenType.Identifier, "remainder"), makeSpan(0, 9)),
+            tok(TokenType.Percent, "%"),
+            new LiteralExpr(3, makeSpan(11, 12)),
+            makeSpan(11, 12),
+          ),
         );
       });
 
@@ -1140,7 +1147,6 @@ describe("Parser", () => {
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(SetExpr);
         expect(((ast[0] as ExprStmt).expr as SetExpr).object).toBeInstanceOf(VarExpr);
         expect(((ast[0] as ExprStmt).expr as SetExpr).name.lexeme).toBe("level");
-        expect(((ast[0] as ExprStmt).expr as SetExpr).operator.type).toBe(TokenType.Eq);
         expect(((ast[0] as ExprStmt).expr as SetExpr).value).toBeInstanceOf(LiteralExpr);
       });
 
@@ -1169,9 +1175,6 @@ describe("Parser", () => {
         );
         expect(((ast[0] as ExprStmt).expr as IndexSetExpr).index).toBeInstanceOf(
           LiteralExpr,
-        );
-        expect(((ast[0] as ExprStmt).expr as IndexSetExpr).operator.type).toBe(
-          TokenType.Eq,
         );
         expect(((ast[0] as ExprStmt).expr as IndexSetExpr).value).toBeInstanceOf(
           LiteralExpr,

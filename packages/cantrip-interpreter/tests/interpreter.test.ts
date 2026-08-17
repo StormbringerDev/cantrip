@@ -349,66 +349,10 @@ describe("interpreter", () => {
         const interpreter = new Interpreter();
         (interpreter as any).environment.define("x", Unit);
         const name = tok(TokenType.Identifier, "x");
-        const operator = tok(TokenType.Eq, "=", null, 3);
         const value = new LiteralExpr(42, makeSpan(5, 7));
-        const expr = new AssignExpr(name, operator, value, makeSpan(0, 7));
+        const expr = new AssignExpr(name, value, makeSpan(0, 7));
         const result = interpreter.visitAssignExpr(expr);
         expect(result).toBe(42);
-      });
-
-      it("evaluates an add assignment expression", () => {
-        const interpreter = new Interpreter();
-        (interpreter as any).environment.define("x", 5);
-        const name = tok(TokenType.Identifier, "x");
-        const operator = tok(TokenType.PlusEq, "+=", null, 3);
-        const value = new LiteralExpr(5, makeSpan(6, 7));
-        const expr = new AssignExpr(name, operator, value, makeSpan(0, 7));
-        const result = interpreter.visitAssignExpr(expr);
-        expect(result).toBe(10);
-      });
-
-      it("evaluates a subtract assignment expression", () => {
-        const interpreter = new Interpreter();
-        (interpreter as any).environment.define("x", 10);
-        const name = tok(TokenType.Identifier, "x");
-        const operator = tok(TokenType.MinusEq, "-=", null, 3);
-        const value = new LiteralExpr(5, makeSpan(6, 7));
-        const expr = new AssignExpr(name, operator, value, makeSpan(0, 7));
-        const result = interpreter.visitAssignExpr(expr);
-        expect(result).toBe(5);
-      });
-
-      it("evaluates a multiply assignment expression", () => {
-        const interpreter = new Interpreter();
-        (interpreter as any).environment.define("x", 5);
-        const name = tok(TokenType.Identifier, "x");
-        const operator = tok(TokenType.StarEq, "*=", null, 3);
-        const value = new LiteralExpr(5, makeSpan(6, 7));
-        const expr = new AssignExpr(name, operator, value, makeSpan(0, 7));
-        const result = interpreter.visitAssignExpr(expr);
-        expect(result).toBe(25);
-      });
-
-      it("evaluates a divide assignment expression", () => {
-        const interpreter = new Interpreter();
-        (interpreter as any).environment.define("x", 10);
-        const name = tok(TokenType.Identifier, "x");
-        const operator = tok(TokenType.SlashEq, "/=", null, 3);
-        const value = new LiteralExpr(5, makeSpan(6, 7));
-        const expr = new AssignExpr(name, operator, value, makeSpan(0, 7));
-        const result = interpreter.visitAssignExpr(expr);
-        expect(result).toBe(2);
-      });
-
-      it("evaluates a modulo assignment expression", () => {
-        const interpreter = new Interpreter();
-        (interpreter as any).environment.define("x", 5);
-        const name = tok(TokenType.Identifier, "x");
-        const operator = tok(TokenType.PercentEq, "%=", null, 3);
-        const value = new LiteralExpr(2, makeSpan(6, 7));
-        const expr = new AssignExpr(name, operator, value, makeSpan(0, 7));
-        const result = interpreter.visitAssignExpr(expr);
-        expect(result).toBe(1);
       });
     });
 
@@ -457,9 +401,8 @@ describe("interpreter", () => {
         const varName = tok(TokenType.Identifier, "reyek");
         const object = new VarExpr(varName, makeSpan(0, 5));
         const name = tok(TokenType.Identifier, "level", null, 6);
-        const operator = tok(TokenType.Eq, "=", null, 13);
         const value = new LiteralExpr(4, makeSpan(16, 17));
-        const expr = new SetExpr(object, name, operator, value, makeSpan(0, 17));
+        const expr = new SetExpr(object, name, value, makeSpan(0, 17));
         const result = interpreter.visitSetExpr(expr);
         expect(result).toBe(4);
         const expected = new Map<string, CantripValue>([
@@ -505,16 +448,8 @@ describe("interpreter", () => {
         const indexee = new VarExpr(tok(TokenType.Identifier, "numbers"), makeSpan(0, 7));
         const bracket = tok(TokenType.LeftBracket, "[", null, 7);
         const index = new LiteralExpr(3, makeSpan(8, 9));
-        const operator = tok(TokenType.Eq, "=", null, 11);
         const value = new LiteralExpr(4, makeSpan(13, 14));
-        const expr = new IndexSetExpr(
-          indexee,
-          bracket,
-          index,
-          operator,
-          value,
-          makeSpan(0, 14),
-        );
+        const expr = new IndexSetExpr(indexee, bracket, index, value, makeSpan(0, 14));
         const result = interpreter.visitIndexSetExpr(expr);
         expect(result).toBe(4);
         const expected = [1, 2, 3, 4];
@@ -531,16 +466,8 @@ describe("interpreter", () => {
         const indexee = new VarExpr(tok(TokenType.Identifier, "reyek"), makeSpan(0, 5));
         const bracket = tok(TokenType.LeftBracket, "[", null, 5);
         const index = new LiteralExpr("level", makeSpan(6, 12));
-        const operator = tok(TokenType.Eq, "=", null, 14);
         const value = new LiteralExpr(4, makeSpan(16, 17));
-        const expr = new IndexSetExpr(
-          indexee,
-          bracket,
-          index,
-          operator,
-          value,
-          makeSpan(0, 17),
-        );
+        const expr = new IndexSetExpr(indexee, bracket, index, value, makeSpan(0, 17));
         const result = interpreter.visitIndexSetExpr(expr);
         expect(result).toBe(4);
         const expected = new Map<string, CantripValue>([
@@ -636,10 +563,14 @@ describe("interpreter", () => {
         const interpreter = new Interpreter();
         (interpreter as any).environment.define("i", 0);
         const incName = tok(TokenType.Identifier, "i", null, 8);
-        const incOperator = tok(TokenType.PlusEq, "+=", null, 10);
-        const incValue = new LiteralExpr(1, makeSpan(13, 14));
+        const incValue = new BinaryExpr(
+          new VarExpr(incName, makeSpan(0, 1)),
+          tok(TokenType.Plus, "+"),
+          new LiteralExpr(1, makeSpan(13, 14)),
+          makeSpan(13, 14),
+        );
         const increment = new ExprStmt(
-          new AssignExpr(incName, incOperator, incValue, makeSpan(8, 14)),
+          new AssignExpr(incName, incValue, makeSpan(8, 14)),
           makeSpan(8, 15),
         );
         const breakCondition = new BinaryExpr(
@@ -672,10 +603,14 @@ describe("interpreter", () => {
         const interpreter = new Interpreter();
         (interpreter as any).environment.define("i", 0);
         const incName = tok(TokenType.Identifier, "i", null, 8);
-        const incOperator = tok(TokenType.PlusEq, "+=", null, 10);
-        const incValue = new LiteralExpr(1, makeSpan(13, 14));
+        const incValue = new BinaryExpr(
+          new VarExpr(incName, makeSpan(0, 1)),
+          tok(TokenType.Plus, "+"),
+          new LiteralExpr(1, makeSpan(13, 14)),
+          makeSpan(13, 14),
+        );
         const increment = new ExprStmt(
-          new AssignExpr(incName, incOperator, incValue, makeSpan(8, 14)),
+          new AssignExpr(incName, incValue, makeSpan(8, 14)),
           makeSpan(8, 15),
         );
         const breakCondition = new BinaryExpr(
@@ -912,8 +847,12 @@ describe("interpreter", () => {
         );
         const increment = new AssignExpr(
           tok(TokenType.Identifier, "i", null, 15),
-          tok(TokenType.PlusEq, "+=", null, 17),
-          new LiteralExpr(1, makeSpan(20, 21)),
+          new BinaryExpr(
+            new VarExpr(tok(TokenType.Identifier, "i"), makeSpan(0, 1)),
+            tok(TokenType.Plus, "+"),
+            new LiteralExpr(1, makeSpan(20, 21)),
+            makeSpan(20, 21),
+          ),
           makeSpan(15, 21),
         );
         const incrementStmt = new ExprStmt(increment, makeSpan(15, 22));

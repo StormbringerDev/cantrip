@@ -21,13 +21,50 @@ import {
   ReturnStmt,
   SetExpr,
   type Stmt,
-  type Token,
+  Token,
   TokenType,
   UnaryExpr,
   VarExpr,
   WhileStmt,
 } from "@cantrip/ast";
 import type { Span } from "@cantrip/types";
+
+/**
+ * A convenience function used to create a single-line
+ * span.
+ *
+ * @param start - The beginning of the new span.
+ * @param end - The end of the new span.
+ * @returns A single-line span from start to end.
+ */
+function makeSpan(start: number, end: number): Span {
+  return {
+    start: { line: 0, column: start, offset: start },
+    end: { line: 0, column: end, offset: end },
+  };
+}
+
+/**
+ * A factory function that creates a phantom token used by
+ * compound assignment operators (`+=`, `-=`, etc.) for
+ * syntactic sugar.
+ *
+ * @param type - The type of token to create.
+ * @param lexeme - The literal text of the token.
+ * @param literal - The literal value of the token (optional).
+ * @param start - The start of the token's source span (optional).
+ * @param end - The end of the token's source span (optional).
+ * @returns A new phantom token used for syntactic sugar.
+ */
+function tok(
+  type: TokenType,
+  lexeme: string,
+  literal: string | number | null = null,
+  start = 0,
+  end = start + lexeme.length,
+): Token {
+  return new Token(type, lexeme, literal, makeSpan(start, end));
+}
 
 /**
  * Error thrown (and collected) when the parser encounters a syntax error.
@@ -386,19 +423,43 @@ export class Parser {
         TokenType.PercentEq,
       )
     ) {
-      const operator = this.previous();
-      const value = this.assignment();
+      let operator = this.previous();
+      let value = this.assignment();
+
+      switch (operator.type) {
+        case TokenType.PlusEq:
+          operator = tok(TokenType.Plus, "+");
+          break;
+        case TokenType.MinusEq:
+          operator = tok(TokenType.Minus, "-");
+          break;
+        case TokenType.StarEq:
+          operator = tok(TokenType.Star, "*");
+          break;
+        case TokenType.SlashEq:
+          operator = tok(TokenType.Slash, "/");
+          break;
+        case TokenType.PercentEq:
+          operator = tok(TokenType.Percent, "%");
+          break;
+      }
 
       if (expr instanceof VarExpr) {
         const name = expr.name;
         const end = value.span.end;
-        return new AssignExpr(name, operator, value, { start, end });
+        if (operator.type !== TokenType.Eq)
+          value = new BinaryExpr(expr, operator, value, value.span);
+        return new AssignExpr(name, value, { start, end });
       } else if (expr instanceof GetExpr) {
         const end = value.span.end;
-        return new SetExpr(expr.object, expr.name, operator, value, { start, end });
+        if (operator.type !== TokenType.Eq)
+          value = new BinaryExpr(expr, operator, value, value.span);
+        return new SetExpr(expr.object, expr.name, value, { start, end });
       } else if (expr instanceof IndexExpr) {
         const end = value.span.end;
-        return new IndexSetExpr(expr.indexee, expr.bracket, expr.index, operator, value, {
+        if (operator.type !== TokenType.Eq)
+          value = new BinaryExpr(expr, operator, value, value.span);
+        return new IndexSetExpr(expr.indexee, expr.bracket, expr.index, value, {
           start,
           end,
         });

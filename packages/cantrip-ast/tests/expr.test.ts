@@ -118,11 +118,9 @@ describe("expression classes", () => {
 
   it("instantiates an AssignExpr", () => {
     const name = tok(TokenType.Identifier, "answer");
-    const operator = tok(TokenType.Eq, "=", null, 6);
-    const expr = new AssignExpr(name, operator, litExpr(42, 7), makeSpan(0, 9));
+    const expr = new AssignExpr(name, litExpr(42, 7), makeSpan(0, 9));
     expect(expr).toBeInstanceOf(AssignExpr);
     expect(expr.name.lexeme).toBe("answer");
-    expect(expr.operator.type).toBe(TokenType.Eq);
     expect(expr.value.value).toBe(42);
   });
 

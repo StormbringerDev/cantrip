@@ -36,11 +36,7 @@ function run(source: string) {
         if (error.token.type === TokenType.Eof) {
           report(error.token.span.start, " at end", error.message);
         } else {
-          report(
-            error.token.span.start,
-            " at '" + error.token.lexeme + "'",
-            error.message,
-          );
+          report(error.token.span.start, ` at '${error.token.lexeme}'`, error.message);
         }
       }
     }

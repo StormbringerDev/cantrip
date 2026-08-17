@@ -73,21 +73,17 @@ export interface ExprVisitor<R> {
 export class AssignExpr extends Expr {
   /** Target variable name. */
   public readonly name: Token;
-  /** Assignment operator (`=`, `+=`, `-=`, ...). */
-  public readonly operator: Token;
   /** Right-hand side expression. */
   public readonly value: Expr;
 
   /**
    * @param name - Identifier being assigned to.
-   * @param operator - The assignment operator token.
    * @param value - Expression providing the new value.
    * @param span - Source span of the whole assignment.
    */
-  constructor(name: Token, operator: Token, value: Expr, span: Span) {
+  constructor(name: Token, value: Expr, span: Span) {
     super(span);
     this.name = name;
-    this.operator = operator;
     this.value = value;
   }
 
@@ -277,6 +273,12 @@ export class IfExpr extends Expr {
   /** Optional else branch if condition is false. */
   public readonly elseBranch: Expr | null;
 
+  /**
+   * @param condition - The if condition expression.
+   * @param thenBranch - The block expression of the if expression.
+   * @param elseBranch - Optional block or if expression.
+   * @param span - Source span of the entire expression.
+   */
   constructor(condition: Expr, thenBranch: Expr, elseBranch: Expr | null, span: Span) {
     super(span);
     this.condition = condition;
@@ -284,6 +286,7 @@ export class IfExpr extends Expr {
     this.elseBranch = elseBranch;
   }
 
+  /** @inheritdoc */
   public accept<R>(visitor: ExprVisitor<R>): R {
     return visitor.visitIfExpr(this);
   }
@@ -340,8 +343,6 @@ export class IndexSetExpr extends Expr {
   public readonly bracket: Token;
   /** Index expression. */
   public readonly index: Expr;
-  /** Assignment operator. */
-  public readonly operator: Token;
   /** Value being assigned. */
   public readonly value: Expr;
 
@@ -349,26 +350,18 @@ export class IndexSetExpr extends Expr {
    * @param indexee - Expression evaluating to target data structure.
    * @param bracket - The `[` token.
    * @param index - Expression evaluating to the target index or key.
-   * @param operator - Assignment operator token.
    * @param value - Expression providing the new value.
    * @param span - Source span of the whole index set expression.
    */
-  constructor(
-    indexee: Expr,
-    bracket: Token,
-    index: Expr,
-    operator: Token,
-    value: Expr,
-    span: Span,
-  ) {
+  constructor(indexee: Expr, bracket: Token, index: Expr, value: Expr, span: Span) {
     super(span);
     this.indexee = indexee;
     this.bracket = bracket;
     this.index = index;
-    this.operator = operator;
     this.value = value;
   }
 
+  /** @inheritdoc */
   public accept<R>(visitor: ExprVisitor<R>): R {
     return visitor.visitIndexSetExpr(this);
   }
@@ -480,23 +473,19 @@ export class SetExpr extends Expr {
   public readonly object: Expr;
   /** Property name. */
   public readonly name: Token;
-  /** Assignment operator. */
-  public readonly operator: Token;
   /** Value being assigned. */
   public readonly value: Expr;
 
   /**
    * @param object - Expression evaluating to the target object.
    * @param name - Identifier of the property.
-   * @param operator - Assignment operator token.
    * @param value - Expression providing the new value.
    * @param span - Source span of the whole set expression.
    */
-  constructor(object: Expr, name: Token, operator: Token, value: Expr, span: Span) {
+  constructor(object: Expr, name: Token, value: Expr, span: Span) {
     super(span);
     this.object = object;
     this.name = name;
-    this.operator = operator;
     this.value = value;
   }
 
