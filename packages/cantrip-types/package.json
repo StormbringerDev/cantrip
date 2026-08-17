@@ -22,7 +22,6 @@
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "eslint": "10.8.1",
     "typescript": "^6.0.3"
   }
 }
