@@ -423,42 +423,43 @@ export class Parser {
         TokenType.PercentEq,
       )
     ) {
-      let operator = this.previous();
+      const operator = this.previous();
       let value = this.assignment();
+      let phantomOperator: Token | null = null;
 
       switch (operator.type) {
         case TokenType.PlusEq:
-          operator = tok(TokenType.Plus, "+");
+          phantomOperator = tok(TokenType.Plus, "+");
           break;
         case TokenType.MinusEq:
-          operator = tok(TokenType.Minus, "-");
+          phantomOperator = tok(TokenType.Minus, "-");
           break;
         case TokenType.StarEq:
-          operator = tok(TokenType.Star, "*");
+          phantomOperator = tok(TokenType.Star, "*");
           break;
         case TokenType.SlashEq:
-          operator = tok(TokenType.Slash, "/");
+          phantomOperator = tok(TokenType.Slash, "/");
           break;
         case TokenType.PercentEq:
-          operator = tok(TokenType.Percent, "%");
+          phantomOperator = tok(TokenType.Percent, "%");
           break;
       }
 
       if (expr instanceof VarExpr) {
         const name = expr.name;
         const end = value.span.end;
-        if (operator.type !== TokenType.Eq)
-          value = new BinaryExpr(expr, operator, value, value.span);
+        if (phantomOperator !== null)
+          value = new BinaryExpr(expr, phantomOperator, value, value.span);
         return new AssignExpr(name, value, { start, end });
       } else if (expr instanceof GetExpr) {
         const end = value.span.end;
-        if (operator.type !== TokenType.Eq)
-          value = new BinaryExpr(expr, operator, value, value.span);
+        if (phantomOperator !== null)
+          value = new BinaryExpr(expr, phantomOperator, value, value.span);
         return new SetExpr(expr.object, expr.name, value, { start, end });
       } else if (expr instanceof IndexExpr) {
         const end = value.span.end;
-        if (operator.type !== TokenType.Eq)
-          value = new BinaryExpr(expr, operator, value, value.span);
+        if (phantomOperator !== null)
+          value = new BinaryExpr(expr, phantomOperator, value, value.span);
         return new IndexSetExpr(expr.indexee, expr.bracket, expr.index, value, {
           start,
           end,
