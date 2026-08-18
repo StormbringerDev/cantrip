@@ -52,6 +52,43 @@ function tok(
 }
 
 describe("interpreter", () => {
+  describe("stdlib", () => {
+    describe("print", () => {
+      it("prints to the host console", () => {
+        const consoleMock = vi.spyOn(console, "log");
+        const interpreter = new Interpreter();
+        const print = new CallExpr(
+          new VarExpr(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+          tok(TokenType.RightParen, ")", null, 25),
+          [new LiteralExpr("Hello, TypeScript!", makeSpan(6, 25))],
+          makeSpan(0, 26),
+        );
+        interpreter.interpret([new ExprStmt(print, makeSpan(0, 27))]);
+        expect(consoleMock).toHaveBeenCalled();
+        expect(consoleMock).toHaveBeenCalledWith("Hello, TypeScript!");
+      });
+    });
+
+    describe("time", () => {
+      it("returns the current time in miliseconds", () => {
+        vi.useFakeTimers();
+        const targetDate = new Date("2023-01-01T00:00:00.000Z");
+        const expected = targetDate.getTime();
+        vi.setSystemTime(targetDate);
+
+        const interpreter = new Interpreter();
+        const time = new CallExpr(
+          new VarExpr(tok(TokenType.Identifier, "time"), makeSpan(0, 4)),
+          tok(TokenType.RightParen, ")", null, 5),
+          [],
+          makeSpan(0, 6),
+        );
+        const result = interpreter.visitCallExpr(time);
+        expect(result).toBe(expected);
+      });
+    });
+  });
+
   describe("expressions", () => {
     describe("literal expressions", () => {
       it("evaluates a number literal", () => {
