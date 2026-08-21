@@ -724,6 +724,10 @@ export class Parser {
       return this.loopExpression();
     }
 
+    if (this.match(TokenType.Match)) {
+      return this.matchExpression();
+    }
+
     throw this.error(this.peek(), "Expect expression.");
   }
 
@@ -954,8 +958,22 @@ export class Parser {
       // Parse an expression if unclear
       const expr = this.expression();
 
-      // Check for semicolon or end of block
-      if (this.match(TokenType.Semicolon)) {
+      // Check for expression type, semicolon or end of block
+      if (
+        expr instanceof IfExpr ||
+        expr instanceof LoopExpr ||
+        expr instanceof MatchExpr
+      ) {
+        // Check for closing brace
+        if (this.check(TokenType.RightBrace)) {
+          // Final value of block
+          value = expr;
+          break;
+        } else {
+          // If closing brace, push expression statement
+          statements.push(new ExprStmt(expr, expr.span));
+        }
+      } else if (this.match(TokenType.Semicolon)) {
         // If semicolon, push expression statement
         const end = this.previous().span.end;
         statements.push(new ExprStmt(expr, { start: expr.span.start, end }));
