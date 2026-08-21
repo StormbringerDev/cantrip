@@ -1,0 +1,35 @@
+{
+  "name": "cantrip",
+  "displayName": "Cantrip",
+  "description": "Syntax highlighting for the Cantrip language",
+  "version": "0.1.0",
+  "publisher": "StormbringerDev",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "cantrip",
+        "aliases": [
+          "Cantrip",
+          "cantrip"
+        ],
+        "extensions": [
+          ".cantrip"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "cantrip",
+        "scopeName": "source.cantrip",
+        "path": "./syntaxes/cantrip.tmLanguage.json"
+      }
+    ]
+  }
+}

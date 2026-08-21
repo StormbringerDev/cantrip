@@ -1,0 +1,74 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Cantrip",
+  "scopeName": "source.cantrip",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#keywords" },
+    { "include": "#fn-decl" },
+    { "include": "#operators" },
+    { "include": "#identifiers" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.cantrip",
+          "match": "//.*$"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.cantrip",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.cantrip",
+          "match": "\\\\[nt\"\\\\]"
+        }
+      ]
+    },
+    "numbers": {
+      "name": "constant.numeric.cantrip",
+      "match": "\\b[0-9]+(\\.[0-9]+)?\\b"
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.cantrip",
+          "match": "\\b(if|else|while|loop|match|break|continue|return)\\b"
+        },
+        {
+          "name": "keyword.declaration.cantrip",
+          "match": "\\b(fn|let)\\b"
+        },
+        {
+          "name": "constant.language.cantrip",
+          "match": "\\b(true|false|nil)\\b"
+        },
+        {
+          "name": "keyword.operator.logical.cantrip",
+          "match": "\\b(and|or)\\b"
+        }
+      ]
+    },
+    "fn-decl": {
+      "match": "\\b(fn)\\s+([_a-zA-Z][_a-zA-Z0-9]*)",
+      "captures": {
+        "1": { "name": "keyword.declaration.cantrip" },
+        "2": { "name": "entity.name.function.cantrip" }
+      }
+    },
+    "operators": {
+      "name": "keyword.operator.cantrip",
+      "match": "->|=>|!=|==|>=|<=|\\+=|-=|\\*=|/=|%=|[+\\-*/%=!<>]"
+    },
+    "identifiers": {
+      "name": "variable.other.cantrip",
+      "match": "\\b[_a-zA-Z][_a-zA-Z0-9]*\\b"
+    }
+  }
+}
