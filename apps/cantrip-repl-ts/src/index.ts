@@ -3,7 +3,7 @@ import { Parser, ParseError, Scanner, ScannerError } from "@cantrip/parser";
 import { Interpreter } from "@cantrip/interpreter";
 import type { Position } from "@cantrip/types";
 import { readFileSync } from "fs";
-import { join } from "path";
+import { resolve } from "path";
 import promptSync from "prompt-sync";
 
 let hadError = false;
@@ -48,7 +48,7 @@ function run(source: string) {
 }
 
 function runFile(path: string) {
-  const filePath = join(__dirname, path);
+  const filePath = resolve(path);
   try {
     const source = readFileSync(filePath, "utf-8");
     run(source);

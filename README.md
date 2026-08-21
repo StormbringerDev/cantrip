@@ -32,7 +32,10 @@ cantrip/
 │   ├── cantrip-parser/       # Recursive descent / Pratt parser
 │   ├── cantrip-interpreter/  # Tree-walking interpreter (Stage 1)
 │   └── cantrip-types/        # Shared TS utilities
-├── examples/                 # .ctrp scripts (golden tests live here)
+├── examples/                 # .cantrip scripts (golden tests live here)
+├── tests/
+│   ├── e2e/                  # End to end tests for the tree-walking interpreter
+│   └── e2e-rs/               # End to end tests for the bytecode and JIT interpreters
 └── docs/
 ```
 
@@ -65,7 +68,7 @@ cargo run -p cantrip-cli
 ### Example
 
 ```cantrip
-// examples/hello.ctrp
+// examples/hello.cantrip
 let name = "world";
 print("Hello, " + name + "!");
 

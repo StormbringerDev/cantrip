@@ -1,0 +1,16 @@
+{
+  "name": "@cantrip/e2e-ts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:watch": "vitest",
+    "test:e2e": "vitest run"
+  },
+  "dependencies": {
+    "@cantrip/interpreter": "workspace:*",
+    "@cantrip/parser": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

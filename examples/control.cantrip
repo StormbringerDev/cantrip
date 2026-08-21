@@ -1,4 +1,4 @@
-// examples/control.ctrp
+// examples/control.cantrip
 // If / while / blocks
 
 print("=== Control Flow ===");

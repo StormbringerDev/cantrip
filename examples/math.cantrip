@@ -1,4 +1,4 @@
-// examples/math.ctrp
+// examples/math.cantrip
 // Basic arithmetic and a simple function.
 
 print("=== Cantrip Math Demo ===");
@@ -10,14 +10,14 @@ print("a * b = " + (a * b));
 print("a / b = " + (a / b));
 
 fn add(x, y) {
-  return x + y;
+  x + y
 }
 
 fn factorial(n) {
   if n <= 1 {
     return 1;
   }
-  n * factorial(n - 1);
+  n * factorial(n - 1)
 }
 
 print("add(40, 2) = " + add(40, 2));

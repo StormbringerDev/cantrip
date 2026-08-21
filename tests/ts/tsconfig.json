@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "types": ["node"],
+    "composite": true
+  },
+  "exclude": ["node_modules", "**/*.spec.ts"],
+  "references": [
+    {
+      "path": "../../packages/cantrip-parser"
+    },
+    {
+      "path": "../../packages/cantrip-interpreter"
+    }
+  ]
+}

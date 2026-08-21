@@ -1,4 +1,4 @@
-// examples/hello.ctrp
+// examples/hello.cantrip
 // The classic first program.
 
 print("Hello, Cantrip!");

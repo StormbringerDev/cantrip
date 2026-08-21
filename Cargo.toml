@@ -6,6 +6,7 @@ members = [
   "crates/cantrip-jit",
   "crates/cantrip-runtime",
   "apps/cantrip-cli",
+  "tests/rust",
 ]
 
 [workspace.package]
