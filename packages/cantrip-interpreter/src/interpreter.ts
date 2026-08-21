@@ -159,28 +159,37 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
       case TokenType.EqEq:
         return left === right;
       case TokenType.Greater:
+        this.checkNumberOperands(expr.operator, left, right);
         return (left as number) > (right as number);
       case TokenType.GreaterEq:
+        this.checkNumberOperands(expr.operator, left, right);
         return (left as number) >= (right as number);
       case TokenType.Less:
+        this.checkNumberOperands(expr.operator, left, right);
         return (left as number) < (right as number);
       case TokenType.LessEq:
+        this.checkNumberOperands(expr.operator, left, right);
         return (left as number) <= (right as number);
       case TokenType.Percent:
+        this.checkNumberOperands(expr.operator, left, right);
         return (left as number) % (right as number);
       case TokenType.Slash:
+        this.checkNumberOperands(expr.operator, left, right);
         return (left as number) / (right as number);
       case TokenType.Star:
+        this.checkNumberOperands(expr.operator, left, right);
         return (left as number) * (right as number);
       case TokenType.Minus:
+        this.checkNumberOperands(expr.operator, left, right);
         return (left as number) - (right as number);
       case TokenType.Plus:
         if (typeof left === "string" || typeof right === "string")
           return this.stringify(left) + this.stringify(right);
+        this.checkNumberOperands(expr.operator, left, right);
         return (left as number) + (right as number);
     }
 
-    return null; // Unreachable.
+    return Unit; // Unreachable.
   }
 
   /**
@@ -231,7 +240,8 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
   public visitGetExpr(expr: GetExpr): CantripValue {
     const object = this.evaluate(expr.object);
     if (object instanceof Map) {
-      return object.get(expr.name.lexeme)!;
+      const value = object.get(expr.name.lexeme);
+      if (value !== undefined) return value;
     }
 
     throw new RuntimeError(expr.name, "Property not found.");
@@ -401,7 +411,7 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
       }
     }
 
-    return null;
+    return Unit;
   }
 
   /**
@@ -435,6 +445,7 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
       case TokenType.Bang:
         return !this.isTruthy(right);
       case TokenType.Minus:
+        this.checkNumberOperand(expr.operator, right);
         return -(right as number);
     }
 
@@ -599,6 +610,35 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
     }
 
     return blockValue;
+  }
+
+  /**
+   * Checks if a single operand is a number.
+   *
+   * @param operator - The operator of the unary expression.
+   * @param operand - The operand of the unary expression.
+   * @throws {RuntimeError} if the operand is not a number.
+   */
+  private checkNumberOperand(operator: Token, operand: CantripValue): void {
+    if (typeof operand === "number") return;
+    throw new RuntimeError(operator, "Operand must be a number.");
+  }
+
+  /**
+   * Checks if two operands are both numbers.
+   *
+   * @param operator - The operator of the binary expression.
+   * @param left - The left value of the binary expression.
+   * @param right - The right value of the binary expression.
+   * @throws {RuntimeError} if either operand is not a number.
+   */
+  private checkNumberOperands(
+    operator: Token,
+    left: CantripValue,
+    right: CantripValue,
+  ): void {
+    if (typeof left === "number" && typeof right === "number") return;
+    throw new RuntimeError(operator, "Operands must be numbers.");
   }
 
   /**

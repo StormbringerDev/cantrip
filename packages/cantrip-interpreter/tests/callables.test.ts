@@ -12,7 +12,7 @@ import {
 } from "@cantrip/ast";
 import { Span } from "@cantrip/types";
 import { Environment } from "../src/environment.js";
-import { Interpreter, Unit } from "../src/interpreter.js";
+import { Interpreter, RuntimeError, Unit } from "../src/interpreter.js";
 
 /** Create single-line Span from start/end offsets (column == offset) */
 function makeSpan(start: number, end: number): Span {
@@ -150,6 +150,13 @@ describe("functions", () => {
     it("returns the result of constNum function", () => {
       const interpreter = new Interpreter();
       expect(constFunction.call(interpreter, [])).toBe(5);
+    });
+  });
+
+  describe("error", () => {
+    it("throws an error", () => {
+      const interpreter = new Interpreter();
+      expect(() => addFunction.call(interpreter, [10, false])).toThrow(RuntimeError);
     });
   });
 });

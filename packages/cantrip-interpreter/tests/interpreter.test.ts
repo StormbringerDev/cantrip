@@ -331,6 +331,18 @@ describe("interpreter", () => {
       it("evaluates a logical or expression", () => {
         const interpreter = new Interpreter();
         const expr = new BinaryExpr(
+          new LiteralExpr(false, makeSpan(0, 5)),
+          tok(TokenType.Or, "or", null, 6),
+          new LiteralExpr(true, makeSpan(9, 14)),
+          makeSpan(0, 14),
+        );
+        const result = interpreter.visitBinaryExpr(expr);
+        expect(result).toBe(true);
+      });
+
+      it("short-circuits a logical or expression", () => {
+        const interpreter = new Interpreter();
+        const expr = new BinaryExpr(
           new LiteralExpr(true, makeSpan(0, 5)),
           tok(TokenType.Or, "or", null, 6),
           new LiteralExpr(false, makeSpan(9, 14)),
@@ -346,6 +358,18 @@ describe("interpreter", () => {
           new LiteralExpr(true, makeSpan(0, 5)),
           tok(TokenType.And, "and", null, 6),
           new LiteralExpr(false, makeSpan(10, 15)),
+          makeSpan(0, 15),
+        );
+        const result = interpreter.visitBinaryExpr(expr);
+        expect(result).toBe(false);
+      });
+
+      it("short-circuits a logical and expression", () => {
+        const interpreter = new Interpreter();
+        const expr = new BinaryExpr(
+          new LiteralExpr(false, makeSpan(0, 5)),
+          tok(TokenType.And, "and", null, 6),
+          new LiteralExpr(true, makeSpan(10, 15)),
           makeSpan(0, 15),
         );
         const result = interpreter.visitBinaryExpr(expr);
@@ -425,6 +449,19 @@ describe("interpreter", () => {
         const result = interpreter.visitGetExpr(expr);
         expect(result).toBe(3);
       });
+
+      it("throws an error if property not found", () => {
+        const interpreter = new Interpreter();
+        const objValue = new Map<string, CantripValue>([
+          ["name", "Reyek"],
+          ["level", 3],
+        ]);
+        (interpreter as any).environment.define("reyek", objValue);
+        const object = new VarExpr(tok(TokenType.Identifier, "reyek"), makeSpan(0, 5));
+        const name = tok(TokenType.Identifier, "class", null, 6);
+        const expr = new GetExpr(object, name, makeSpan(0, 11));
+        expect(() => interpreter.visitGetExpr(expr)).toThrow("Property not found.");
+      });
     });
 
     describe("set expressions", () => {
@@ -462,6 +499,30 @@ describe("interpreter", () => {
         expect(result).toBe(2);
       });
 
+      it("throws an error if index is not a number", () => {
+        const interpreter = new Interpreter();
+        (interpreter as any).environment.define("numbers", [1, 2, 3]);
+        const indexee = new VarExpr(tok(TokenType.Identifier, "numbers"), makeSpan(0, 7));
+        const bracket = tok(TokenType.LeftBracket, "[", null, 7);
+        const index = new LiteralExpr(null, makeSpan(8, 9));
+        const expr = new IndexExpr(indexee, bracket, index, makeSpan(0, 10));
+        expect(() => interpreter.visitIndexExpr(expr)).toThrow(
+          "Index must evaluate to a number.",
+        );
+      });
+
+      it("throws an error if index is out of bounds", () => {
+        const interpreter = new Interpreter();
+        (interpreter as any).environment.define("numbers", [1, 2, 3]);
+        const indexee = new VarExpr(tok(TokenType.Identifier, "numbers"), makeSpan(0, 7));
+        const bracket = tok(TokenType.LeftBracket, "[", null, 7);
+        const index = new LiteralExpr(3, makeSpan(8, 9));
+        const expr = new IndexExpr(indexee, bracket, index, makeSpan(0, 10));
+        expect(() => interpreter.visitIndexExpr(expr)).toThrow(
+          "Array index out of bounds.",
+        );
+      });
+
       it("retrieves a value from an object", () => {
         const interpreter = new Interpreter();
         const objValue = new Map<string, CantripValue>([
@@ -475,6 +536,50 @@ describe("interpreter", () => {
         const expr = new IndexExpr(indexee, bracket, index, makeSpan(0, 13));
         const result = interpreter.visitIndexExpr(expr);
         expect(result).toBe(3);
+      });
+
+      it("throws an error if index is not a string", () => {
+        const interpreter = new Interpreter();
+        const objValue = new Map<string, CantripValue>([
+          ["name", "Reyek"],
+          ["level", 3],
+        ]);
+        (interpreter as any).environment.define("reyek", objValue);
+        const indexee = new VarExpr(tok(TokenType.Identifier, "reyek"), makeSpan(0, 5));
+        const bracket = tok(TokenType.LeftBracket, "[", null, 5);
+        const index = new LiteralExpr(false, makeSpan(6, 12));
+        const expr = new IndexExpr(indexee, bracket, index, makeSpan(0, 13));
+        expect(() => interpreter.visitIndexExpr(expr)).toThrow(
+          "Index must evaluate to a string.",
+        );
+      });
+
+      it("throws an error if object key is not found", () => {
+        const interpreter = new Interpreter();
+        const objValue = new Map<string, CantripValue>([
+          ["name", "Reyek"],
+          ["level", 3],
+        ]);
+        (interpreter as any).environment.define("reyek", objValue);
+        const indexee = new VarExpr(tok(TokenType.Identifier, "reyek"), makeSpan(0, 5));
+        const bracket = tok(TokenType.LeftBracket, "[", null, 5);
+        const index = new LiteralExpr("class", makeSpan(6, 12));
+        const expr = new IndexExpr(indexee, bracket, index, makeSpan(0, 13));
+        expect(() => interpreter.visitIndexExpr(expr)).toThrow(
+          "Object does not contain key.",
+        );
+      });
+
+      it("throws an error if indexee is not a data structure", () => {
+        const interpreter = new Interpreter();
+        (interpreter as any).environment.define("x", null);
+        const indexee = new VarExpr(tok(TokenType.Identifier, "x"), makeSpan(0, 7));
+        const bracket = tok(TokenType.LeftBracket, "[", null, 7);
+        const index = new LiteralExpr(3, makeSpan(8, 9));
+        const expr = new IndexExpr(indexee, bracket, index, makeSpan(0, 10));
+        expect(() => interpreter.visitIndexExpr(expr)).toThrow(
+          "Cannot index into a non-structured value.",
+        );
       });
     });
 
@@ -491,6 +596,19 @@ describe("interpreter", () => {
         expect(result).toBe(4);
         const expected = [1, 2, 3, 4];
         expect((interpreter as any).environment.get(indexee.name)).toEqual(expected);
+      });
+
+      it("throws an error if index is not a number", () => {
+        const interpreter = new Interpreter();
+        (interpreter as any).environment.define("numbers", [1, 2, 3]);
+        const indexee = new VarExpr(tok(TokenType.Identifier, "numbers"), makeSpan(0, 7));
+        const bracket = tok(TokenType.LeftBracket, "[", null, 7);
+        const index = new LiteralExpr(null, makeSpan(8, 9));
+        const value = new LiteralExpr(4, makeSpan(13, 14));
+        const expr = new IndexSetExpr(indexee, bracket, index, value, makeSpan(0, 14));
+        expect(() => interpreter.visitIndexSetExpr(expr)).toThrow(
+          "Index must evaluate to a number.",
+        );
       });
 
       it("sets an object key", () => {
@@ -512,6 +630,36 @@ describe("interpreter", () => {
           ["level", 4],
         ]);
         expect((interpreter as any).environment.get(indexee.name)).toEqual(expected);
+      });
+
+      it("throws an error if index is not a string", () => {
+        const interpreter = new Interpreter();
+        const objValue = new Map<string, CantripValue>([
+          ["name", "Reyek"],
+          ["level", 3],
+        ]);
+        (interpreter as any).environment.define("reyek", objValue);
+        const indexee = new VarExpr(tok(TokenType.Identifier, "reyek"), makeSpan(0, 5));
+        const bracket = tok(TokenType.LeftBracket, "[", null, 5);
+        const index = new LiteralExpr(false, makeSpan(6, 12));
+        const value = new LiteralExpr(4, makeSpan(16, 17));
+        const expr = new IndexSetExpr(indexee, bracket, index, value, makeSpan(0, 17));
+        expect(() => interpreter.visitIndexSetExpr(expr)).toThrow(
+          "Index must evaluate to a string.",
+        );
+      });
+
+      it("throws an error if indexee is not a data structure", () => {
+        const interpreter = new Interpreter();
+        (interpreter as any).environment.define("x", null);
+        const indexee = new VarExpr(tok(TokenType.Identifier, "x"), makeSpan(0, 7));
+        const bracket = tok(TokenType.LeftBracket, "[", null, 7);
+        const index = new LiteralExpr(3, makeSpan(8, 9));
+        const value = new LiteralExpr(4, makeSpan(16, 17));
+        const expr = new IndexSetExpr(indexee, bracket, index, value, makeSpan(0, 17));
+        expect(() => interpreter.visitIndexSetExpr(expr)).toThrow(
+          "Cannot index into a non-structured value.",
+        );
       });
     });
 
@@ -630,6 +778,76 @@ describe("interpreter", () => {
         const breaker = new IfExpr(breakCondition, breakBranch, null, makeSpan(16, 36));
         const body = new BlockExpr([increment], breaker, makeSpan(6, 38));
         const expr = new LoopExpr(body, makeSpan(0, 38));
+        const loopSpy = vi.spyOn(interpreter, "visitAssignExpr");
+        const result = interpreter.visitLoopExpr(expr);
+        expect(result).toBe(Unit);
+        expect(loopSpy).toHaveBeenCalledTimes(5);
+      });
+
+      it("evaluates an infinite loop expression with a continue", () => {
+        const interpreter = new Interpreter();
+        (interpreter as any).environment.define("i", 0);
+        const incName = tok(TokenType.Identifier, "i");
+        const continueCondition = new BinaryExpr(
+          new VarExpr(incName, makeSpan(0, 1)),
+          tok(TokenType.EqEq, "=="),
+          new LiteralExpr(3, makeSpan(0, 1)),
+          makeSpan(0, 1),
+        );
+        const continueBranch = new BlockExpr(
+          [
+            new ExprStmt(
+              new AssignExpr(
+                incName,
+                new BinaryExpr(
+                  new VarExpr(incName, makeSpan(0, 1)),
+                  tok(TokenType.Plus, "+"),
+                  new LiteralExpr(2, makeSpan(0, 1)),
+                  makeSpan(0, 1),
+                ),
+                makeSpan(0, 1),
+              ),
+              makeSpan(0, 1),
+            ),
+            new ContinueStmt(tok(TokenType.Continue, "continue"), makeSpan(0, 1)),
+          ],
+          null,
+          makeSpan(0, 1),
+        );
+        const continueIf = new IfExpr(
+          continueCondition,
+          continueBranch,
+          null,
+          makeSpan(0, 1),
+        );
+        const continuer = new ExprStmt(continueIf, makeSpan(0, 1));
+        const increment = new ExprStmt(
+          new AssignExpr(
+            incName,
+            new BinaryExpr(
+              new VarExpr(incName, makeSpan(0, 1)),
+              tok(TokenType.Plus, "+"),
+              new LiteralExpr(1, makeSpan(0, 1)),
+              makeSpan(0, 1),
+            ),
+            makeSpan(0, 1),
+          ),
+          makeSpan(0, 1),
+        );
+        const breakCondition = new BinaryExpr(
+          new VarExpr(incName, makeSpan(0, 1)),
+          tok(TokenType.GreaterEq, ">="),
+          new LiteralExpr(5, makeSpan(0, 1)),
+          makeSpan(0, 1),
+        );
+        const breakBranch = new BlockExpr(
+          [new BreakStmt(tok(TokenType.Break, "break"), null, makeSpan(0, 1))],
+          null,
+          makeSpan(0, 1),
+        );
+        const breaker = new IfExpr(breakCondition, breakBranch, null, makeSpan(0, 1));
+        const body = new BlockExpr([continuer, increment], breaker, makeSpan(0, 1));
+        const expr = new LoopExpr(body, makeSpan(0, 1));
         const loopSpy = vi.spyOn(interpreter, "visitAssignExpr");
         const result = interpreter.visitLoopExpr(expr);
         expect(result).toBe(Unit);
@@ -766,6 +984,28 @@ describe("interpreter", () => {
         const expr = new CallExpr(callee, paren, args, makeSpan(0, 10));
         const result = interpreter.visitCallExpr(expr);
         expect(result).toBe(3);
+      });
+
+      it("throws an error if call is not a function", () => {
+        const interpreter = new Interpreter();
+        (interpreter as any).environment.define("notAFunction", null);
+        const callee = new VarExpr(
+          tok(TokenType.Identifier, "notAFunction"),
+          makeSpan(0, 12),
+        );
+        const paren = tok(TokenType.RightParen, ")", null, 13);
+        const expr = new CallExpr(callee, paren, [], makeSpan(0, 14));
+        expect(() => interpreter.visitCallExpr(expr)).toThrow("Can only call functions.");
+      });
+
+      it("throws an error if argument count does not match arity", () => {
+        const interpreter = new Interpreter();
+        const callee = new VarExpr(tok(TokenType.Identifier, "print"), makeSpan(0, 5));
+        const paren = tok(TokenType.RightParen, ")", null, 6);
+        const expr = new CallExpr(callee, paren, [], makeSpan(0, 7));
+        expect(() => interpreter.visitCallExpr(expr)).toThrow(
+          "Expected 1 arguments but got 0.",
+        );
       });
     });
   });
