@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { CantripFunction, CantripNative, isCantripCallable } from "../src/callables.js";
 import {
   BinaryExpr,
@@ -179,8 +179,11 @@ describe("native functions", () => {
   });
 
   it("returns the result of the ts function or unit", () => {
+    vi.useFakeTimers();
+    const targetDate = new Date("2023-01-01T00:00:00.000Z");
+    const expected = targetDate.getTime();
+    vi.setSystemTime(targetDate);
     const interpreter = new Interpreter();
-    const expected = Date.now();
     expect(time.call(interpreter, [])).toBe(expected);
     expect(print.call(interpreter, ["Hello"])).toBe(Unit);
   });
