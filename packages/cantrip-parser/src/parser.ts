@@ -27,7 +27,12 @@ import {
   VarExpr,
   WhileStmt,
 } from "@cantrip/ast";
-import type { Span } from "@cantrip/types";
+import {
+  diagnosticAtSpan,
+  type Diagnostic,
+  type DiagnosticFromOptions,
+  type Span,
+} from "@cantrip/types";
 
 /**
  * A convenience function used to create a single-line
@@ -85,6 +90,16 @@ export class ParseError extends Error {
     this.name = "ParseError";
     this.token = token;
   }
+}
+
+export function fromParseError(
+  err: ParseError,
+  opts: DiagnosticFromOptions = {},
+): Diagnostic {
+  return diagnosticAtSpan(err.message, err.token.span, {
+    severity: "error",
+    ...opts,
+  });
 }
 
 /**

@@ -28,6 +28,11 @@ import type {
   UnaryExpr,
   WhileStmt,
 } from "@cantrip/ast";
+import {
+  diagnosticAtSpan,
+  type Diagnostic,
+  type DiagnosticFromOptions,
+} from "@cantrip/types";
 import { Environment } from "./environment.js";
 import {
   type CantripCallable,
@@ -78,6 +83,16 @@ export class RuntimeError extends Error {
     this.name = "RuntimeError";
     this.token = token;
   }
+}
+
+export function fromRuntimeError(
+  err: RuntimeError,
+  opts: DiagnosticFromOptions = {},
+): Diagnostic {
+  return diagnosticAtSpan(err.message, err.token.span, {
+    severity: "error",
+    ...opts,
+  });
 }
 
 /**

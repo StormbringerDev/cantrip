@@ -1,4 +1,9 @@
-import type { Position } from "@cantrip/types";
+import {
+  diagnosticAt,
+  type Diagnostic,
+  type DiagnosticFromOptions,
+  type Position,
+} from "@cantrip/types";
 import { Token, TokenType } from "@cantrip/ast";
 
 // --- Character classification helpers --------------------------------
@@ -69,6 +74,16 @@ export class ScannerError extends Error {
     this.name = "ScannerError";
     this.position = position;
   }
+}
+
+export function fromScannerError(
+  err: ScannerError,
+  opts: DiagnosticFromOptions = {},
+): Diagnostic {
+  return diagnosticAt(err.message, err.position, {
+    severity: "error",
+    ...opts,
+  });
 }
 
 /**
