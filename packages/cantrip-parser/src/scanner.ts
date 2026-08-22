@@ -1,9 +1,9 @@
+import type { Position } from "@cantrip/types";
 import {
   diagnosticAt,
   type Diagnostic,
   type DiagnosticFromOptions,
-  type Position,
-} from "@cantrip/types";
+} from "@cantrip/diagnostics";
 import { Token, TokenType } from "@cantrip/ast";
 
 // --- Character classification helpers --------------------------------

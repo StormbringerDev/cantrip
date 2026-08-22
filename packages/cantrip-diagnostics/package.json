@@ -1,5 +1,5 @@
 {
-  "name": "@cantrip/interpreter",
+  "name": "@cantrip/diagnostics",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -22,13 +22,9 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@cantrip/ast": "workspace:*",
-    "@cantrip/diagnostics": "workspace:*",
-    "@cantrip/parser": "workspace:*",
     "@cantrip/types": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "26.2.0",
     "typescript": "^6.0.3"
   }
 }

@@ -1,5 +1,5 @@
-import type { Position, Span } from "./location.js";
-import { spanAt } from "./location.js";
+import type { Position, Span } from "@cantrip/types";
+import { spanAt } from "@cantrip/types";
 import type { Diagnostic, DiagnosticNote, Severity } from "./diagnostic.js";
 
 export interface DiagnosticFromOptions {

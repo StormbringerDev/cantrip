@@ -32,7 +32,7 @@ import {
   diagnosticAtSpan,
   type Diagnostic,
   type DiagnosticFromOptions,
-} from "@cantrip/types";
+} from "@cantrip/diagnostics";
 import { Environment } from "./environment.js";
 import {
   type CantripCallable,

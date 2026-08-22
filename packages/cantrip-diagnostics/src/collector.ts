@@ -1,5 +1,5 @@
+import type { Span } from "@cantrip/types";
 import type { Diagnostic } from "./diagnostic.js";
-import type { Span } from "./location.js";
 
 export interface EmitOptions {
   span?: Span;

@@ -31,8 +31,8 @@ import {
   diagnosticAtSpan,
   type Diagnostic,
   type DiagnosticFromOptions,
-  type Span,
-} from "@cantrip/types";
+} from "@cantrip/diagnostics";
+import type { Span } from "@cantrip/types";
 
 /**
  * A convenience function used to create a single-line

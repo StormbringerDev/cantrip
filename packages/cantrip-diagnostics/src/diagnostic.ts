@@ -1,4 +1,4 @@
-import type { Span } from "./location.js";
+import type { Span } from "@cantrip/types";
 
 export type Severity = "error" | "warning" | "info" | "hint";
 

@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@cantrip/ast": "workspace:*",
+    "@cantrip/diagnostics": "workspace:*",
     "@cantrip/types": "workspace:*"
   },
   "devDependencies": {
