@@ -185,8 +185,11 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
       case TokenType.Plus:
         if (typeof left === "string" || typeof right === "string")
           return this.stringify(left) + this.stringify(right);
-        this.checkNumberOperands(expr.operator, left, right);
-        return (left as number) + (right as number);
+        if (typeof left === "number" && typeof right === "number") return left + right;
+        throw new RuntimeError(
+          expr.operator,
+          "Operands must be numbers if neither is a string.",
+        );
     }
 
     return Unit; // Unreachable.
@@ -424,7 +427,7 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
     const object = this.evaluate(expr.object);
 
     if (!(object instanceof Map)) {
-      throw new RuntimeError(expr.name, "Only object values have fields.");
+      throw new RuntimeError(expr.name, "Cannot set fields of non-object values.");
     }
 
     const value = this.evaluate(expr.value);
@@ -449,7 +452,7 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
         return -(right as number);
     }
 
-    return null; // Unreachable
+    return Unit; // Unreachable
   }
 
   /**
@@ -645,7 +648,7 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
    * Checks if a value is truthy.
    *
    * @param value - The value to be tested for truthiness.
-   * @returns `false` for `nil` and `false`, `true` for everything else.
+   * @returns `false` for `nil`, unit, and `false`, `true` for everything else.
    */
   private isTruthy(value: CantripValue): boolean {
     if (value === null) return false;

@@ -171,6 +171,18 @@ describe("interpreter", () => {
         expect(result).toBe(-5);
       });
 
+      it("throws an error if operand is not a number", () => {
+        const interpreter = new Interpreter();
+        const expr = new UnaryExpr(
+          tok(TokenType.Minus, "-"),
+          new LiteralExpr("5", makeSpan(1, 2)),
+          makeSpan(0, 2),
+        );
+        expect(() => interpreter.visitUnaryExpr(expr)).toThrow(
+          "Operand must be a number.",
+        );
+      });
+
       it("evaluates a logical not expression", () => {
         const interpreter = new Interpreter();
         const expr = new UnaryExpr(
@@ -208,6 +220,19 @@ describe("interpreter", () => {
         expect(result).toBe("Hello, world!");
       });
 
+      it("throws an error if either operand is not a number", () => {
+        const interpreter = new Interpreter();
+        const expr = new BinaryExpr(
+          new LiteralExpr(1, makeSpan(0, 1)),
+          tok(TokenType.Plus, "+"),
+          new LiteralExpr(true, makeSpan(0, 1)),
+          makeSpan(0, 1),
+        );
+        expect(() => interpreter.visitBinaryExpr(expr)).toThrow(
+          "Operands must be numbers if neither is a string.",
+        );
+      });
+
       it("evaluates a subtraction expression", () => {
         const interpreter = new Interpreter();
         const expr = new BinaryExpr(
@@ -218,6 +243,19 @@ describe("interpreter", () => {
         );
         const result = interpreter.visitBinaryExpr(expr);
         expect(result).toBe(3);
+      });
+
+      it("throws an error if either operand is not a number", () => {
+        const interpreter = new Interpreter();
+        const expr = new BinaryExpr(
+          new LiteralExpr(1, makeSpan(0, 1)),
+          tok(TokenType.Minus, "-"),
+          new LiteralExpr(true, makeSpan(0, 1)),
+          makeSpan(0, 1),
+        );
+        expect(() => interpreter.visitBinaryExpr(expr)).toThrow(
+          "Operands must be numbers.",
+        );
       });
 
       it("evaluates a multiplication expression", () => {
@@ -232,6 +270,19 @@ describe("interpreter", () => {
         expect(result).toBe(25);
       });
 
+      it("throws an error if either operand is not a number", () => {
+        const interpreter = new Interpreter();
+        const expr = new BinaryExpr(
+          new LiteralExpr(1, makeSpan(0, 1)),
+          tok(TokenType.Star, "*"),
+          new LiteralExpr(true, makeSpan(0, 1)),
+          makeSpan(0, 1),
+        );
+        expect(() => interpreter.visitBinaryExpr(expr)).toThrow(
+          "Operands must be numbers.",
+        );
+      });
+
       it("evaluates a division expression", () => {
         const interpreter = new Interpreter();
         const expr = new BinaryExpr(
@@ -244,6 +295,19 @@ describe("interpreter", () => {
         expect(result).toBe(5);
       });
 
+      it("throws an error if either operand is not a number", () => {
+        const interpreter = new Interpreter();
+        const expr = new BinaryExpr(
+          new LiteralExpr(1, makeSpan(0, 1)),
+          tok(TokenType.Slash, "/"),
+          new LiteralExpr(true, makeSpan(0, 1)),
+          makeSpan(0, 1),
+        );
+        expect(() => interpreter.visitBinaryExpr(expr)).toThrow(
+          "Operands must be numbers.",
+        );
+      });
+
       it("evaluates a modulo expression", () => {
         const interpreter = new Interpreter();
         const expr = new BinaryExpr(
@@ -254,6 +318,19 @@ describe("interpreter", () => {
         );
         const result = interpreter.visitBinaryExpr(expr);
         expect(result).toBe(1);
+      });
+
+      it("throws an error if either operand is not a number", () => {
+        const interpreter = new Interpreter();
+        const expr = new BinaryExpr(
+          new LiteralExpr(1, makeSpan(0, 1)),
+          tok(TokenType.Percent, "%"),
+          new LiteralExpr(true, makeSpan(0, 1)),
+          makeSpan(0, 1),
+        );
+        expect(() => interpreter.visitBinaryExpr(expr)).toThrow(
+          "Operands must be numbers.",
+        );
       });
 
       it("evaluates an equality expression", () => {
@@ -292,6 +369,19 @@ describe("interpreter", () => {
         expect(result).toBe(true);
       });
 
+      it("throws an error if either operand is not a number", () => {
+        const interpreter = new Interpreter();
+        const expr = new BinaryExpr(
+          new LiteralExpr(1, makeSpan(0, 1)),
+          tok(TokenType.Greater, ">"),
+          new LiteralExpr(true, makeSpan(0, 1)),
+          makeSpan(0, 1),
+        );
+        expect(() => interpreter.visitBinaryExpr(expr)).toThrow(
+          "Operands must be numbers.",
+        );
+      });
+
       it("evaluates a greater or equal expression", () => {
         const interpreter = new Interpreter();
         const expr = new BinaryExpr(
@@ -302,6 +392,19 @@ describe("interpreter", () => {
         );
         const result = interpreter.visitBinaryExpr(expr);
         expect(result).toBe(true);
+      });
+
+      it("throws an error if either operand is not a number", () => {
+        const interpreter = new Interpreter();
+        const expr = new BinaryExpr(
+          new LiteralExpr(1, makeSpan(0, 1)),
+          tok(TokenType.GreaterEq, ">="),
+          new LiteralExpr(true, makeSpan(0, 1)),
+          makeSpan(0, 1),
+        );
+        expect(() => interpreter.visitBinaryExpr(expr)).toThrow(
+          "Operands must be numbers.",
+        );
       });
 
       it("evaluates a less than expression", () => {
@@ -316,6 +419,19 @@ describe("interpreter", () => {
         expect(result).toBe(false);
       });
 
+      it("throws an error if either operand is not a number", () => {
+        const interpreter = new Interpreter();
+        const expr = new BinaryExpr(
+          new LiteralExpr(1, makeSpan(0, 1)),
+          tok(TokenType.Less, "<"),
+          new LiteralExpr(true, makeSpan(0, 1)),
+          makeSpan(0, 1),
+        );
+        expect(() => interpreter.visitBinaryExpr(expr)).toThrow(
+          "Operands must be numbers.",
+        );
+      });
+
       it("evaluates a less or equal expression", () => {
         const interpreter = new Interpreter();
         const expr = new BinaryExpr(
@@ -326,6 +442,19 @@ describe("interpreter", () => {
         );
         const result = interpreter.visitBinaryExpr(expr);
         expect(result).toBe(false);
+      });
+
+      it("throws an error if either operand is not a number", () => {
+        const interpreter = new Interpreter();
+        const expr = new BinaryExpr(
+          new LiteralExpr(1, makeSpan(0, 1)),
+          tok(TokenType.LessEq, "<="),
+          new LiteralExpr(true, makeSpan(0, 1)),
+          makeSpan(0, 1),
+        );
+        expect(() => interpreter.visitBinaryExpr(expr)).toThrow(
+          "Operands must be numbers.",
+        );
       });
 
       it("evaluates a logical or expression", () => {
@@ -484,6 +613,19 @@ describe("interpreter", () => {
           ["level", 4],
         ]);
         expect((interpreter as any).environment.get(varName)).toEqual(expected);
+      });
+
+      it("throws an error if value is not an object", () => {
+        const interpreter = new Interpreter();
+        (interpreter as any).environment.define("x", 5);
+        const varName = tok(TokenType.Identifier, "x");
+        const notObject = new VarExpr(varName, makeSpan(0, 1));
+        const name = tok(TokenType.Identifier, "cantSet");
+        const value = new LiteralExpr(null, makeSpan(0, 1));
+        const expr = new SetExpr(notObject, name, value, makeSpan(0, 1));
+        expect(() => interpreter.visitSetExpr(expr)).toThrow(
+          "Cannot set fields of non-object values.",
+        );
       });
     });
 
@@ -893,6 +1035,27 @@ describe("interpreter", () => {
         expect(result).toBe(10);
         expect(loopSpy).toHaveBeenCalledTimes(5);
       });
+
+      it("throws an error if loop body contains an erroneous statement", () => {
+        const interpreter = new Interpreter();
+        const body = new BlockExpr(
+          [
+            new ExprStmt(
+              new BinaryExpr(
+                new LiteralExpr(true, makeSpan(0, 1)),
+                tok(TokenType.Plus, "+"),
+                new LiteralExpr(5, makeSpan(0, 1)),
+                makeSpan(0, 1),
+              ),
+              makeSpan(0, 1),
+            ),
+          ],
+          null,
+          makeSpan(0, 1),
+        );
+        const expr = new LoopExpr(body, makeSpan(0, 1));
+        expect(() => interpreter.visitLoopExpr(expr)).toThrow();
+      });
     });
 
     describe("match expressions", () => {
@@ -1152,6 +1315,170 @@ describe("interpreter", () => {
           makeSpan(0, 7),
         );
         expect(() => interpreter.visitReturnStmt(stmt)).toThrow(Return);
+      });
+    });
+  });
+
+  describe("utility checks", () => {
+    describe("truthiness", () => {
+      it("determines 'nil' is falsy", () => {
+        const interpreter = new Interpreter();
+        const expr = new UnaryExpr(
+          tok(TokenType.Bang, "!"),
+          new LiteralExpr(null, makeSpan(0, 1)),
+          makeSpan(0, 1),
+        );
+        const result = interpreter.visitUnaryExpr(expr);
+        expect(result).toBe(true);
+      });
+
+      it("determines unit is falsy", () => {
+        const interpreter = new Interpreter();
+        const expr = new UnaryExpr(
+          tok(TokenType.Bang, "!"),
+          new CallExpr(
+            new VarExpr(tok(TokenType.Identifier, "print"), makeSpan(0, 1)),
+            tok(TokenType.RightParen, ")"),
+            [new LiteralExpr(null, makeSpan(0, 1))],
+            makeSpan(0, 1),
+          ),
+          makeSpan(0, 1),
+        );
+        const result = interpreter.visitUnaryExpr(expr);
+        expect(result).toBe(true);
+      });
+
+      it("determines 'false' is falsy", () => {
+        const interpreter = new Interpreter();
+        const expr = new UnaryExpr(
+          tok(TokenType.Bang, "!"),
+          new LiteralExpr(false, makeSpan(0, 1)),
+          makeSpan(0, 1),
+        );
+        const result = interpreter.visitUnaryExpr(expr);
+        expect(result).toBe(true);
+      });
+
+      it("determines 'true' is truthy", () => {
+        const interpreter = new Interpreter();
+        const expr = new UnaryExpr(
+          tok(TokenType.Bang, "!"),
+          new LiteralExpr(true, makeSpan(0, 1)),
+          makeSpan(0, 1),
+        );
+        const result = interpreter.visitUnaryExpr(expr);
+        expect(result).toBe(false);
+      });
+
+      it("determines number is truthy", () => {
+        const interpreter = new Interpreter();
+        const expr = new UnaryExpr(
+          tok(TokenType.Bang, "!"),
+          new LiteralExpr(0, makeSpan(0, 1)),
+          makeSpan(0, 1),
+        );
+        const result = interpreter.visitUnaryExpr(expr);
+        expect(result).toBe(false);
+      });
+
+      it("determines string is truthy", () => {
+        const interpreter = new Interpreter();
+        const expr = new UnaryExpr(
+          tok(TokenType.Bang, "!"),
+          new LiteralExpr("", makeSpan(0, 1)),
+          makeSpan(0, 1),
+        );
+        const result = interpreter.visitUnaryExpr(expr);
+        expect(result).toBe(false);
+      });
+
+      it("determines array is truthy", () => {
+        const interpreter = new Interpreter();
+        const expr = new UnaryExpr(
+          tok(TokenType.Bang, "!"),
+          new LiteralExpr([], makeSpan(0, 1)),
+          makeSpan(0, 1),
+        );
+        const result = interpreter.visitUnaryExpr(expr);
+        expect(result).toBe(false);
+      });
+
+      it("determines object is truthy", () => {
+        const interpreter = new Interpreter();
+        const expr = new UnaryExpr(
+          tok(TokenType.Bang, "!"),
+          new LiteralExpr(new Map(), makeSpan(0, 1)),
+          makeSpan(0, 1),
+        );
+        const result = interpreter.visitUnaryExpr(expr);
+        expect(result).toBe(false);
+      });
+    });
+
+    describe("stringification", () => {
+      it("prints 'nil'", () => {
+        const interpreter = new Interpreter();
+        const consoleMock = vi.spyOn(console, "log");
+        const stmt = new ExprStmt(
+          new CallExpr(
+            new VarExpr(tok(TokenType.Identifier, "print"), makeSpan(0, 1)),
+            tok(TokenType.RightParen, ")"),
+            [new LiteralExpr(null, makeSpan(0, 1))],
+            makeSpan(0, 1),
+          ),
+          makeSpan(0, 1),
+        );
+        interpreter.interpret([stmt]);
+        expect(consoleMock).toHaveBeenCalledWith("nil");
+      });
+
+      it("prints an array", () => {
+        const interpreter = new Interpreter();
+        const consoleMock = vi.spyOn(console, "log");
+        const stmt = new ExprStmt(
+          new CallExpr(
+            new VarExpr(tok(TokenType.Identifier, "print"), makeSpan(0, 1)),
+            tok(TokenType.RightParen, ")"),
+            [
+              new LiteralExpr(
+                [
+                  new LiteralExpr(1, makeSpan(0, 1)),
+                  new LiteralExpr(2, makeSpan(0, 1)),
+                  new LiteralExpr(3, makeSpan(0, 1)),
+                ],
+                makeSpan(0, 1),
+              ),
+            ],
+            makeSpan(0, 1),
+          ),
+          makeSpan(0, 1),
+        );
+        interpreter.interpret([stmt]);
+        expect(consoleMock).toHaveBeenCalledWith("[1, 2, 3]");
+      });
+
+      it("prints an object", () => {
+        const interpreter = new Interpreter();
+        const consoleMock = vi.spyOn(console, "log");
+        const stmt = new ExprStmt(
+          new CallExpr(
+            new VarExpr(tok(TokenType.Identifier, "print"), makeSpan(0, 1)),
+            tok(TokenType.RightParen, ")"),
+            [
+              new LiteralExpr(
+                new Map<string, Expr>([
+                  ["name", new LiteralExpr("Reyek", makeSpan(0, 1))],
+                  ["level", new LiteralExpr(3, makeSpan(0, 1))],
+                ]),
+                makeSpan(0, 1),
+              ),
+            ],
+            makeSpan(0, 1),
+          ),
+          makeSpan(0, 1),
+        );
+        interpreter.interpret([stmt]);
+        expect(consoleMock).toHaveBeenCalledWith("{ name: Reyek, level: 3 }");
       });
     });
   });

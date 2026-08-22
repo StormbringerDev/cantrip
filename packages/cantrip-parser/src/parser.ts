@@ -657,7 +657,7 @@ export class Parser {
 
         args.push(this.expression());
 
-        // Check for trailing semicolon.
+        // Check for trailing comma.
         if (
           this.check(TokenType.Comma) &&
           this.peekNext().type === TokenType.RightParen
