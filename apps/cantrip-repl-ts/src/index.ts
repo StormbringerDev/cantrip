@@ -1,10 +1,6 @@
-import { fromParseError, fromScannerError, Parser, Scanner } from "@cantrip/parser";
+import { scanAndParse } from "@cantrip/parser";
 import { Interpreter } from "@cantrip/interpreter";
-import {
-  DiagnosticCollector,
-  formatDiagnostics,
-  type SourceFile,
-} from "@cantrip/diagnostics";
+import { formatDiagnostics, type SourceFile } from "@cantrip/diagnostics";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import promptSync from "prompt-sync";
@@ -21,26 +17,10 @@ function run(source: string, sourceId = REPL_SOURCE_ID): void {
   const sourceFile: SourceFile = { id: sourceId, text: source, name: sourceId };
   const sources = new Map<string, SourceFile>([[sourceId, sourceFile]]);
 
-  const collector = new DiagnosticCollector();
+  const { ast, diagnostics } = scanAndParse(source, sourceId);
 
-  const scanner = new Scanner(source);
-  const { tokens, scannerErrors } = scanner.scanTokens();
-
-  for (const err of scannerErrors) {
-    collector.emit(fromScannerError(err, { sourceId }));
-  }
-
-  const parser = new Parser(tokens);
-  const { ast, parseErrors } = parser.parse();
-
-  for (const err of parseErrors) {
-    collector.emit(fromParseError(err, { sourceId }));
-  }
-
-  if (collector.hasErrors()) {
-    console.error(formatDiagnostics(collector.diagnostics(), sources));
-    hadError = true;
-    return;
+  if (diagnostics.length > 0) {
+    console.error(formatDiagnostics(diagnostics, sources));
   }
 
   const statements = ast.filter((s) => s !== null);
