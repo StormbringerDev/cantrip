@@ -9,18 +9,18 @@ import promptSync from "prompt-sync";
 let hadError = false;
 const interpreter = new Interpreter();
 
-function printUsage() {
+function printUsage(): void {
   console.log("Usage: cantrip-ts [script]");
 }
 
-function report(position: Position, where: string, message: string) {
+function report(position: Position, where: string, message: string): void {
   console.error(
     `[Line ${position.line + 1} Column ${position.column + 1}] Error${where}: ${message}`,
   );
   hadError = true;
 }
 
-function run(source: string) {
+function run(source: string): void {
   const scanner = new Scanner(source);
   const { tokens, scannerErrors } = scanner.scanTokens();
   const parser = new Parser(tokens);
@@ -47,7 +47,7 @@ function run(source: string) {
   interpreter.interpret(statements);
 }
 
-function runFile(path: string) {
+function runFile(path: string): void {
   const filePath = resolve(path);
   try {
     const source = readFileSync(filePath, "utf-8");
@@ -59,14 +59,14 @@ function runFile(path: string) {
   if (hadError) process.exit(65);
 }
 
-function runPrompt() {
+function runPrompt(): void {
   const prompt = promptSync({ sigint: true, eot: true });
 
   console.log("Welcome to the Cantrip REPL. Press Ctrl+D to exit:");
   console.log();
 
   for (;;) {
-    const line = prompt("cantrip-ts > ");
+    const line = prompt("> ");
     if (line) run(line);
     hadError = false;
   }

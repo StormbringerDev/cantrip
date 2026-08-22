@@ -10,3 +10,8 @@ export interface Span {
   readonly start: Position;
   readonly end: Position;
 }
+
+/** Create a zero-width span at a position */
+export function spanAt(pos: Position): Span {
+  return { start: pos, end: pos };
+}
