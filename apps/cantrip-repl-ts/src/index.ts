@@ -1,45 +1,45 @@
-import { TokenType } from "@cantrip/ast";
-import { Parser, ParseError, Scanner, ScannerError } from "@cantrip/parser";
+import { fromParseError, fromScannerError, Parser, Scanner } from "@cantrip/parser";
 import { Interpreter } from "@cantrip/interpreter";
-import type { Position } from "@cantrip/types";
+import {
+  DiagnosticCollector,
+  formatDiagnostics,
+  type SourceFile,
+} from "@cantrip/diagnostics";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import promptSync from "prompt-sync";
 
 let hadError = false;
+const REPL_SOURCE_ID = "<repl>";
 const interpreter = new Interpreter();
 
 function printUsage(): void {
   console.log("Usage: cantrip-ts [script]");
 }
 
-function report(position: Position, where: string, message: string): void {
-  console.error(
-    `[Line ${position.line + 1} Column ${position.column + 1}] Error${where}: ${message}`,
-  );
-  hadError = true;
-}
+function run(source: string, sourceId = REPL_SOURCE_ID): void {
+  const sourceFile: SourceFile = { id: sourceId, text: source, name: sourceId };
+  const sources = new Map<string, SourceFile>([[sourceId, sourceFile]]);
 
-function run(source: string): void {
+  const collector = new DiagnosticCollector();
+
   const scanner = new Scanner(source);
   const { tokens, scannerErrors } = scanner.scanTokens();
+
+  for (const err of scannerErrors) {
+    collector.emit(fromScannerError(err, { sourceId }));
+  }
+
   const parser = new Parser(tokens);
   const { ast, parseErrors } = parser.parse();
-  const errors: Error[] = [...scannerErrors, ...parseErrors];
 
-  // If there are errors, report errors and end execution
-  if (errors.length > 0) {
-    for (const error of errors) {
-      if (error instanceof ScannerError) {
-        report(error.position, "", error.message);
-      } else if (error instanceof ParseError) {
-        if (error.token.type === TokenType.Eof) {
-          report(error.token.span.start, " at end", error.message);
-        } else {
-          report(error.token.span.start, ` at '${error.token.lexeme}'`, error.message);
-        }
-      }
-    }
+  for (const err of parseErrors) {
+    collector.emit(fromParseError(err, { sourceId }));
+  }
+
+  if (collector.hasErrors()) {
+    console.error(formatDiagnostics(collector.diagnostics(), sources));
+    hadError = true;
     return;
   }
 
@@ -51,7 +51,7 @@ function runFile(path: string): void {
   const filePath = resolve(path);
   try {
     const source = readFileSync(filePath, "utf-8");
-    run(source);
+    run(source, filePath);
   } catch (err) {
     console.error(err);
   }

@@ -47,6 +47,9 @@ importers:
       '@cantrip/ast':
         specifier: workspace:*
         version: link:../../packages/cantrip-ast
+      '@cantrip/diagnostics':
+        specifier: workspace:*
+        version: link:../../packages/cantrip-diagnostics
       '@cantrip/interpreter':
         specifier: workspace:*
         version: link:../../packages/cantrip-interpreter
