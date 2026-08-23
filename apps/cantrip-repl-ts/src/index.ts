@@ -11,16 +11,20 @@ import promptSync from "prompt-sync";
 
 let hadError = false;
 const REPL_SOURCE_ID = "<repl>";
-const interpreter = new Interpreter();
+const diagnostics = new DiagnosticCollector();
 
 function printUsage(): void {
   console.log("Usage: cantrip-ts [script]");
 }
 
-function run(source: string, sourceId = REPL_SOURCE_ID): void {
+function run(
+  source: string,
+  interpreter: Interpreter,
+  diagnostics: DiagnosticCollector,
+  sourceId = REPL_SOURCE_ID,
+): void {
   const sourceFile: SourceFile = { id: sourceId, text: source, name: sourceId };
   const sources = new Map([[sourceId, sourceFile]]);
-  const diagnostics = new DiagnosticCollector();
 
   const tokens = new Scanner(source, diagnostics, sourceId).scanTokens();
   const ast = new Parser(tokens, diagnostics, sourceId).parse();
@@ -33,13 +37,18 @@ function run(source: string, sourceId = REPL_SOURCE_ID): void {
 
   const statements = ast.filter((s) => s !== null);
   interpreter.interpret(statements);
+
+  if (diagnostics.hasErrors()) {
+    console.error(formatDiagnostics(diagnostics.diagnostics(), sources));
+  }
 }
 
-function runFile(path: string): void {
+function runFile(diagnostics: DiagnosticCollector, path: string): void {
   const filePath = resolve(path);
+  const interpreter = new Interpreter(diagnostics);
   try {
     const source = readFileSync(filePath, "utf-8");
-    run(source, basename(filePath));
+    run(source, interpreter, diagnostics, basename(filePath));
   } catch (err) {
     console.error(err);
   }
@@ -47,16 +56,18 @@ function runFile(path: string): void {
   if (hadError) process.exit(65);
 }
 
-function runPrompt(): void {
+function runPrompt(diagnostics: DiagnosticCollector): void {
   const prompt = promptSync({ sigint: true, eot: true });
+  const interpreter = new Interpreter(diagnostics, REPL_SOURCE_ID);
 
   console.log("Welcome to the Cantrip REPL. Press Ctrl+D to exit:");
   console.log();
 
   for (;;) {
     const line = prompt("> ");
-    if (line) run(line);
+    if (line) run(line, interpreter, diagnostics);
     hadError = false;
+    diagnostics.clear();
   }
 }
 
@@ -65,7 +76,7 @@ if (args.length > 1) {
   printUsage();
   process.exit(64);
 } else if (args.length === 1) {
-  runFile(args[0]);
+  runFile(diagnostics, args[0]);
 } else {
-  runPrompt();
+  runPrompt(diagnostics);
 }

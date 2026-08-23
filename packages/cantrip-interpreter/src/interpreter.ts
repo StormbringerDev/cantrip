@@ -30,6 +30,7 @@ import type {
 } from "@cantrip/ast";
 import {
   diagnosticAtSpan,
+  type DiagnosticCollector,
   type Diagnostic,
   type DiagnosticFromOptions,
 } from "@cantrip/diagnostics";
@@ -108,10 +109,17 @@ export function fromRuntimeError(
 export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void> {
   /** The global environment where stdlib functions are defined. */
   public readonly globals = new Environment();
-  /** The variable environment currently in scope. */
   private environment = this.globals;
+  private readonly diagnostics: DiagnosticCollector;
+  private readonly sourceId: string;
 
-  constructor() {
+  /**
+   * @param diagnostics - The diagnostic collector.
+   * @param sourceId - The name of the source file.
+   */
+  constructor(diagnostics: DiagnosticCollector, sourceId = "<input>") {
+    this.diagnostics = diagnostics;
+    this.sourceId = sourceId;
     this.globals.define(
       "print",
       new CantripNative((args) => {
@@ -127,13 +135,14 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
    *
    * @param statements - The array of statements to be executed.
    */
-  public interpret(statements: Stmt[]) {
+  public interpret(statements: Stmt[]): void {
     try {
       for (const statement of statements) {
         this.execute(statement);
       }
     } catch (err) {
       this.runtimeError(err as RuntimeError);
+      return;
     }
   }
 
@@ -708,7 +717,7 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
    * @param error - The error to be reported.
    */
   private runtimeError(error: RuntimeError): void {
-    console.error(`${error.message}\n[line ${error.token.span.start.line}]`);
+    this.diagnostics.emit(fromRuntimeError(error, { sourceId: this.sourceId }));
   }
 }
 
