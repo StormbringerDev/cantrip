@@ -1,21 +1,28 @@
 import { describe, expect, it } from "vitest";
 import { Scanner } from "../src/scanner.js";
 import { TokenType } from "@cantrip/ast";
+import { DiagnosticCollector } from "@cantrip/diagnostics";
 
 describe("Scanner", () => {
   it("emits an Eof token when scanning is complete", () => {
-    const scanner = new Scanner("");
-    const { tokens } = scanner.scanTokens();
+    const diagnostics = new DiagnosticCollector();
+    const scanner = new Scanner("", diagnostics, "<test>");
+    const tokens = scanner.scanTokens();
+    expect(diagnostics.hasErrors()).toBe(false);
     expect(tokens).toHaveLength(1);
     expect(tokens.at(-1)!.type).toBe(TokenType.Eof);
   });
 
   it("scans arithmetic, comparison, assignment, and grouping operators", () => {
+    const diagnostics = new DiagnosticCollector();
     const scanner = new Scanner(
       "((4 + 2) * 3.14 / 3) != 0 <= 1 >= 2 == 3 % 4 -> 5 => 6 += 7 -= 8 *= 9 /= 10 %= 11",
+      diagnostics,
+      "<test>",
     );
-    const { tokens } = scanner.scanTokens();
+    const tokens = scanner.scanTokens();
 
+    expect(diagnostics.hasErrors()).toBe(false);
     const expected = [
       TokenType.LeftParen,
       TokenType.LeftParen,
@@ -59,7 +66,9 @@ describe("Scanner", () => {
   });
 
   it("scans keywords, identifiers, strings, brackets, and remaining punctuation", () => {
-    const scanner = new Scanner(`
+    const diagnostics = new DiagnosticCollector();
+    const scanner = new Scanner(
+      `
       fn main() {
         let answer: number = 42;
         if true or false {
@@ -79,9 +88,13 @@ describe("Scanner", () => {
           _ => print("Still searching"),
         }
       }
-    `);
+    `,
+      diagnostics,
+      "<test>",
+    );
 
-    const { tokens } = scanner.scanTokens();
+    const tokens = scanner.scanTokens();
+    expect(diagnostics.hasErrors()).toBe(false);
     const types = tokens.map((t) => t.type);
 
     expect(types).toContain(TokenType.Fn);
@@ -113,10 +126,12 @@ describe("Scanner", () => {
   });
 
   it("handles bang and other single-character leftovers", () => {
+    const diagnostics = new DiagnosticCollector();
     // I know the source string is illogical, but the scanner only emits tokens and I'm
     // testing that the correct tokens are emitted
-    const scanner = new Scanner("!x -y");
-    const { tokens } = scanner.scanTokens();
+    const scanner = new Scanner("!x -y", diagnostics, "<test>");
+    const tokens = scanner.scanTokens();
+    expect(diagnostics.hasErrors()).toBe(false);
     expect(tokens.map((t) => t.type)).toEqual([
       TokenType.Bang,
       TokenType.Identifier,
@@ -127,19 +142,28 @@ describe("Scanner", () => {
   });
 
   it("ignores comments", () => {
-    const scanner = new Scanner("// Very important comment");
-    const { tokens } = scanner.scanTokens();
+    const diagnostics = new DiagnosticCollector();
+    const scanner = new Scanner("// Very important comment", diagnostics, "<test>");
+    const tokens = scanner.scanTokens();
+    expect(diagnostics.hasErrors()).toBe(false);
     expect(tokens).toHaveLength(1);
   });
 
   it("handles escape sequences in string literals", () => {
-    const scanner = new Scanner(String.raw`
+    const diagnostics = new DiagnosticCollector();
+    const scanner = new Scanner(
+      String.raw`
       "This string has a \"substring\"."
       "\tThis string starts with a tab."
       "\nThis string starts with a newline."
       "Escape sequences are written with \\."
-    `);
-    const { tokens } = scanner.scanTokens();
+    `,
+      diagnostics,
+      "<test>",
+    );
+    const tokens = scanner.scanTokens();
+
+    expect(diagnostics.hasErrors()).toBe(false);
 
     const expected = [
       'This string has a "substring".',

@@ -30,6 +30,7 @@ import {
 import {
   diagnosticAtSpan,
   type Diagnostic,
+  type DiagnosticCollector,
   type DiagnosticFromOptions,
 } from "@cantrip/diagnostics";
 import type { Span } from "@cantrip/types";
@@ -103,6 +104,17 @@ export function fromParseError(
 }
 
 /**
+ * Internal control-flow error. Not part of the public diagnostic surface.
+ * Thrown so declaration() can synchronize; the real diagnostic was already emitted.
+ */
+class ParseRecover extends Error {
+  constructor() {
+    super("parse recover");
+    this.name = "ParseRecover";
+  }
+}
+
+/**
  * Recursive-descent parser for Cantrip.
  *
  * Consumes a flat list of tokens produced by the {@link Scanner}
@@ -113,18 +125,20 @@ export function fromParseError(
  * diagnostics can be reported in a single run.
  */
 export class Parser {
-  /** Token stream to parse. */
   private readonly tokens: Token[];
-  /** Accumulated parse errors. */
-  private errors: ParseError[] = [];
-  /** Index of the current token. */
+  private readonly diagnostics: DiagnosticCollector;
+  private readonly sourceId: string;
   private current = 0;
 
   /**
    * @param tokens - Complete token list (including the final `Eof` token).
+   * @param diagnostics - The diagnostic collector.
+   * @param [sourceId="<input>"] - The name of the source file.
    */
-  constructor(tokens: Token[]) {
+  constructor(tokens: Token[], diagnostics: DiagnosticCollector, sourceId = "<input>") {
     this.tokens = tokens;
+    this.diagnostics = diagnostics;
+    this.sourceId = sourceId;
   }
 
   /**
@@ -134,13 +148,13 @@ export class Parser {
    *          for statements that failed to parse) and the list of
    *          collected {@link ParseError}s.
    */
-  public parse(): { ast: (Stmt | null)[]; parseErrors: ParseError[] } {
+  public parse(): (Stmt | null)[] {
     const ast: (Stmt | null)[] = [];
     while (!this.isAtEnd()) {
       ast.push(this.declaration());
     }
 
-    return { ast, parseErrors: this.errors };
+    return ast;
   }
 
   /**
@@ -157,9 +171,12 @@ export class Parser {
       if (this.match(TokenType.Let)) return this.letDecl();
 
       return this.statement();
-    } catch {
-      this.synchronize();
-      return null;
+    } catch (e) {
+      if (e instanceof ParseRecover) {
+        this.synchronize();
+        return null;
+      }
+      throw e;
     }
   }
 
@@ -1094,10 +1111,13 @@ export class Parser {
    * @param message - Description of the problem.
    * @returns A new {@link ParseError} instance.
    */
-  private error(token: Token, message: string): ParseError {
-    const err = new ParseError(token, message);
-    this.errors.push(err);
-    return err;
+  private error(token: Token, message: string): ParseRecover {
+    this.diagnostics.emit(
+      diagnosticAtSpan(message, token.span, {
+        sourceId: this.sourceId,
+      }),
+    );
+    return new ParseRecover();
   }
 
   /**

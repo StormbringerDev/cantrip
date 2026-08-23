@@ -88,6 +88,9 @@ importers:
 
   packages/cantrip-diagnostics:
     dependencies:
+      '@cantrip/ast':
+        specifier: workspace:*
+        version: link:../cantrip-ast
       '@cantrip/types':
         specifier: workspace:*
         version: link:../cantrip-types

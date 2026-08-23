@@ -2,6 +2,7 @@ import type { Position } from "@cantrip/types";
 import {
   diagnosticAt,
   type Diagnostic,
+  type DiagnosticCollector,
   type DiagnosticFromOptions,
 } from "@cantrip/diagnostics";
 import { Token, TokenType } from "@cantrip/ast";
@@ -100,24 +101,24 @@ export function fromScannerError(
  * - Tracking accurate source positions (line / column / offset)
  */
 export class Scanner {
-  /** Complete source text being scanned. */
   private readonly source: string;
-  /** Tokens produced so far. */
+  private readonly diagnostics: DiagnosticCollector;
+  private readonly sourceId: string;
   private tokens: Token[] = [];
-  /** Lexical errors collected during scanning. */
-  private errors: ScannerError[] = [];
-  /** Current 0-based line number. */
+
   private line = 0;
-  /** Current 0-based column within the line. */
   private column = 0;
-  /** Absolute character offset from the start of the source. */
   private offset = 0;
 
   /**
    * @param source - Source text to tokenize.
+   * @param diagnostics - The diagnostic collector.
+   * @param [sourceId="<input>"] - The name of the source file.
    */
-  constructor(source: string) {
+  constructor(source: string, diagnostics: DiagnosticCollector, sourceId = "<input>") {
     this.source = source;
+    this.diagnostics = diagnostics;
+    this.sourceId = sourceId;
   }
 
   /**
@@ -128,26 +129,19 @@ export class Scanner {
    * @returns Object containing the token array and the list of
    *          {@link ScannerError}s that occurred.
    */
-  scanTokens(): { tokens: Token[]; scannerErrors: ScannerError[] } {
+  scanTokens(): Token[] {
     while (!this.isAtEnd()) {
       this.scanToken();
     }
 
     this.tokens.push(
       new Token(TokenType.Eof, "", null, {
-        start: {
-          line: this.line,
-          column: this.column++,
-          offset: this.offset++,
-        },
-        end: {
-          line: this.line,
-          column: this.column,
-          offset: this.offset,
-        },
+        start: { line: this.line, column: this.column, offset: this.offset },
+        end: { line: this.line, column: this.column + 1, offset: this.offset + 1 },
       }),
     );
-    return { tokens: this.tokens, scannerErrors: this.errors };
+
+    return this.tokens;
   }
 
   /**
@@ -255,7 +249,12 @@ export class Scanner {
         } else if (isAlpha(char)) {
           this.addIdentifier(start);
         } else {
-          this.errors.push(new ScannerError(start, `Unexpected character '${char}'.`));
+          this.diagnostics.emit(
+            diagnosticAt(`Unexpected character '${char}'.`, start, {
+              sourceId: this.sourceId,
+              // code: "Exxxx" later
+            }),
+          );
         }
     }
   }
@@ -356,7 +355,11 @@ export class Scanner {
     }
 
     if (this.isAtEnd()) {
-      this.errors.push(new ScannerError(start, "Unterminated string."));
+      this.diagnostics.emit(
+        diagnosticAt("Unterminated string.", start, {
+          sourceId: this.sourceId,
+        }),
+      );
     }
 
     // Consume closing quote

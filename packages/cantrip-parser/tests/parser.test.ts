@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ParseError, Parser } from "../src/parser.js";
+import { Parser } from "../src/parser.js";
 import {
   AssignExpr,
   BinaryExpr,
@@ -29,6 +29,7 @@ import {
   WhileStmt,
 } from "@cantrip/ast";
 import type { Span } from "@cantrip/types";
+import { DiagnosticCollector } from "@cantrip/diagnostics";
 
 /** Create single-line Span from start/end offsets (column == offset) */
 function makeSpan(start: number, end: number): Span {
@@ -53,14 +54,16 @@ describe("Parser", () => {
   describe("expressions", () => {
     describe("literals", () => {
       it("parses a number literal", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Number, "42", 42),
           tok(TokenType.Semicolon, ";", null, 2),
           tok(TokenType.Eof, "", null, 3),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(LiteralExpr);
@@ -69,14 +72,16 @@ describe("Parser", () => {
 
       it("parses a string literal", () => {
         // Lexeme includes quotes; literal value doesn't
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.String, '"Hello!"', "Hello!"),
           tok(TokenType.Semicolon, ";", null, 8),
           tok(TokenType.Eof, "", null, 9),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(LiteralExpr);
@@ -84,14 +89,16 @@ describe("Parser", () => {
       });
 
       it("parses true", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.True, "true"),
           tok(TokenType.Semicolon, ";", null, 4),
           tok(TokenType.Eof, "", null, 5),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(LiteralExpr);
@@ -99,14 +106,16 @@ describe("Parser", () => {
       });
 
       it("parses false", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.False, "false"),
           tok(TokenType.Semicolon, ";", null, 5),
           tok(TokenType.Eof, "", null, 6),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(LiteralExpr);
@@ -114,14 +123,16 @@ describe("Parser", () => {
       });
 
       it("parses nil", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Nil, "nil"),
           tok(TokenType.Semicolon, ";", null, 3),
           tok(TokenType.Eof, "", null, 4),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(LiteralExpr);
@@ -129,15 +140,17 @@ describe("Parser", () => {
       });
 
       it("parses an empty array literal", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.LeftBracket, "["),
           tok(TokenType.RightBracket, "]", null, 1),
           tok(TokenType.Semicolon, ";", null, 2),
           tok(TokenType.Eof, "", null, 3),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(LiteralExpr);
@@ -145,6 +158,7 @@ describe("Parser", () => {
       });
 
       it("parses an array literal", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.LeftBracket, "["),
           tok(TokenType.Number, "1", 1, 1),
@@ -156,9 +170,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 7),
           tok(TokenType.Eof, "", null, 8),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(LiteralExpr);
@@ -171,6 +186,7 @@ describe("Parser", () => {
       });
 
       it("parses an array literal with a trailing comma", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.LeftBracket, "["),
           tok(TokenType.Number, "1", 1, 1),
@@ -183,9 +199,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 8),
           tok(TokenType.Eof, "", null, 9),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(LiteralExpr);
@@ -198,6 +215,7 @@ describe("Parser", () => {
       });
 
       it("parses nested array literals", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.LeftBracket, "["),
           tok(TokenType.Number, "1", 1, 1),
@@ -211,9 +229,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 9),
           tok(TokenType.Eof, "", null, 10),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(LiteralExpr);
@@ -228,6 +247,7 @@ describe("Parser", () => {
       });
 
       it("parses an empty object literal", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.LeftParen, "("),
           tok(TokenType.LeftBrace, "{", null, 1),
@@ -236,9 +256,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 4),
           tok(TokenType.Eof, "", null, 5),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(GroupingExpr);
@@ -252,6 +273,7 @@ describe("Parser", () => {
       });
 
       it("parses an object literal", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.LeftParen, "("),
           tok(TokenType.LeftBrace, "{", null, 1),
@@ -267,9 +289,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 24),
           tok(TokenType.Eof, "", null, 25),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(GroupingExpr);
@@ -286,6 +309,7 @@ describe("Parser", () => {
       });
 
       it("parses an object literal with a trailing comma", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.LeftParen, "("),
           tok(TokenType.LeftBrace, "{", null, 1),
@@ -302,9 +326,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 25),
           tok(TokenType.Eof, "", null, 26),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(GroupingExpr);
@@ -321,6 +346,7 @@ describe("Parser", () => {
       });
 
       it("parses nested object literals", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.LeftParen, "("),
           tok(TokenType.LeftBrace, "{", null, 1),
@@ -344,9 +370,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 52),
           tok(TokenType.Eof, "", null, 53),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(GroupingExpr);
@@ -372,6 +399,7 @@ describe("Parser", () => {
       });
 
       it("parses an object literal with a string key", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.LeftParen, "("),
           tok(TokenType.LeftBrace, "{", null, 1),
@@ -383,9 +411,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 19),
           tok(TokenType.Eof, "", null, 20),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(GroupingExpr);
@@ -402,6 +431,7 @@ describe("Parser", () => {
 
       describe("errors", () => {
         it("pushes an error with a missing comma in array", () => {
+          const diagnostics = new DiagnosticCollector();
           const tokens = [
             tok(TokenType.LeftBracket, "["),
             tok(TokenType.Number, "1", 1, 1),
@@ -412,17 +442,19 @@ describe("Parser", () => {
             tok(TokenType.Semicolon, ";", null, 7),
             tok(TokenType.Eof, "", null, 8),
           ];
-          const parser = new Parser(tokens);
-          const { ast, parseErrors } = parser.parse();
+          const parser = new Parser(tokens, diagnostics, "<test>");
+          const ast = parser.parse();
 
+          expect(diagnostics.hasErrors()).toBe(true);
+          const diags = diagnostics.diagnostics();
+          expect(diags).toHaveLength(1);
+          expect(diags[0].message).toBe("Expect ',' between array elements.");
           expect(ast).toHaveLength(1);
           expect(ast[0]).toBeNull();
-          expect(parseErrors).toHaveLength(1);
-          expect(parseErrors[0]).toBeInstanceOf(ParseError);
-          expect(parseErrors[0].message).toBe("Expect ',' between array elements.");
         });
 
         it("pushes an error with a missing closing bracket", () => {
+          const diagnostics = new DiagnosticCollector();
           const tokens = [
             tok(TokenType.LeftBracket, "["),
             tok(TokenType.Number, "1", 1, 1),
@@ -433,17 +465,19 @@ describe("Parser", () => {
             tok(TokenType.Semicolon, ";", null, 6),
             tok(TokenType.Eof, "", null, 7),
           ];
-          const parser = new Parser(tokens);
-          const { ast, parseErrors } = parser.parse();
+          const parser = new Parser(tokens, diagnostics, "<test>");
+          const ast = parser.parse();
 
+          expect(diagnostics.hasErrors()).toBe(true);
+          const diags = diagnostics.diagnostics();
+          expect(diags).toHaveLength(1);
+          expect(diags[0].message).toBe("Expect ']' after array literal.");
           expect(ast).toHaveLength(1);
           expect(ast[0]).toBeNull();
-          expect(parseErrors).toHaveLength(1);
-          expect(parseErrors[0]).toBeInstanceOf(ParseError);
-          expect(parseErrors[0].message).toBe("Expect ']' after array literal.");
         });
 
         it("pushes an error with a missing comma in object", () => {
+          const diagnostics = new DiagnosticCollector();
           const tokens = [
             tok(TokenType.LeftParen, "("),
             tok(TokenType.LeftBrace, "{", null, 1),
@@ -458,17 +492,19 @@ describe("Parser", () => {
             tok(TokenType.Semicolon, ";", null, 23),
             tok(TokenType.Eof, "", null, 24),
           ];
-          const parser = new Parser(tokens);
-          const { ast, parseErrors } = parser.parse();
+          const parser = new Parser(tokens, diagnostics, "<test>");
+          const ast = parser.parse();
 
+          expect(diagnostics.hasErrors()).toBe(true);
+          const diags = diagnostics.diagnostics();
+          expect(diags).toHaveLength(1);
+          expect(diags[0].message).toBe("Expect ',' between object fields.");
           expect(ast).toHaveLength(1);
           expect(ast[0]).toBeNull();
-          expect(parseErrors).toHaveLength(1);
-          expect(parseErrors[0]).toBeInstanceOf(ParseError);
-          expect(parseErrors[0].message).toBe("Expect ',' between object fields.");
         });
 
         it("pushes an error with a missing field identifier", () => {
+          const diagnostics = new DiagnosticCollector();
           const tokens = [
             tok(TokenType.LeftParen, "("),
             tok(TokenType.LeftBrace, "{", null, 1),
@@ -483,17 +519,19 @@ describe("Parser", () => {
             tok(TokenType.Semicolon, ";", null, 19),
             tok(TokenType.Eof, "", null, 20),
           ];
-          const parser = new Parser(tokens);
-          const { ast, parseErrors } = parser.parse();
+          const parser = new Parser(tokens, diagnostics, "<test>");
+          const ast = parser.parse();
 
+          expect(diagnostics.hasErrors()).toBe(true);
+          const diags = diagnostics.diagnostics();
+          expect(diags).toHaveLength(1);
+          expect(diags[0].message).toBe("Expect field identifier.");
           expect(ast).toHaveLength(1);
           expect(ast[0]).toBeNull();
-          expect(parseErrors).toHaveLength(1);
-          expect(parseErrors[0]).toBeInstanceOf(ParseError);
-          expect(parseErrors[0].message).toBe("Expect field identifier.");
         });
 
         it("pushes an error with a missing colon", () => {
+          const diagnostics = new DiagnosticCollector();
           const tokens = [
             tok(TokenType.LeftParen, "("),
             tok(TokenType.LeftBrace, "{", null, 1),
@@ -508,17 +546,19 @@ describe("Parser", () => {
             tok(TokenType.Semicolon, ";", null, 23),
             tok(TokenType.Eof, "", null, 24),
           ];
-          const parser = new Parser(tokens);
-          const { ast, parseErrors } = parser.parse();
+          const parser = new Parser(tokens, diagnostics, "<test>");
+          const ast = parser.parse();
 
+          expect(diagnostics.hasErrors()).toBe(true);
+          const diags = diagnostics.diagnostics();
+          expect(diags).toHaveLength(1);
+          expect(diags[0].message).toBe("Expect ':' after field identifier.");
           expect(ast).toHaveLength(1);
           expect(ast[0]).toBeNull();
-          expect(parseErrors).toHaveLength(1);
-          expect(parseErrors[0]).toBeInstanceOf(ParseError);
-          expect(parseErrors[0].message).toBe("Expect ':' after field identifier.");
         });
 
         it("pushes an error with a missing field value", () => {
+          const diagnostics = new DiagnosticCollector();
           const tokens = [
             tok(TokenType.LeftParen, "("),
             tok(TokenType.LeftBrace, "{", null, 1),
@@ -533,17 +573,19 @@ describe("Parser", () => {
             tok(TokenType.Semicolon, ";", null, 22),
             tok(TokenType.Eof, "", null, 23),
           ];
-          const parser = new Parser(tokens);
-          const { ast, parseErrors } = parser.parse();
+          const parser = new Parser(tokens, diagnostics, "<test>");
+          const ast = parser.parse();
 
+          expect(diagnostics.hasErrors()).toBe(true);
+          const diags = diagnostics.diagnostics();
+          expect(diags).toHaveLength(1);
+          expect(diags[0].message).toBe("Expect expression.");
           expect(ast).toHaveLength(1);
           expect(ast[0]).toBeNull();
-          expect(parseErrors).toHaveLength(1);
-          expect(parseErrors[0]).toBeInstanceOf(ParseError);
-          expect(parseErrors[0].message).toBe("Expect expression.");
         });
 
         it("pushes an error with a missing closing brace", () => {
+          const diagnostics = new DiagnosticCollector();
           const tokens = [
             tok(TokenType.LeftParen, "("),
             tok(TokenType.LeftBrace, "{", null, 1),
@@ -557,19 +599,21 @@ describe("Parser", () => {
             tok(TokenType.Semicolon, ";", null, 21),
             tok(TokenType.Eof, "", null, 22),
           ];
-          const parser = new Parser(tokens);
-          const { ast, parseErrors } = parser.parse();
+          const parser = new Parser(tokens, diagnostics, "<test>");
+          const ast = parser.parse();
 
+          expect(diagnostics.hasErrors()).toBe(true);
+          const diags = diagnostics.diagnostics();
+          expect(diags).toHaveLength(1);
+          expect(diags[0].message).toBe("Expect '}' after object literal.");
           expect(ast).toHaveLength(1);
           expect(ast[0]).toBeNull();
-          expect(parseErrors).toHaveLength(1);
-          expect(parseErrors[0]).toBeInstanceOf(ParseError);
-          expect(parseErrors[0].message).toBe("Expect '}' after object literal.");
         });
       });
     });
 
     describe("grouping expressions", () => {
+      const diagnostics = new DiagnosticCollector();
       it("parses a grouping expression", () => {
         const tokens = [
           tok(TokenType.LeftParen, "("),
@@ -578,9 +622,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 6),
           tok(TokenType.Eof, "", null, 7),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(GroupingExpr);
@@ -592,15 +637,17 @@ describe("Parser", () => {
 
     describe("unary expressions", () => {
       it("parses a negation expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Minus, "-"),
           tok(TokenType.Number, "5", 5, 1),
           tok(TokenType.Semicolon, ";", 2),
           tok(TokenType.Eof, "", null, 3),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(UnaryExpr);
@@ -613,15 +660,17 @@ describe("Parser", () => {
       });
 
       it("parses a logical not expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Bang, "!"),
           tok(TokenType.True, "true", null, 1),
           tok(TokenType.Semicolon, ";", null, 2),
           tok(TokenType.Eof, "", null, 3),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(UnaryExpr);
@@ -637,6 +686,7 @@ describe("Parser", () => {
     describe("binary expressions", () => {
       // Term expressions
       it("parses an addition expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Number, "5", 5),
           tok(TokenType.Plus, "+", null, 1),
@@ -644,9 +694,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 3),
           tok(TokenType.Eof, "", null, 4),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(BinaryExpr);
@@ -662,6 +713,7 @@ describe("Parser", () => {
       });
 
       it("parses a subtraction expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Number, "10", 10),
           tok(TokenType.Minus, "-", null, 2),
@@ -669,9 +721,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 4),
           tok(TokenType.Eof, "", null, 5),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(BinaryExpr);
@@ -688,6 +741,7 @@ describe("Parser", () => {
 
       // Factor expressions
       it("parses a multiplication expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Number, "5", 5),
           tok(TokenType.Star, "*", null, 1),
@@ -695,9 +749,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 3),
           tok(TokenType.Eof, "", null, 4),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(BinaryExpr);
@@ -713,6 +768,7 @@ describe("Parser", () => {
       });
 
       it("parses a division expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Number, "10", 10),
           tok(TokenType.Slash, "/", null, 2),
@@ -720,9 +776,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 4),
           tok(TokenType.Eof, "", null, 5),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(BinaryExpr);
@@ -738,6 +795,7 @@ describe("Parser", () => {
       });
 
       it("parses a modulo expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Number, "5", 5),
           tok(TokenType.Percent, "%", null, 1),
@@ -745,9 +803,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 3),
           tok(TokenType.Eof, "", null, 4),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(BinaryExpr);
@@ -764,6 +823,7 @@ describe("Parser", () => {
 
       // Comparison expressions
       it("parses a greater than expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Number, "5", 5),
           tok(TokenType.Greater, ">", null, 1),
@@ -771,9 +831,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 3),
           tok(TokenType.Eof, "", null, 4),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(BinaryExpr);
@@ -789,6 +850,7 @@ describe("Parser", () => {
       });
 
       it("parses a greater than or equal to expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Number, "5", 5),
           tok(TokenType.GreaterEq, ">=", null, 1),
@@ -796,9 +858,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 4),
           tok(TokenType.Eof, "", null, 5),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(BinaryExpr);
@@ -814,6 +877,7 @@ describe("Parser", () => {
       });
 
       it("parses a less than expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Number, "5", 5),
           tok(TokenType.Less, "<", null, 1),
@@ -821,9 +885,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 3),
           tok(TokenType.Eof, "", null, 4),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(BinaryExpr);
@@ -839,6 +904,7 @@ describe("Parser", () => {
       });
 
       it("parses a less than or equal to expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Number, "5", 5),
           tok(TokenType.LessEq, "<=", null, 1),
@@ -846,9 +912,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 4),
           tok(TokenType.Eof, "", null, 5),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<text>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(BinaryExpr);
@@ -865,6 +932,7 @@ describe("Parser", () => {
 
       // Equality expressions
       it("parses an equality expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Number, "5", 5),
           tok(TokenType.EqEq, "==", null, 1),
@@ -872,9 +940,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 4),
           tok(TokenType.Eof, "", null, 5),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(BinaryExpr);
@@ -890,6 +959,7 @@ describe("Parser", () => {
       });
 
       it("parses an inequality expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Number, "5", 5),
           tok(TokenType.BangEq, "!=", null, 1),
@@ -897,9 +967,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 4),
           tok(TokenType.Eof, "", null, 5),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(BinaryExpr);
@@ -916,6 +987,7 @@ describe("Parser", () => {
 
       // Logic expressions
       it("parses an 'or' expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.True, "true"),
           tok(TokenType.Or, "or", null, 5),
@@ -923,9 +995,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 13),
           tok(TokenType.Eof, "", null, 14),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(BinaryExpr);
@@ -941,6 +1014,7 @@ describe("Parser", () => {
       });
 
       it("parses an 'and' expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.True, "true"),
           tok(TokenType.And, "and", null, 5),
@@ -948,9 +1022,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 14),
           tok(TokenType.Eof, "", null, 15),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(BinaryExpr);
@@ -968,14 +1043,16 @@ describe("Parser", () => {
 
     describe("variable expressions", () => {
       it("parses a variable expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Identifier, "num"),
           tok(TokenType.Semicolon, ";", null, 3),
           tok(TokenType.Eof, "", null, 4),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(VarExpr);
@@ -985,6 +1062,7 @@ describe("Parser", () => {
 
     describe("assignment expressions", () => {
       it("parses a standard assignment expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Identifier, "answer"),
           tok(TokenType.Eq, "=", null, 6),
@@ -992,9 +1070,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", 9),
           tok(TokenType.Eof, "", null, 10),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(AssignExpr);
@@ -1005,6 +1084,7 @@ describe("Parser", () => {
       });
 
       it("parses an addition assignment expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Identifier, "counter"),
           tok(TokenType.PlusEq, "+=", null, 7),
@@ -1012,9 +1092,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", 9),
           tok(TokenType.Eof, "", null, 10),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(AssignExpr);
@@ -1030,6 +1111,7 @@ describe("Parser", () => {
       });
 
       it("parses a subtraction assignment expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Identifier, "health"),
           tok(TokenType.MinusEq, "-=", null, 6),
@@ -1037,9 +1119,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", 9),
           tok(TokenType.Eof, "", null, 10),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(AssignExpr);
@@ -1055,6 +1138,7 @@ describe("Parser", () => {
       });
 
       it("parses a multiplication assignment expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Identifier, "factor"),
           tok(TokenType.StarEq, "*=", null, 6),
@@ -1062,9 +1146,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", 9),
           tok(TokenType.Eof, "", null, 10),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(AssignExpr);
@@ -1080,6 +1165,7 @@ describe("Parser", () => {
       });
 
       it("parses a division assignment expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Identifier, "half"),
           tok(TokenType.SlashEq, "/=", null, 4),
@@ -1087,9 +1173,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", 7),
           tok(TokenType.Eof, "", null, 9),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(AssignExpr);
@@ -1105,6 +1192,7 @@ describe("Parser", () => {
       });
 
       it("parses a modulo assignment expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Identifier, "remainder"),
           tok(TokenType.PercentEq, "%=", null, 9),
@@ -1112,9 +1200,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", 12),
           tok(TokenType.Eof, "", null, 13),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(AssignExpr);
@@ -1130,6 +1219,7 @@ describe("Parser", () => {
       });
 
       it("parses a set expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Identifier, "reyek"),
           tok(TokenType.Dot, ".", null, 6),
@@ -1139,9 +1229,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 14),
           tok(TokenType.Eof, "", null, 15),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(SetExpr);
@@ -1151,6 +1242,7 @@ describe("Parser", () => {
       });
 
       it("parses an index set expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Identifier, "names"),
           tok(TokenType.LeftBracket, "[", null, 5),
@@ -1161,9 +1253,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 17),
           tok(TokenType.Eof, "", null, 18),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(IndexSetExpr);
@@ -1184,6 +1277,7 @@ describe("Parser", () => {
 
     describe("call expressions", () => {
       it("parses a get expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Identifier, "reyek"),
           tok(TokenType.Dot, ".", null, 6),
@@ -1191,9 +1285,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", 15),
           tok(TokenType.Eof, "", null, 16),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(GetExpr);
@@ -1202,6 +1297,7 @@ describe("Parser", () => {
       });
 
       it("parses an index expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Identifier, "users"),
           tok(TokenType.LeftBracket, "[", null, 5),
@@ -1210,9 +1306,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 8),
           tok(TokenType.Eof, "", null, 9),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(IndexExpr);
@@ -1224,10 +1321,60 @@ describe("Parser", () => {
           LiteralExpr,
         );
       });
+
+      it("parses a call expression with no arguments", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Identifier, "greetWorld"),
+          tok(TokenType.LeftParen, "(", null, 11),
+          tok(TokenType.RightParen, ")", null, 12),
+          tok(TokenType.Semicolon, ";", null, 13),
+          tok(TokenType.Eof, "", null, 14),
+        ];
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
+
+        expect(diagnostics.hasErrors()).toBe(false);
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ExprStmt);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(CallExpr);
+        expect(((ast[0] as ExprStmt).expr as CallExpr).callee).toBeInstanceOf(VarExpr);
+        expect(((ast[0] as ExprStmt).expr as CallExpr).paren.type).toBe(
+          TokenType.RightParen,
+        );
+        expect(((ast[0] as ExprStmt).expr as CallExpr).args).toHaveLength(0);
+      });
+
+      it("parses a call expression with arguments", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Identifier, "add"),
+          tok(TokenType.LeftParen, "(", null, 4),
+          tok(TokenType.Number, "1", 1, 5),
+          tok(TokenType.Comma, ",", null, 6),
+          tok(TokenType.Number, "2", 2, 8),
+          tok(TokenType.RightParen, ")", null, 9),
+          tok(TokenType.Semicolon, ";", null, 10),
+          tok(TokenType.Eof, "", null, 11),
+        ];
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
+
+        expect(diagnostics.hasErrors()).toBe(false);
+        expect(ast).toHaveLength(1);
+        expect(ast[0]).toBeInstanceOf(ExprStmt);
+        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(CallExpr);
+        expect(((ast[0] as ExprStmt).expr as CallExpr).callee).toBeInstanceOf(VarExpr);
+        expect(((ast[0] as ExprStmt).expr as CallExpr).paren.type).toBe(
+          TokenType.RightParen,
+        );
+        expect(((ast[0] as ExprStmt).expr as CallExpr).args).toHaveLength(2);
+      });
     });
 
     describe("block expressions", () => {
       it("parses a block expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.LeftParen, "("),
           tok(TokenType.LeftBrace, "{", null, 1),
@@ -1241,9 +1388,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 18),
           tok(TokenType.Eof, "", null, 19),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(GroupingExpr);
@@ -1264,6 +1412,7 @@ describe("Parser", () => {
       });
 
       it("parses a block expression with a value", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.LeftParen, "("),
           tok(TokenType.LeftBrace, "{", null, 1),
@@ -1275,9 +1424,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 7),
           tok(TokenType.Eof, "", null, 8),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(GroupingExpr);
@@ -1296,6 +1446,7 @@ describe("Parser", () => {
 
     describe("if expressions", () => {
       it("parses an if expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.If, "if"),
           tok(TokenType.Identifier, "flag", null, 3),
@@ -1304,9 +1455,10 @@ describe("Parser", () => {
           tok(TokenType.RightBrace, "}", null, 15),
           tok(TokenType.Eof, "", null, 16),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(IfExpr);
@@ -1324,6 +1476,7 @@ describe("Parser", () => {
       });
 
       it("parses an if expression with an else clause", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.If, "if"),
           tok(TokenType.Identifier, "flag", null, 3),
@@ -1336,9 +1489,10 @@ describe("Parser", () => {
           tok(TokenType.RightBrace, "}", null, 30),
           tok(TokenType.Eof, "", null, 31),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(IfExpr);
@@ -1358,6 +1512,7 @@ describe("Parser", () => {
       });
 
       it("parses an if expression with an else if clause", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.If, "if"),
           tok(TokenType.Identifier, "flag1", null, 3),
@@ -1372,9 +1527,10 @@ describe("Parser", () => {
           tok(TokenType.RightBrace, "}", null, 36),
           tok(TokenType.Eof, "", null, 37),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(IfExpr);
@@ -1394,6 +1550,7 @@ describe("Parser", () => {
 
     describe("loop expressions", () => {
       it("parses a loop expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Loop, "loop"),
           tok(TokenType.LeftBrace, "{", null, 5),
@@ -1405,9 +1562,10 @@ describe("Parser", () => {
           tok(TokenType.RightBrace, "}", null, 19),
           tok(TokenType.Eof, "", null, 20),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(LoopExpr);
@@ -1417,6 +1575,7 @@ describe("Parser", () => {
 
     describe("match expressions", () => {
       it("parses a match expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Match, "match"),
           tok(TokenType.Identifier, "x"),
@@ -1439,9 +1598,10 @@ describe("Parser", () => {
           tok(TokenType.RightBrace, "}"),
           tok(TokenType.Eof, ""),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ExprStmt);
         expect((ast[0] as ExprStmt).expr).toBeInstanceOf(MatchExpr);
@@ -1458,67 +1618,22 @@ describe("Parser", () => {
         expect(((ast[0] as ExprStmt).expr as MatchExpr).branches).toEqual(expected);
       });
     });
-
-    describe("call expressions", () => {
-      it("parses a call expression with no arguments", () => {
-        const tokens = [
-          tok(TokenType.Identifier, "greetWorld"),
-          tok(TokenType.LeftParen, "(", null, 11),
-          tok(TokenType.RightParen, ")", null, 12),
-          tok(TokenType.Semicolon, ";", null, 13),
-          tok(TokenType.Eof, "", null, 14),
-        ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
-
-        expect(ast).toHaveLength(1);
-        expect(ast[0]).toBeInstanceOf(ExprStmt);
-        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(CallExpr);
-        expect(((ast[0] as ExprStmt).expr as CallExpr).callee).toBeInstanceOf(VarExpr);
-        expect(((ast[0] as ExprStmt).expr as CallExpr).paren.type).toBe(
-          TokenType.RightParen,
-        );
-        expect(((ast[0] as ExprStmt).expr as CallExpr).args).toHaveLength(0);
-      });
-
-      it("parses a call expression with arguments", () => {
-        const tokens = [
-          tok(TokenType.Identifier, "add"),
-          tok(TokenType.LeftParen, "(", null, 4),
-          tok(TokenType.Number, "1", 1, 5),
-          tok(TokenType.Comma, ",", null, 6),
-          tok(TokenType.Number, "2", 2, 8),
-          tok(TokenType.RightParen, ")", null, 9),
-          tok(TokenType.Semicolon, ";", null, 10),
-          tok(TokenType.Eof, "", null, 11),
-        ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
-
-        expect(ast).toHaveLength(1);
-        expect(ast[0]).toBeInstanceOf(ExprStmt);
-        expect((ast[0] as ExprStmt).expr).toBeInstanceOf(CallExpr);
-        expect(((ast[0] as ExprStmt).expr as CallExpr).callee).toBeInstanceOf(VarExpr);
-        expect(((ast[0] as ExprStmt).expr as CallExpr).paren.type).toBe(
-          TokenType.RightParen,
-        );
-        expect(((ast[0] as ExprStmt).expr as CallExpr).args).toHaveLength(2);
-      });
-    });
   });
 
   describe("statements", () => {
     describe("declarations", () => {
       it("parses a variable declaration", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Let, "let"),
           tok(TokenType.Identifier, "answer", null, 4),
           tok(TokenType.Semicolon, ";", null, 5),
           tok(TokenType.Eof, "", null, 6),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(LetStmt);
         expect((ast[0] as LetStmt).name.lexeme).toBe("answer");
@@ -1526,6 +1641,7 @@ describe("Parser", () => {
       });
 
       it("parses a variable declaration with an initializer", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Let, "let"),
           tok(TokenType.Identifier, "answer", null, 4),
@@ -1534,9 +1650,10 @@ describe("Parser", () => {
           tok(TokenType.Semicolon, ";", null, 8),
           tok(TokenType.Eof, "", null, 9),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(LetStmt);
         expect((ast[0] as LetStmt).name.lexeme).toBe("answer");
@@ -1544,6 +1661,7 @@ describe("Parser", () => {
       });
 
       it("parses a function declaration with no parameters", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Fn, "fn"),
           tok(TokenType.Identifier, "five", null, 4),
@@ -1554,9 +1672,10 @@ describe("Parser", () => {
           tok(TokenType.RightBrace, "}", null, 15),
           tok(TokenType.Eof, "", null, 16),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(FunctionStmt);
         expect((ast[0] as FunctionStmt).name.lexeme).toBe("five");
@@ -1565,6 +1684,7 @@ describe("Parser", () => {
       });
 
       it("parses a function declaration with parameters", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Fn, "fn"),
           tok(TokenType.Identifier, "add", null, 4),
@@ -1580,9 +1700,10 @@ describe("Parser", () => {
           tok(TokenType.RightBrace, "}", null, 22),
           tok(TokenType.Eof, "", null, 23),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(FunctionStmt);
         expect((ast[0] as FunctionStmt).name.lexeme).toBe("add");
@@ -1593,13 +1714,14 @@ describe("Parser", () => {
 
     describe("blocks", () => {
       it("parses an empty block statement", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.LeftBrace, "{"),
           tok(TokenType.RightBrace, "}", null, 1),
           tok(TokenType.Eof, "", null, 2),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(BlockStmt);
@@ -1607,21 +1729,24 @@ describe("Parser", () => {
       });
 
       it("parses a block statement with unterminated expression", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.LeftBrace, "{"),
           tok(TokenType.Number, "42", 42, 1),
           tok(TokenType.RightBrace, "}", null, 3),
           tok(TokenType.Eof, "", null, 4),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(BlockStmt);
         expect((ast[0] as BlockStmt).statements).toHaveLength(0);
       });
 
       it("parses a block statement with expression statement", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.LeftBrace, "{"),
           tok(TokenType.Number, "42", 42, 1),
@@ -1629,9 +1754,10 @@ describe("Parser", () => {
           tok(TokenType.RightBrace, "}", null, 4),
           tok(TokenType.Eof, "", null, 5),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(BlockStmt);
         expect((ast[0] as BlockStmt).statements).toHaveLength(1);
@@ -1639,6 +1765,7 @@ describe("Parser", () => {
       });
 
       it("parses a block statement with a let declaration", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.LeftBrace, "{"),
           tok(TokenType.Let, "let", null, 1),
@@ -1649,9 +1776,10 @@ describe("Parser", () => {
           tok(TokenType.RightBrace, "}", null, 9),
           tok(TokenType.Eof, "", null, 10),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(BlockStmt);
         expect((ast[0] as BlockStmt).statements).toHaveLength(1);
@@ -1661,14 +1789,16 @@ describe("Parser", () => {
 
     describe("break & continue statements", () => {
       it("parses a break statement", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Break, "break"),
           tok(TokenType.Semicolon, ";", null, 5),
           tok(TokenType.Eof, "", null, 6),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(BreakStmt);
         expect((ast[0] as BreakStmt).keyword.type).toBe(TokenType.Break);
@@ -1676,15 +1806,17 @@ describe("Parser", () => {
       });
 
       it("parses a break statement with a value", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Break, "break"),
           tok(TokenType.Number, "10", 10, 6),
           tok(TokenType.Semicolon, ";", null, 8),
           tok(TokenType.Eof, "", null, 9),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(BreakStmt);
         expect((ast[0] as BreakStmt).keyword.type).toBe(TokenType.Break);
@@ -1692,14 +1824,16 @@ describe("Parser", () => {
       });
 
       it("parses a continue statement", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Continue, "continue"),
           tok(TokenType.Semicolon, ";", null, 8),
           tok(TokenType.Eof, "", null, 9),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ContinueStmt);
         expect((ast[0] as ContinueStmt).keyword.type).toBe(TokenType.Continue);
@@ -1708,6 +1842,7 @@ describe("Parser", () => {
 
     describe("while loops", () => {
       it("parses a while loop", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.While, "while"),
           tok(TokenType.Identifier, "flag", null, 6),
@@ -1720,9 +1855,10 @@ describe("Parser", () => {
           tok(TokenType.RightBrace, "}", null, 22),
           tok(TokenType.Eof, "", null, 23),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(WhileStmt);
         expect((ast[0] as WhileStmt).condition).toBeInstanceOf(VarExpr);
@@ -1733,14 +1869,16 @@ describe("Parser", () => {
 
     describe("return statements", () => {
       it("parses a bare return statement", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Return, "return"),
           tok(TokenType.Semicolon, ";", null, 6),
           tok(TokenType.Eof, "", null, 7),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
+        expect(diagnostics.hasErrors()).toBe(false);
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ReturnStmt);
         expect((ast[0] as ReturnStmt).keyword.type).toBe(TokenType.Return);
@@ -1748,14 +1886,15 @@ describe("Parser", () => {
       });
 
       it("parses a return statement with a value", () => {
+        const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Return, "return"),
           tok(TokenType.Number, "42", 42, 7),
           tok(TokenType.Semicolon, ";", null, 8),
           tok(TokenType.Eof, "", null, 9),
         ];
-        const parser = new Parser(tokens);
-        const { ast } = parser.parse();
+        const parser = new Parser(tokens, diagnostics, "<test>");
+        const ast = parser.parse();
 
         expect(ast).toHaveLength(1);
         expect(ast[0]).toBeInstanceOf(ReturnStmt);

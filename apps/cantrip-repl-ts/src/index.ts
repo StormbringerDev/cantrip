@@ -1,8 +1,12 @@
-import { scanAndParse } from "@cantrip/parser";
+import { Parser, Scanner } from "@cantrip/parser";
 import { Interpreter } from "@cantrip/interpreter";
-import { formatDiagnostics, type SourceFile } from "@cantrip/diagnostics";
+import {
+  DiagnosticCollector,
+  formatDiagnostics,
+  type SourceFile,
+} from "@cantrip/diagnostics";
 import { readFileSync } from "fs";
-import { resolve } from "path";
+import { basename, resolve } from "path";
 import promptSync from "prompt-sync";
 
 let hadError = false;
@@ -15,12 +19,16 @@ function printUsage(): void {
 
 function run(source: string, sourceId = REPL_SOURCE_ID): void {
   const sourceFile: SourceFile = { id: sourceId, text: source, name: sourceId };
-  const sources = new Map<string, SourceFile>([[sourceId, sourceFile]]);
+  const sources = new Map([[sourceId, sourceFile]]);
+  const diagnostics = new DiagnosticCollector();
 
-  const { ast, diagnostics } = scanAndParse(source, sourceId);
+  const tokens = new Scanner(source, diagnostics, sourceId).scanTokens();
+  const ast = new Parser(tokens, diagnostics, sourceId).parse();
 
-  if (diagnostics.length > 0) {
-    console.error(formatDiagnostics(diagnostics, sources));
+  if (diagnostics.hasErrors()) {
+    console.error(formatDiagnostics(diagnostics.diagnostics(), sources));
+    hadError = true;
+    return;
   }
 
   const statements = ast.filter((s) => s !== null);
@@ -31,7 +39,7 @@ function runFile(path: string): void {
   const filePath = resolve(path);
   try {
     const source = readFileSync(filePath, "utf-8");
-    run(source, filePath);
+    run(source, basename(filePath));
   } catch (err) {
     console.error(err);
   }
