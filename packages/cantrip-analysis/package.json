@@ -1,5 +1,5 @@
 {
-  "name": "@cantrip/diagnostics",
+  "name": "@cantrip/analysis",
   "version": "0.2.0",
   "private": true,
   "type": "module",
@@ -23,6 +23,8 @@
   },
   "dependencies": {
     "@cantrip/ast": "workspace:*",
+    "@cantrip/diagnostics": "workspace:*",
+    "@cantrip/interpreter": "workspace:*",
     "@cantrip/types": "workspace:*"
   },
   "devDependencies": {

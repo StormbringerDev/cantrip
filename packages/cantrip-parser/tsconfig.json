@@ -12,6 +12,9 @@
     },
     {
       "path": "../cantrip-ast"
+    },
+    {
+      "path": "../cantrip-diagnostics"
     }
   ]
 }

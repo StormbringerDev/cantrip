@@ -8,10 +8,16 @@
   "include": ["src/**/*"],
   "references": [
     {
+      "path": "../cantrip-types"
+    },
+    {
       "path": "../cantrip-ast"
     },
     {
-      "path": "../cantrip-types"
+      "path": "../cantrip-interpreter"
+    },
+    {
+      "path": "../cantrip-diagnostics"
     }
   ]
 }

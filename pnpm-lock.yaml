@@ -76,6 +76,22 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
+  packages/cantrip-analysis:
+    dependencies:
+      '@cantrip/ast':
+        specifier: workspace:*
+        version: link:../cantrip-ast
+      '@cantrip/diagnostics':
+        specifier: workspace:*
+        version: link:../cantrip-diagnostics
+      '@cantrip/types':
+        specifier: workspace:*
+        version: link:../cantrip-types
+    devDependencies:
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   packages/cantrip-ast:
     dependencies:
       '@cantrip/types':
@@ -107,9 +123,6 @@ importers:
       '@cantrip/diagnostics':
         specifier: workspace:*
         version: link:../cantrip-diagnostics
-      '@cantrip/parser':
-        specifier: workspace:*
-        version: link:../cantrip-parser
       '@cantrip/types':
         specifier: workspace:*
         version: link:../cantrip-types

@@ -12,10 +12,10 @@
       "path": "../cantrip-types"
     },
     {
-      "path": "../cantrip-ast"
+      "path": "../cantrip-diagnostics"
     },
     {
-      "path": "../cantrip-parser"
+      "path": "../cantrip-ast"
     }
   ]
 }
