@@ -84,6 +84,9 @@ importers:
       '@cantrip/diagnostics':
         specifier: workspace:*
         version: link:../cantrip-diagnostics
+      '@cantrip/interpreter':
+        specifier: workspace:*
+        version: link:../cantrip-interpreter
       '@cantrip/types':
         specifier: workspace:*
         version: link:../cantrip-types
