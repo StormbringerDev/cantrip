@@ -27,12 +27,7 @@ import {
   VarExpr,
   WhileStmt,
 } from "@cantrip/ast";
-import {
-  diagnosticAtSpan,
-  type Diagnostic,
-  type DiagnosticCollector,
-  type DiagnosticFromOptions,
-} from "@cantrip/diagnostics";
+import { diagnosticAtSpan, type DiagnosticCollector } from "@cantrip/diagnostics";
 import type { Span } from "@cantrip/types";
 
 /**
@@ -70,37 +65,6 @@ function tok(
   end = start + lexeme.length,
 ): Token {
   return new Token(type, lexeme, literal, makeSpan(start, end));
-}
-
-/**
- * Error thrown (and collected) when the parser encounters a syntax error.
- *
- * Unlike a hard throw that aborts parsing, these errors are accumulated
- * so the parser can continue and report multiple problems in one pass.
- */
-export class ParseError extends Error {
-  /** The token at which the error was detected. */
-  public readonly token: Token;
-
-  /**
-   * @param token - Token that triggered the error.
-   * @param message - Human-readable description of the problem.
-   */
-  constructor(token: Token, message: string) {
-    super(message);
-    this.name = "ParseError";
-    this.token = token;
-  }
-}
-
-export function fromParseError(
-  err: ParseError,
-  opts: DiagnosticFromOptions = {},
-): Diagnostic {
-  return diagnosticAtSpan(err.message, err.token.span, {
-    severity: "error",
-    ...opts,
-  });
 }
 
 /**

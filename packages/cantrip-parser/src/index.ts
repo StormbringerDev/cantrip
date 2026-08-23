@@ -1,2 +1,2 @@
-export { fromParseError, Parser, ParseError } from "./parser.js";
-export { fromScannerError, Scanner, ScannerError } from "./scanner.js";
+export { Parser } from "./parser.js";
+export { Scanner } from "./scanner.js";

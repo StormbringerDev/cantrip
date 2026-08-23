@@ -1,10 +1,5 @@
 import type { Position } from "@cantrip/types";
-import {
-  diagnosticAt,
-  type Diagnostic,
-  type DiagnosticCollector,
-  type DiagnosticFromOptions,
-} from "@cantrip/diagnostics";
+import { diagnosticAt, type DiagnosticCollector } from "@cantrip/diagnostics";
 import { Token, TokenType } from "@cantrip/ast";
 
 // --- Character classification helpers --------------------------------
@@ -57,35 +52,6 @@ keywords.set("or", TokenType.Or);
 keywords.set("return", TokenType.Return);
 keywords.set("true", TokenType.True);
 keywords.set("while", TokenType.While);
-
-/**
- * Error produced by the scanner when it encounters an unexpected character
- * or an unterminated string.
- */
-export class ScannerError extends Error {
-  /** Source position where the error was detected. */
-  public readonly position: Position;
-
-  /**
-   * @param position - Location of the offending character / start of the string.
-   * @param message - Human-readable description of the problem.
-   */
-  constructor(position: Position, message: string) {
-    super(message);
-    this.name = "ScannerError";
-    this.position = position;
-  }
-}
-
-export function fromScannerError(
-  err: ScannerError,
-  opts: DiagnosticFromOptions = {},
-): Diagnostic {
-  return diagnosticAt(err.message, err.position, {
-    severity: "error",
-    ...opts,
-  });
-}
 
 /**
  * Hand-written lexer for the Cantrip language.
