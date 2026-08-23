@@ -44,6 +44,9 @@ importers:
 
   apps/cantrip-repl-ts:
     dependencies:
+      '@cantrip/analysis':
+        specifier: workspace:*
+        version: link:../../packages/cantrip-analysis
       '@cantrip/ast':
         specifier: workspace:*
         version: link:../../packages/cantrip-ast

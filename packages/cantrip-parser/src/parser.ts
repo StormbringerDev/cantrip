@@ -112,13 +112,13 @@ export class Parser {
    *          for statements that failed to parse) and the list of
    *          collected {@link ParseError}s.
    */
-  public parse(): (Stmt | null)[] {
+  public parse(): Stmt[] {
     const ast: (Stmt | null)[] = [];
     while (!this.isAtEnd()) {
       ast.push(this.declaration());
     }
 
-    return ast;
+    return ast.filter((s) => s !== null);
   }
 
   /**
@@ -384,7 +384,10 @@ export class Parser {
     const start = this.previous().span.start;
     const { statements } = this.parseBlockBody();
     const end = this.previous().span.end;
-    return new BlockStmt(statements, { start, end });
+    return new BlockStmt(
+      statements.filter((s) => s !== null),
+      { start, end },
+    );
   }
 
   /**
@@ -925,7 +928,11 @@ export class Parser {
     const start = this.previous().span.start;
     const { statements, value } = this.parseBlockBody();
     const end = this.previous().span.end;
-    return new BlockExpr(statements, value, { start, end });
+    return new BlockExpr(
+      statements.filter((s) => s !== null),
+      value,
+      { start, end },
+    );
   }
 
   /**

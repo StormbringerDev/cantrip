@@ -17,6 +17,7 @@
   "dependencies": {
     "@cantrip/interpreter": "workspace:*",
     "@cantrip/ast": "workspace:*",
+    "@cantrip/analysis": "workspace:*",
     "@cantrip/diagnostics": "workspace:*",
     "@cantrip/parser": "workspace:*",
     "@cantrip/types": "workspace:*",

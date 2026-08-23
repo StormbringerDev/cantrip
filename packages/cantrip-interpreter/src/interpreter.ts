@@ -86,7 +86,7 @@ export class RuntimeError extends Error {
   }
 }
 
-export function fromRuntimeError(
+function fromRuntimeError(
   err: RuntimeError,
   opts: DiagnosticFromOptions = {},
 ): Diagnostic {
@@ -110,6 +110,7 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
   /** The global environment where stdlib functions are defined. */
   public readonly globals = new Environment();
   private environment = this.globals;
+  private readonly locals = new Map<Expr, number>();
   private readonly diagnostics: DiagnosticCollector;
   private readonly sourceId: string;
 
@@ -147,6 +148,16 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
   }
 
   /**
+   * Resolves a local variable for faster execution.
+   *
+   * @param expr - The variable expression to resolve.
+   * @param depth - The scope depth from the current scope to the outermost scope.
+   */
+  public resolve(expr: Expr, depth: number) {
+    this.locals.set(expr, depth);
+  }
+
+  /**
    * Evaluates an assignment expression (`x = 42`).
    *
    * @param expr - The assignment expression to be evaluated.
@@ -154,7 +165,14 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
    */
   public visitAssignExpr(expr: AssignExpr): CantripValue {
     const value = this.evaluate(expr.value);
-    this.environment.assign(expr.name, value);
+
+    const distance = this.locals.get(expr);
+    if (distance) {
+      this.environment.assignAt(distance, expr.name, value);
+    } else {
+      this.globals.assign(expr.name, value);
+    }
+
     return value;
   }
 
@@ -487,7 +505,16 @@ export class Interpreter implements ExprVisitor<CantripValue>, StmtVisitor<void>
    * @returns The value of the variable if it exists in scope.
    */
   public visitVarExpr(expr: VarExpr): CantripValue {
-    return this.environment.get(expr.name);
+    return this.lookUpVariable(expr.name, expr);
+  }
+
+  private lookUpVariable(name: Token, expr: Expr): CantripValue {
+    const distance = this.locals.get(expr);
+    if (distance) {
+      return this.environment.getAt(distance, name.lexeme);
+    } else {
+      return this.globals.get(name);
+    }
   }
 
   /**

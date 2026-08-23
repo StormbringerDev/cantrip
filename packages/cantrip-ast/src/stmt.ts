@@ -60,13 +60,13 @@ export class BlockStmt extends Stmt {
    * The list of contained statements.
    * `null` values are placeholders for where {@link ParseError}s occured.
    */
-  public readonly statements: (Stmt | null)[];
+  public readonly statements: Stmt[];
 
   /**
    * @param statements - List of statements to run.
    * @param span - Source span of the entire block including braces.
    */
-  constructor(statements: (Stmt | null)[], span: Span) {
+  constructor(statements: Stmt[], span: Span) {
     super(span);
     this.statements = statements;
   }

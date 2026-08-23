@@ -140,7 +140,7 @@ export class BlockExpr extends Expr {
    * The list of contained statements.
    * `null` values are placeholders for where {@link ParseError}s occured.
    */
-  public readonly statements: (Stmt | null)[];
+  public readonly statements: Stmt[];
   /** The optional value expression; `nil` by default. */
   public readonly value: Expr | null;
 
@@ -149,7 +149,7 @@ export class BlockExpr extends Expr {
    * @param value
    * @param span - Source span of the entire block including braces.
    */
-  constructor(statements: (Stmt | null)[], value: Expr | null, span: Span) {
+  constructor(statements: Stmt[], value: Expr | null, span: Span) {
     super(span);
     this.statements = statements;
     this.value = value;

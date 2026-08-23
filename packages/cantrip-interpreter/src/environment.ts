@@ -19,7 +19,7 @@ export class Environment {
   }
 
   /**
-   * Retrieves a variable value if it exists in the environment.
+   * Retrieves a variable value if it exists in the immediate scope.
    *
    * @param name - The variable identifier token.
    * @returns The value associated with the name.
@@ -36,7 +36,7 @@ export class Environment {
   }
 
   /**
-   * Assigns an existing variable a new value.
+   * Assigns an existing variable in the immediate scope a new value.
    *
    * @param name - The variable identifier token.
    * @param value - The value being assigned.
@@ -65,5 +65,38 @@ export class Environment {
    */
   public define(name: string, value: CantripValue): void {
     this.values.set(name, value);
+  }
+
+  /**
+   * Retrieves the enclosing variable at the given distance.
+   *
+   * @param distance - The distance of the target environment.
+   * @returns - The enclosing environment at the distance.
+   */
+  public ancestor(distance: number): Environment {
+    if (distance === 0) return this;
+    return this.enclosing!.ancestor(distance - 1);
+  }
+
+  /**
+   * Retrieves a variable value in an outer scope.
+   *
+   * @param distance - The environment where the target variable is located.
+   * @param name - The name of the variable.
+   * @returns - The value of the variable.
+   */
+  public getAt(distance: number, name: string): CantripValue {
+    return this.ancestor(distance).values.get(name)!;
+  }
+
+  /**
+   * Assigns an existing variable in an enclosing scope a new value.
+   *
+   * @param distance - The environment where the target variable is located.
+   * @param name - The name token of the variable.
+   * @param value - The value to assign.
+   */
+  public assignAt(distance: number, name: Token, value: CantripValue): void {
+    this.ancestor(distance).values.set(name.lexeme, value);
   }
 }

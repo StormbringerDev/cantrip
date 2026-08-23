@@ -1,4 +1,5 @@
 import { Parser, Scanner } from "@cantrip/parser";
+import { Resolver } from "@cantrip/analysis";
 import { Interpreter } from "@cantrip/interpreter";
 import {
   DiagnosticCollector,
@@ -29,14 +30,24 @@ function run(
   const tokens = new Scanner(source, diagnostics, sourceId).scanTokens();
   const ast = new Parser(tokens, diagnostics, sourceId).parse();
 
+  // Stop if there was a syntax error.
   if (diagnostics.hasErrors()) {
     console.error(formatDiagnostics(diagnostics.diagnostics(), sources));
     hadError = true;
     return;
   }
 
-  const statements = ast.filter((s) => s !== null);
-  interpreter.interpret(statements);
+  const resolver = new Resolver(interpreter, diagnostics, sourceId);
+  resolver.resolve(ast);
+
+  // Stop if there was a resolution error.
+  if (diagnostics.hasErrors()) {
+    console.error(formatDiagnostics(diagnostics.diagnostics(), sources));
+    hadError = true;
+    return;
+  }
+
+  interpreter.interpret(ast);
 
   if (diagnostics.hasErrors()) {
     console.error(formatDiagnostics(diagnostics.diagnostics(), sources));
