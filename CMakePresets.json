@@ -1,0 +1,21 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "dev",
+      "generator": "Ninja",
+      "binaryDir": "build/dev",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CANTRIP_BUILD_TESTS": "ON",
+        "CANTRIP_BUILD_CLI": "ON"
+      }
+    },
+    {
+      "name": "rel",
+      "generator": "Ninja",
+      "binaryDir": "build/rel",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo" }
+    }
+  ]
+}
