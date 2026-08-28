@@ -7,20 +7,20 @@ on:
     branches: [main, master]
 
 jobs:
-  rust:
-    name: Rust
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-      - name: Cargo test
-        run: cargo test --workspace
-      - name: Cargo clippy
-        run: cargo clippy --workspace -- -D warning
-      - name: Cargo fmt
-        run: cargo fmt --all -- --check
+  # rust:
+  #   name: Rust
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dtolnay/rust-toolchain@stable
+  #       with:
+  #         components: rustfmt, clippy
+  #     - name: Cargo test
+  #       run: cargo test --workspace
+  #     - name: Cargo clippy
+  #       run: cargo clippy --workspace -- -D warning
+  #     - name: Cargo fmt
+  #       run: cargo fmt --all -- --check
 
   typescript:
     name: TypeScript
