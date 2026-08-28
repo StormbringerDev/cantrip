@@ -1,4 +1,4 @@
-add_library(cantrip_vm OBJECT)
+add_library(cantrip_vm OBJECT vm.c dispatch.c)
 target_include_directories(cantrip_vm
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>

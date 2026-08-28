@@ -1,4 +1,4 @@
-add_library(cantrip_compiler OBJECT)
+add_library(cantrip_compiler OBJECT scanner.c compiler.c debug.c)
 target_include_directories(cantrip_compiler
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>

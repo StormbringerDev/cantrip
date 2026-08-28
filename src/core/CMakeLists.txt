@@ -1,4 +1,11 @@
-add_library(cantrip_core OBJECT)
+add_library(cantrip_core OBJECT
+  value.c
+  object.c
+  table.c
+  chunk.c
+  memory.c
+  error.c
+)
 target_include_directories(cantrip_core
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>

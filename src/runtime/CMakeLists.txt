@@ -1,4 +1,4 @@
-add_library(cantrip_runtime OBJECT)
+add_library(cantrip_runtime OBJECT native.c embed.c)
 target_include_directories(cantrip_runtime
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
