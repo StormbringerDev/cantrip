@@ -3,15 +3,15 @@
 A lightweight, expressive scripting language.
 
 Cantrip is designed as a fast-to-build, enjoyable scripting language with a clean syntax.  
-It serves as a practical learning vehicle and a future scripting layer for the [Ritual](https://github.com/StormbringerDev/ritual) game engine.
+It serves as a practical learning vehicle and a scripting layer for the [Ritual](https://github.com/StormbringerDev/ritual) game engine.
 
 ### Implementation Roadmap
 
-| Stage                                  | Status              | Description                            |
-| -------------------------------------- | ------------------- | -------------------------------------- |
-| 1. TypeScript Tree-Walking Interpreter | ✅ Feature-complete | Fast iteration on syntax & semantics   |
-| 2. Rust Bytecode VM                    | 🚧 Scaffolded       | Portable, efficient execution          |
-| 3. Rust JIT                            | 🚧 Scaffolded       | Native performance (Cranelift planned) |
+| Stage                                  | Status              | Description                          |
+| -------------------------------------- | ------------------- | ------------------------------------ |
+| 1. TypeScript Tree-Walking Interpreter | ✅ Feature-complete | Fast iteration on syntax & semantics |
+| 2. C Bytecode VM                       | 🚧 Scaffolded       | Portable, efficient execution        |
+| 3. C JIT                               | 🚧 Scaffolded       | Native performance (LLVM planned)    |
 
 ---
 
@@ -20,13 +20,16 @@ It serves as a practical learning vehicle and a future scripting layer for the [
 ```
 cantrip/
 ├── apps/
-│   ├── cantrip-cli/          # Rust CLI (REPL + runner) — the main `cantrip` binary
+│   ├── cantrip-cli/          # Rust CLI (REPL + runner) — the deprecated `cantrip` binary
+│   ├── cantrip/              # C CLI (REPL + runner) — the main `cantrip` binary
 │   └── cantrip-repl-ts/      # Pure TypeScript REPL for rapid prototyping
-├── crates/                   # Rust workspace
-│   ├── cantrip-core/         # Shared AST, values, errors, opcodes
-│   ├── cantrip-bytecode/     # Bytecode compiler + VM
-│   ├── cantrip-jit/          # JIT backend (future)
-│   └── cantrip-runtime/      # Embedding API + standard library
+├── include/cantrip/          # Public C interface
+├── src/                      # C workspace
+│   ├── core/                 # Shared AST, values, memory management
+│   ├── compiler/             # Bytecode compiler
+│   ├── vm/                   # Bytecode VM
+│   ├── runtime/              # Embedding implementation + standard library
+│   └── jit/                  # JIT backend (future)
 ├── packages/                 # TypeScript (pnpm workspace)
 │   ├── cantrip-ast/          # Shared AST types
 │   ├── cantrip-parser/       # Recursive descent / Pratt parser
@@ -44,7 +47,8 @@ cantrip/
 ### Prerequisites
 
 - Node.js 20+ and pnpm 9+
-- Rust 1.80+ (stable)
+- A C compiler (`gcc`, `clang`, etc.)
+- CMake 3.21+
 - (Optional) just / make for convenience scripts
 
 ```bash
@@ -61,8 +65,9 @@ pnpm build
 # Run the TypeScript REPL
 pnpm --filter cantrip-repl-ts dev
 
-# Run the Rust CLI (not yet implemented)
-cargo run -p cantrip-cli
+# Build & run the C CLI (not yet implemented)
+cmake --preset dev && cmake --build build/dev
+./build/dev/apps/cantrip/cantrip
 ```
 
 ### Example
