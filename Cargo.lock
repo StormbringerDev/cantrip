@@ -59,55 +59,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
-name = "cantrip-bytecode"
-version = "0.2.0"
-dependencies = [
- "cantrip-core",
- "thiserror",
-]
-
-[[package]]
 name = "cantrip-cli"
 version = "0.2.0"
 dependencies = [
  "anyhow",
- "cantrip-core",
- "cantrip-runtime",
  "clap",
-]
-
-[[package]]
-name = "cantrip-core"
-version = "0.2.0"
-dependencies = [
- "serde",
- "thiserror",
-]
-
-[[package]]
-name = "cantrip-e2e-rust"
-version = "0.0.0"
-dependencies = [
- "cantrip-runtime",
-]
-
-[[package]]
-name = "cantrip-jit"
-version = "0.2.0"
-dependencies = [
- "cantrip-bytecode",
- "cantrip-core",
- "thiserror",
-]
-
-[[package]]
-name = "cantrip-runtime"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "cantrip-bytecode",
- "cantrip-core",
- "thiserror",
 ]
 
 [[package]]
@@ -141,7 +97,7 @@ dependencies = [
  "heck",
  "proc-macro2",
  "quote",
- "syn 2.0.119",
+ "syn",
 ]
 
 [[package]]
@@ -193,36 +149,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde"
-version = "1.0.229"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4148590afebada386688f18773da617792bf2ef03ffc1e4cbd2b1d45b023e0ba"
-dependencies = [
- "serde_core",
- "serde_derive",
-]
-
-[[package]]
-name = "serde_core"
-version = "1.0.229"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67dca2c9c51e58a4791a4b1ed58308b39c64224d349a935ab5039aa360942a48"
-dependencies = [
- "serde_derive",
-]
-
-[[package]]
-name = "serde_derive"
-version = "1.0.229"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7a5d71263a5a7d47b41f6b3f06ba276f10cc18b0931f1799f710578e2309348"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 3.0.2",
-]
-
-[[package]]
 name = "strsim"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -237,37 +163,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
-]
-
-[[package]]
-name = "syn"
-version = "3.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a207d6d6a2b7fc470b80443726053f18a2481b7e1eee970597051596567987a3"
-dependencies = [
- "proc-macro2",
- "quote",
- "unicode-ident",
-]
-
-[[package]]
-name = "thiserror"
-version = "2.0.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec86235f5fcc2a73650310756d2ac5b138a5780bbbdfae3eeccec992c435ba4f"
-dependencies = [
- "thiserror-impl",
-]
-
-[[package]]
-name = "thiserror-impl"
-version = "2.0.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc04cd3e1236dd4a98afca4569f2deb3f120e5422a4023be2cb683f8486292af"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 3.0.2",
 ]
 
 [[package]]

@@ -1,8 +1,0 @@
-[package]
-name = "cantrip-e2e-rust"
-version = "0.0.0"
-edition = "2024"
-publish = false
-
-[dependencies]
-cantrip-runtime = { path = "../../crates/cantrip-runtime" }

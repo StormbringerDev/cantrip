@@ -8,6 +8,7 @@ build/
 target/
 *.tsbuildinfo
 .turbo/
+compile_commands.json
 
 # IDE / OS
 .idea/

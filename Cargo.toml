@@ -1,12 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-  "crates/cantrip-core",
-  "crates/cantrip-bytecode",
-  "crates/cantrip-jit",
-  "crates/cantrip-runtime",
   "apps/cantrip-cli",
-  "tests/rust",
 ]
 
 [workspace.package]

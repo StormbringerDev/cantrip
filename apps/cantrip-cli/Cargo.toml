@@ -10,7 +10,5 @@ name = "cantrip"
 path = "src/main.rs"
 
 [dependencies]
-cantrip-runtime = { path = "../../crates/cantrip-runtime" }
-cantrip-core = { path = "../../crates/cantrip-core" }
 anyhow = { workspace = true }
 clap = { version = "4.6.3", features = ["derive"] }
