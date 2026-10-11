@@ -1,0 +1,8 @@
+.vscode/
+.venv/
+build/
+.cache/
+__pycache__/
+*.vsix
+compile_commands.json
+.pytest_cache/
