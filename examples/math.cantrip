@@ -1,0 +1,24 @@
+// examples/math.cantrip
+// Demo of Cantrip arithmetic evaluation.
+
+print("=== Math Demo ===");
+
+let x = 40;
+let y = 2;
+print("40 + 2 = " + (x + y));
+print("40 * 2 = " + (x * y));
+print("40 / 2 = " + (x / y));
+
+fn exponent(n, exp) {
+  let result = 1;
+  if exp == 0 {
+    return 1;
+  }
+  let i = 0;
+  while i < exp {
+    result = result * n;
+  }
+  result
+}
+
+print("2^3 = " + exponent(2, 3));

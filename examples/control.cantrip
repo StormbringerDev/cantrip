@@ -1,0 +1,35 @@
+// examples/control.cantrip
+// Demo of Cantrip control flow.
+
+print("=== Control Flow Demo ===");
+
+let i = 0;
+while i < 5 {
+  i = i + 1;
+  print(i);
+}
+
+if i == 5 {
+  print("Loop finished successfully.");
+} else {
+  print("Something went wrong.");
+}
+
+fn fib_iter(n) {
+  if n <= 0 {
+    return 0;
+  }
+  let a = 0;
+  let b = 1;
+  let temp;
+  let i = 2;
+  while i < n {
+    temp = a;
+    a = b;
+    b = temp + b;
+    i = i + 1;
+  }
+  b
+}
+
+print(fib_iter(10)); // 34
