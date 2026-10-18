@@ -18,5 +18,5 @@ export default defineConfig(
       },
     },
   },
-  globalIgnores(["**/*.{test,spec}.{js,ts}", "*.config.{js,ts}"]),
+  globalIgnores(["**/*.{test,spec}.{js,ts}", "*.config.{js,ts}", "dist/**/*"]),
 );

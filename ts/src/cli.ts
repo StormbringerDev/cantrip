@@ -25,7 +25,7 @@ export async function run(argv: string[]) {
 }
 
 async function startRepl() {
-  process.stdout.write("repl\n");
+  if (process.env.NODE_ENV === "test") process.stdout.write("repl\n");
   await text(process.stdin);
 }
 
@@ -36,5 +36,5 @@ async function runScript(program: Command, script: string) {
     program.error(`cannot open script: ${script}`, { exitCode: 1 });
   }
 
-  process.stdout.write(`${script}\n`);
+  if (process.env.NODE_ENV === "test") process.stdout.write(`${script}\n`);
 }
