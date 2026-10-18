@@ -1,0 +1,32 @@
+{
+  "name": "cantrip",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Prototype interpreter for the Cantrip scripting language",
+  "license": "LGPL-3.0-only",
+  "type": "module",
+  "bin": {
+    "cantrip": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "cli": "node ./dist/index.js",
+    "lint": "eslint \"src/**\"",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "commander": "^15.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.5",
+    "@vitest/coverage-v8": "^5.0.5",
+    "eslint": "^10.13.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.9.10",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.2",
+    "vitest": "^5.0.5"
+  }
+}

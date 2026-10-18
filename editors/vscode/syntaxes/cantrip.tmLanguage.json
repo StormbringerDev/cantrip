@@ -1,0 +1,162 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Cantrip",
+  "scopeName": "source.cantrip",
+  "fileTypes": ["cantrip"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#function-declaration" },
+    { "include": "#function-expression" },
+    { "include": "#let-declaration" },
+    { "include": "#keywords" },
+    { "include": "#constants" },
+    { "include": "#function-call" },
+    { "include": "#operators" },
+    { "include": "#identifiers" },
+    { "include": "#punctuation" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.cantrip",
+          "match": "//[^\\n]*"
+        },
+        {
+          "name": "comment.block.cantrip",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.cantrip",
+      "begin": "\"",
+      "end": "\"",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.string.begin.cantrip" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.string.end.cantrip" }
+      }
+    },
+    "numbers": {
+      "name": "constant.numeric.cantrip",
+      "match": "(?<![A-Za-z0-9_])[0-9]+(?:\\.[0-9]+)?(?![A-Za-z0-9_])"
+    },
+    "function-declaration": {
+      "name": "meta.function.cantrip",
+      "begin": "\\b(fn)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*(\\()",
+      "end": "\\)",
+      "beginCaptures": {
+        "1": { "name": "storage.type.function.cantrip" },
+        "2": { "name": "entity.name.function.cantrip" },
+        "3": { "name": "punctuation.definition.parameters.begin.cantrip" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.parameters.end.cantrip" }
+      },
+      "patterns": [{ "include": "#parameters" }]
+    },
+    "function-expression": {
+      "name": "meta.function.anonymous.cantrip",
+      "begin": "\\b(fn)\\s*(\\()",
+      "end": "\\)",
+      "beginCaptures": {
+        "1": { "name": "storage.type.function.cantrip" },
+        "2": { "name": "punctuation.definition.parameters.begin.cantrip" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.parameters.end.cantrip" }
+      },
+      "patterns": [{ "include": "#parameters" }]
+    },
+    "parameters": {
+      "patterns": [
+        {
+          "name": "variable.parameter.cantrip",
+          "match": "[A-Za-z_][A-Za-z0-9_]*"
+        },
+        { "name": "punctuation.separator.parameter.cantrip", "match": "," }
+      ]
+    },
+    "let-declaration": {
+      "match": "\\b(let)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+      "captures": {
+        "1": { "name": "storage.type.cantrip" },
+        "2": { "name": "variable.other.readwrite.cantrip" }
+      }
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.conditional.cantrip",
+          "match": "\\b(if|else)\\b"
+        },
+        {
+          "name": "keyword.control.loop.cantrip",
+          "match": "\\b(while|break|continue)\\b"
+        },
+        {
+          "name": "keyword.control.flow.cantrip",
+          "match": "\\b(return)\\b"
+        },
+        {
+          "name": "keyword.operator.logical.cantrip",
+          "match": "\\b(and|or)\\b"
+        },
+        {
+          "name": "storage.type.function.cantrip",
+          "match": "\\b(fn)\\b"
+        },
+        {
+          "name": "storage.type.cantrip",
+          "match": "\\b(let)\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.cantrip",
+          "match": "\\b(true|false)\\b"
+        },
+        {
+          "name": "constant.language.nil.cantrip",
+          "match": "\\b(nil)\\b"
+        }
+      ]
+    },
+    "function-call": {
+      "match": "\\b(?!(?:and|or|if|else|while|return|break|continue|fn|let|true|false|nil)\\b)([A-Za-z_][A-Za-z0-9_]*)\\s*(?=\\()",
+      "captures": {
+        "1": { "name": "entity.name.function.call.cantrip" }
+      }
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.comparison.cantrip",
+          "match": "==|!=|<=|>=|<|>"
+        },
+        { "name": "keyword.operator.assignment.cantrip", "match": "=" },
+        { "name": "keyword.operator.logical.cantrip", "match": "!" },
+        { "name": "keyword.operator.arithmetic.cantrip", "match": "[-+*/]" }
+      ]
+    },
+    "identifiers": {
+      "name": "variable.other.cantrip",
+      "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
+    },
+    "punctuation": {
+      "patterns": [
+        { "name": "punctuation.terminator.statement.cantrip", "match": ";" },
+        { "name": "punctuation.separator.comma.cantrip", "match": "," },
+        { "name": "punctuation.section.block.cantrip", "match": "[{}]" },
+        { "name": "punctuation.section.parens.cantrip", "match": "[()]" }
+      ]
+    }
+  }
+}

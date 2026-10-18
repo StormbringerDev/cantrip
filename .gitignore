@@ -1,0 +1,7 @@
+.vscode/
+build/
+dist/
+node_modules/
+.cache/
+*.vsix
+compile_commands.json
