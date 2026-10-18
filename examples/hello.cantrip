@@ -1,0 +1,11 @@
+// examples/hello.cantrip
+// The classic first program.
+
+let name = "world";
+print("Hello, " + name + "!");
+
+fn greet(name) {
+  print("Greetings, " + name + "! How's your day going?");
+}
+
+greet("Reyek");

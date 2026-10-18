@@ -15,7 +15,7 @@ run-c path="": build-c
     ./c/build/dev/cantrip {{path}}
 
 test-ts: build-ts
-    cd python && pnpm test
+    cd ts && pnpm test
 
 test-c: build-c
     ctest --preset dev

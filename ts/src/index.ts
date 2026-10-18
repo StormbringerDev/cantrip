@@ -1,3 +1,5 @@
 #!/usr/bin/env node
 
-console.log("Hello, Cantrip!");
+import { run } from "./cli.js";
+
+await run(process.argv);
