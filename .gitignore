@@ -2,7 +2,7 @@
 build/
 dist/
 node_modules/
-.vitest/
+coverage/
 .cache/
 *.vsix
 compile_commands.json

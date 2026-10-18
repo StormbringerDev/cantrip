@@ -5,8 +5,8 @@ generate-ast target:
 build-ts:
     cd ts && pnpm install && pnpm build
 
-run-ts path="": build-ts
-    cd ts && pnpm run cli {{path}}
+run-ts path="":
+    cd ts && pnpm dev {{path}}
 
 build-c:
     cd c && cmake --preset dev && cmake --build --preset dev
