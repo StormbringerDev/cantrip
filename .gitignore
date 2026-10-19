@@ -3,6 +3,7 @@ build/
 dist/
 node_modules/
 coverage/
+__pycache__/
 .cache/
 *.vsix
 compile_commands.json

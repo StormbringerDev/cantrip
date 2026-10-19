@@ -1,6 +1,6 @@
 [arg("target", pattern="ts|c")]
-generate-ast target:
-    python tools/generate_ast.py --target {{target}} --path ./python/src/cantrip
+generate-ast target outdir:
+    python tools/generate_ast.py --target={{target}} {{outdir}}
 
 build-ts:
     cd ts && pnpm install && pnpm build
@@ -29,4 +29,4 @@ conformance-c: build-c
 test-all: test-ts test-c conformance-ts conformance-c
 
 clean:
-    rm -rf c/{.cache,build} python/src/**/__pycache__ .pytest_cache **/.pytest_cache
+    rm -rf c/{.cache,build} ts/{coverage,dist,node_modules}
