@@ -1,4 +1,5 @@
 import { DiagnosticCollector } from "../diagnostic/collector.js";
+import { error as diagnosticError } from "../diagnostic/create.js";
 import { binary, grouping, literal, unary, type Expr } from "./expr.js";
 import { TokenType, type Token } from "./token.js";
 
@@ -177,7 +178,7 @@ export class Parser {
   // --- Error handling --------------------------------------------------------
 
   private error(token: Token, message: string): ParseError {
-    this.diagnostics.error(message, { span: token.span });
+    this.diagnostics.emit(diagnosticError(message, token));
     return new ParseError();
   }
 

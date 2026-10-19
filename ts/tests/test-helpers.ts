@@ -1,7 +1,7 @@
 import type { Token, TokenType } from "../src/parser/token.js";
 import type { Span } from "../src/types/location.js";
 
-export function newSpan(start: number, end: number): Span {
+export function makeSpan(start: number, end: number): Span {
   return {
     start: {
       line: 1,
@@ -27,6 +27,6 @@ export function tok(
     type,
     lexeme,
     literal: literal,
-    span: newSpan(start, end),
+    span: makeSpan(start, end),
   };
 }

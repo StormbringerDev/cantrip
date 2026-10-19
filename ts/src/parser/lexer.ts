@@ -1,4 +1,5 @@
 import { DiagnosticCollector } from "../diagnostic/collector.js";
+import { error } from "../diagnostic/create.js";
 import { type Position, spanAt } from "../types/location.js";
 import { TokenType, type Token } from "./token.js";
 
@@ -155,16 +156,16 @@ export class Lexer {
         } else if (isAlpha(char)) {
           this.identifier(start);
         } else {
-          this.diagnostics.error("unexpected character", {
-            span: {
+          this.diagnostics.emit(
+            error("unexpected character", {
               start,
               end: {
                 line: this.line,
                 column: this.column,
                 offset: this.offset,
               },
-            },
-          });
+            }),
+          );
         }
         break;
     }
@@ -209,7 +210,7 @@ export class Lexer {
         column: start.column + 1,
         offset: start.offset + 1,
       };
-      this.diagnostics.error("unterminated string", { span: { start, end } });
+      this.diagnostics.emit(error("unterminated string", { start, end }));
     }
 
     // Closing quote
