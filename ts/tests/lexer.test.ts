@@ -18,7 +18,7 @@ describe("lexer", () => {
     const lexer = new Lexer("(){},.;", diagnostics);
     const tokens = lexer.scan();
 
-    expect(diagnostics.hasErrors()).toBe(false);
+    expect(diagnostics.hasError()).toBe(false);
     const expected = [
       TokenType.LeftParen,
       TokenType.RightParen,
@@ -38,7 +38,7 @@ describe("lexer", () => {
     const lexer = new Lexer(source, diagnostics);
     const tokens = lexer.scan();
 
-    expect(diagnostics.hasErrors()).toBe(false);
+    expect(diagnostics.hasError()).toBe(false);
     expect(tokens.map((t) => t.type)).toEqual([TokenType.Eof]);
   });
 
@@ -48,7 +48,7 @@ describe("lexer", () => {
     const lexer = new Lexer(source, diagnostics);
     const tokens = lexer.scan();
 
-    expect(diagnostics.hasErrors()).toBe(false);
+    expect(diagnostics.hasError()).toBe(false);
     const expected = [
       TokenType.Plus,
       TokenType.Minus,
@@ -74,7 +74,7 @@ describe("lexer", () => {
     const lexer = new Lexer(source, diagnostics);
     const tokens = lexer.scan();
 
-    expect(diagnostics.hasErrors()).toBe(false);
+    expect(diagnostics.hasError()).toBe(false);
     const expected = [
       TokenType.Identifier,
       TokenType.Identifier,
@@ -107,7 +107,7 @@ describe("lexer", () => {
     const lexer = new Lexer(source.join(" "), diagnostics);
     const tokens = lexer.scan();
 
-    expect(diagnostics.hasErrors()).toBe(false);
+    expect(diagnostics.hasError()).toBe(false);
     const expected = [
       TokenType.And,
       TokenType.Break,
@@ -132,7 +132,7 @@ describe("lexer", () => {
     const lexer = new Lexer(source, diagnostics);
     const tokens = lexer.scan();
 
-    expect(diagnostics.hasErrors()).toBe(false);
+    expect(diagnostics.hasError()).toBe(false);
     expect(tokens.map((t) => t.type)).toEqual([TokenType.Eof]);
   });
 });

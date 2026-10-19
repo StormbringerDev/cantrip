@@ -54,7 +54,7 @@ export class DiagnosticCollector {
     this.diagnostics.length = 0;
   }
 
-  hasErrors(): boolean {
+  hasError(): boolean {
     return this.diagnostics.some((diag) => diag.severity === "error");
   }
 }

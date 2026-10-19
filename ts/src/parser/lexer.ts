@@ -155,7 +155,7 @@ export class Lexer {
         } else if (isAlpha(char)) {
           this.identifier(start);
         } else {
-          this.diagnostics.error(`unexpected character '${char}'`, {
+          this.diagnostics.error("unexpected character", {
             span: {
               start,
               end: {
