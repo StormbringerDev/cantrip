@@ -16,6 +16,13 @@ export interface Break {
   readonly span: Span;
 }
 
+export interface Const {
+  readonly type: "Const";
+  readonly name: Token;
+  readonly initializer: Expr;
+  readonly span: Span;
+}
+
 export interface Continue {
   readonly type: "Continue";
   readonly keyword: Token;
@@ -42,7 +49,7 @@ export interface While {
   readonly span: Span;
 }
 
-export type Stmt = Block | Break | Continue | Expression | Let | While;
+export type Stmt = Block | Break | Const | Continue | Expression | Let | While;
 
 export function block(statements: (Stmt | null)[], span: Span): Block {
   return { type: "Block", statements, span };
@@ -50,6 +57,10 @@ export function block(statements: (Stmt | null)[], span: Span): Block {
 
 export function break_(keyword: Token, span: Span): Break {
   return { type: "Break", keyword, span };
+}
+
+export function const_(name: Token, initializer: Expr, span: Span): Const {
+  return { type: "Const", name, initializer, span };
 }
 
 export function continue_(keyword: Token, span: Span): Continue {

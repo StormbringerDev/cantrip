@@ -12,6 +12,29 @@ import { tok } from "./test-helpers.js";
 
 describe("parser", () => {
   describe("statements", () => {
+    describe("const declaration", () => {
+      it("parses a const declaration", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Const, "const"),
+          tok(TokenType.Identifier, "maxRuns", null, 6),
+          tok(TokenType.Eq, "=", null, 14),
+          tok(TokenType.Number, "10", 10, 16),
+          tok(TokenType.Semicolon, ";", null, 18),
+          tok(TokenType.Eof, "", null, 19),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as Stmt).type).toBe("Const");
+        expect((statements[0] as astStmt.Const).name.lexeme).toBe("maxRuns");
+        expect((statements[0] as astStmt.Const).initializer.type).toBe(
+          "Literal",
+        );
+      });
+    });
+
     describe("let declaration", () => {
       it("parses a let declaration", () => {
         const diagnostics = new DiagnosticCollector();

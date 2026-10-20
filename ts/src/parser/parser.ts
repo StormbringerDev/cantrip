@@ -35,6 +35,7 @@ export class Parser {
 
   private declaration(): Stmt | null {
     try {
+      if (this.match(TokenType.Const)) return this.constDeclaration();
       if (this.match(TokenType.Let)) return this.letDeclaration();
 
       return this.statement();
@@ -43,6 +44,19 @@ export class Parser {
       this.synchronize();
       return null;
     }
+  }
+
+  private constDeclaration(): Stmt {
+    const start = this.previous().span.start;
+    const name = this.consume(TokenType.Identifier, "expect constant name");
+    this.consume(TokenType.Eq, "'const' declarations must be initialized");
+    const initializer = this.expression();
+
+    const end = this.consume(
+      TokenType.Semicolon,
+      "expect ';' after constant declaration",
+    ).span.end;
+    return astStmt.const_(name, initializer, { start, end });
   }
 
   private letDeclaration(): Stmt {

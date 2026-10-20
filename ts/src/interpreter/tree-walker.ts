@@ -33,6 +33,9 @@ function execute(stmt: Stmt): void {
     case "Break":
       executeBreak(stmt);
       break;
+    case "Const":
+      executeConst(stmt);
+      break;
     case "Continue":
       executeContinue(stmt);
       break;
@@ -90,6 +93,10 @@ function executeBlock(stmt: astStmt.Block): void {
 
 function executeBreak(_stmt: astStmt.Break): void {
   throw new Break();
+}
+
+function executeConst(stmt: astStmt.Const): void {
+  environment.define(stmt.name.lexeme, evaluate(stmt.initializer));
 }
 
 function executeContinue(_stmt: astStmt.Continue): void {
