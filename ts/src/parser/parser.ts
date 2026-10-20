@@ -91,7 +91,7 @@ export class Parser {
   }
 
   private assignment(): Expr {
-    const expr = this.equality();
+    const expr = this.or();
 
     if (this.match(TokenType.Eq)) {
       const equals = this.previous();
@@ -106,6 +106,36 @@ export class Parser {
       }
 
       this.error(equals, "invalid assignment target");
+    }
+
+    return expr;
+  }
+
+  private or(): Expr {
+    let expr = this.and();
+
+    while (this.match(TokenType.Or)) {
+      const operator = this.previous();
+      const right = this.and();
+      expr = astExpr.binary(expr, operator, right, {
+        start: expr.span.start,
+        end: right.span.end,
+      });
+    }
+
+    return expr;
+  }
+
+  private and(): Expr {
+    let expr = this.equality();
+
+    while (this.match(TokenType.And)) {
+      const operator = this.previous();
+      const right = this.equality();
+      expr = astExpr.binary(expr, operator, right, {
+        start: expr.span.start,
+        end: right.span.end,
+      });
     }
 
     return expr;

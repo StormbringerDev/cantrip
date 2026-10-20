@@ -224,6 +224,66 @@ describe("parser", () => {
     });
 
     describe("binary", () => {
+      it("parses a logical or expression", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.True, "true"),
+          tok(TokenType.Or, "or", null, 5),
+          tok(TokenType.False, "false", null, 8),
+          tok(TokenType.Semicolon, ";", null, 9),
+          tok(TokenType.Eof, "", null, 10),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
+          "Binary",
+        );
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .left.type,
+        ).toBe("Literal");
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .operator.type,
+        ).toBe(TokenType.Or);
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .right.type,
+        ).toBe("Literal");
+      });
+
+      it("parses a logical and expression", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.False, "false"),
+          tok(TokenType.And, "and", null, 6),
+          tok(TokenType.False, "true", null, 10),
+          tok(TokenType.Semicolon, ";", null, 14),
+          tok(TokenType.Eof, "", null, 15),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
+          "Binary",
+        );
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .left.type,
+        ).toBe("Literal");
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .operator.type,
+        ).toBe(TokenType.And);
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .right.type,
+        ).toBe("Literal");
+      });
+
       it("parses an equality expression", () => {
         const diagnostics = new DiagnosticCollector();
         const tokens = [

@@ -100,6 +100,13 @@ function evaluateAssign(expr: astExpr.Assign): Value {
 
 function evaluateBinary(expr: astExpr.Binary): Value {
   const left = evaluate(expr.left);
+
+  if (expr.operator.type === TokenType.Or) {
+    return isTruthy(left) ? left : evaluate(expr.right);
+  } else if (expr.operator.type === TokenType.And) {
+    return !isTruthy(left) ? left : evaluate(expr.right);
+  }
+
   const right = evaluate(expr.right);
 
   switch (expr.operator.type) {
@@ -202,7 +209,7 @@ function evaluateVariable(expr: astExpr.Variable): Value {
 }
 
 function isTruthy(value: Value): boolean {
-  if (value == null) return false;
+  if (value === null || value === UNIT) return false;
   if (typeof value === "boolean") return value;
   return true;
 }
