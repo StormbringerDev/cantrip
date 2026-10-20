@@ -1,7 +1,5 @@
 import type { Token } from "../parser/token.js";
 
-export type Value = number | string | boolean | null;
-
 export class RuntimeError extends Error {
   readonly token: Token;
 

@@ -6,7 +6,8 @@ import type * as astStmt from "../parser/stmt.js";
 import type { Stmt } from "../parser/stmt.js";
 import { TokenType, type Token } from "../parser/token.js";
 import { Environment } from "./environment.js";
-import { RuntimeError, type Value } from "./util.js";
+import { RuntimeError } from "./exceptions.js";
+import { UNIT, type Value } from "./types.js";
 
 export function interpret(
   statements: Stmt[],
@@ -63,7 +64,7 @@ function evaluate(expr: Expr): Value {
   }
 
   // Unreachable.
-  return null;
+  return UNIT;
 }
 
 function executeBlock(stmt: astStmt.Block): void {
@@ -146,12 +147,12 @@ function evaluateBinary(expr: astExpr.Binary): Value {
   }
 
   // Unreachable
-  return null;
+  return UNIT;
 }
 
 function evaluateBlock(expr: astExpr.Block): Value {
   const previous = environment;
-  let value: Value = null;
+  let value: Value = UNIT;
   try {
     environment = new Environment(previous);
 
@@ -171,7 +172,7 @@ function evaluateIf(expr: astExpr.If): Value {
   } else if (expr.elseBranch !== null) {
     return evaluate(expr.elseBranch);
   }
-  return null;
+  return UNIT;
 }
 
 function evaluateGrouping(expr: astExpr.Grouping): Value {
@@ -192,7 +193,7 @@ function evaluateUnary(expr: astExpr.Unary): Value {
     case TokenType.Bang:
       return !isTruthy(right);
     default:
-      return null; // Unreachable
+      return UNIT; // Unreachable
   }
 }
 
@@ -208,6 +209,7 @@ function isTruthy(value: Value): boolean {
 
 function stringify(value: Value): string {
   if (value === null) return "nil";
+  if (value === UNIT) return "()";
 
   return value.toString();
 }
