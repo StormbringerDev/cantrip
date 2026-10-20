@@ -86,17 +86,17 @@ print(add(40, 2));
 
 ### Language Features
 
-- `loop` expressions — Infinite loops that can return a value with `break`. `break` statements in a `while` loop will not be able to carry a value.
-- `const` declarations — Syntax for declaring immutable variables: `const name = value`. `const` declarations must be initialized before use.
-- Arrow functions — Alternative syntax for creating anonymous functions: `(params) => expr` (equivalent to `fn(params) { ... }`).
-- Arrays and JS-like objects — Structured data to make handling JSON and other structured data easier.
-- Gradual typing with inferrence — A type-checking model similar to TypeScript.
+- [ ] `loop` expressions — Infinite loops that can return a value with `break`. `break` statements in a `while` loop will not be able to carry a value.
+- [x] `const` declarations — Syntax for declaring immutable variables: `const name = value`. `const` declarations must be initialized before use.
+- [ ] Arrow functions — Alternative syntax for creating anonymous functions: `(params) => expr` (equivalent to `fn(params) { ... }`).
+- [ ] Arrays and JS-like objects — Structured data to make handling JSON and other structured data easier.
+- [ ] Gradual typing with inferrence — A type-checking model similar to TypeScript.
 
 ### Language support
 
-- LSP — A language server protocol that writes to stdout.
-- Editor support — Syntax highlighting and LSP integration. Currently, only VS Code and Neovim support is planned.
-- Formatter, linter — Additional support for Cantrip development.
+- [ ] LSP — A language server protocol that writes to stdout.
+- [ ] Editor support — Syntax highlighting and LSP integration. Currently, only VS Code and Neovim support is planned.
+- [ ] Formatter, linter — Additional support for Cantrip development.
 
 ## License
 

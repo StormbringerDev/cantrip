@@ -62,8 +62,11 @@ export class Parser {
   private statement(): Stmt {
     // A block where a statement is expected is parsed as a statement
     if (this.match(TokenType.LeftBrace)) return this.blockStatement();
+    if (this.match(TokenType.Break)) return this.breakStatement();
+    if (this.match(TokenType.Continue)) return this.continueStatement();
     // Bypass to remove requirement for semicolon on lone if expression
     if (this.match(TokenType.If)) return this.ifStatement();
+    if (this.match(TokenType.While)) return this.whileStatement();
 
     return this.expressionStatement();
   }
@@ -74,9 +77,18 @@ export class Parser {
     return astStmt.block(statements, { start, end });
   }
 
-  private ifStatement(): Stmt {
-    const expr = this.ifExpression();
-    return astStmt.expression(expr, expr.span);
+  private breakStatement(): Stmt {
+    const keyword = this.previous();
+    const end = this.consume(TokenType.Semicolon, "expect ';' after 'break'")
+      .span.end;
+    return astStmt.break_(keyword, { start: keyword.span.start, end });
+  }
+
+  private continueStatement(): Stmt {
+    const keyword = this.previous();
+    const end = this.consume(TokenType.Semicolon, "expect ';' after 'continue'")
+      .span.end;
+    return astStmt.continue_(keyword, { start: keyword.span.start, end });
   }
 
   private expressionStatement(): Stmt {
@@ -84,6 +96,20 @@ export class Parser {
     const end = this.consume(TokenType.Semicolon, "expect ';' after expression")
       .span.end;
     return astStmt.expression(expr, { start: expr.span.start, end });
+  }
+
+  private ifStatement(): Stmt {
+    const expr = this.ifExpression();
+    return astStmt.expression(expr, expr.span);
+  }
+
+  private whileStatement(): Stmt {
+    const start = this.previous().span.start;
+    const condition = this.expression();
+    this.consume(TokenType.LeftBrace, "expect '{' after loop condition");
+    const body = this.blockStatement();
+
+    return astStmt.while_(condition, body, { start, end: body.span.end });
   }
 
   private expression(): Expr {

@@ -134,6 +134,44 @@ describe("parser", () => {
       });
     });
 
+    describe("break", () => {
+      it("parses a break statement", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Break, "break"),
+          tok(TokenType.Semicolon, ";", null, 5),
+          tok(TokenType.Eof, "", null, 6),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as Stmt).type).toBe("Break");
+        expect((statements[0] as astStmt.Break).keyword.type).toBe(
+          TokenType.Break,
+        );
+      });
+    });
+
+    describe("continue", () => {
+      it("parses a continue statement", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Continue, "continue"),
+          tok(TokenType.Semicolon, ";", null, 8),
+          tok(TokenType.Eof, "", null, 9),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as Stmt).type).toBe("Continue");
+        expect((statements[0] as astStmt.Break).keyword.type).toBe(
+          TokenType.Continue,
+        );
+      });
+    });
+
     describe("expression", () => {
       it("parses an expression statement", () => {
         const diagnostics = new DiagnosticCollector();
@@ -171,6 +209,27 @@ describe("parser", () => {
         expect(diags).toHaveLength(1);
         expect(diags[0].severity).toBe("error");
         expect(diags[0].message).toBe("expect ';' after expression");
+      });
+    });
+
+    describe("while", () => {
+      it("parses a while statement", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.While, "while"),
+          tok(TokenType.True, "true", null, 6),
+          tok(TokenType.LeftBrace, "{", null, 11),
+          tok(TokenType.String, '"Help!"', "Help!", 13),
+          tok(TokenType.RightBrace, "}", null, 20),
+          tok(TokenType.Eof, "", null, 21),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as Stmt).type).toBe("While");
+        expect((statements[0] as astStmt.While).condition.type).toBe("Literal");
+        expect((statements[0] as astStmt.While).body.type).toBe("Block");
       });
     });
   });

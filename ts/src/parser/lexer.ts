@@ -20,6 +20,7 @@ function isAlpha(char: string): boolean {
 const keywords = new Map<string, TokenType>([
   ["and", TokenType.And],
   ["break", TokenType.Break],
+  ["const", TokenType.Const],
   ["continue", TokenType.Continue],
   ["else", TokenType.Else],
   ["false", TokenType.False],

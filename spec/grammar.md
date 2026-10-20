@@ -11,6 +11,7 @@ declaration  = fnDecl
              | letDecl
              | statement ;
 
+constDecl    = "const" IDENTIFIER "=" expression ";" ;
 fnDecl       = "fn" IDENTIFIER "(" parameters? ")" block ;
 letDecl      = "let" IDENTIFIER ( "=" expression )? ";" ;
 

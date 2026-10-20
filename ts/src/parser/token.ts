@@ -30,6 +30,7 @@ export enum TokenType {
   // Keywords
   And = "And",
   Break = "Break",
+  Const = "Const",
   Continue = "Continue",
   Else = "Else",
   False = "False",

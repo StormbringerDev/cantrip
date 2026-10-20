@@ -88,6 +88,7 @@ describe("lexer", () => {
     const source = [
       "and",
       "break",
+      "const",
       "continue",
       "else",
       "false",
@@ -106,6 +107,7 @@ describe("lexer", () => {
     const expected = [
       TokenType.And,
       TokenType.Break,
+      TokenType.Const,
       TokenType.Continue,
       TokenType.Else,
       TokenType.False,

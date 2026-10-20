@@ -6,7 +6,7 @@ import type * as astStmt from "../parser/stmt.js";
 import type { Stmt } from "../parser/stmt.js";
 import { TokenType, type Token } from "../parser/token.js";
 import { Environment } from "./environment.js";
-import { RuntimeError } from "./exceptions.js";
+import { Break, Continue, RuntimeError } from "./exceptions.js";
 import { UNIT, type Value } from "./types.js";
 
 export function interpret(
@@ -30,11 +30,20 @@ function execute(stmt: Stmt): void {
     case "Block":
       executeBlock(stmt);
       break;
+    case "Break":
+      executeBreak(stmt);
+      break;
+    case "Continue":
+      executeContinue(stmt);
+      break;
     case "Expression":
       executeExpression(stmt);
       break;
     case "Let":
       executeLet(stmt);
+      break;
+    case "While":
+      executeWhile(stmt);
       break;
     default:
       stmt satisfies never;
@@ -79,6 +88,14 @@ function executeBlock(stmt: astStmt.Block): void {
   }
 }
 
+function executeBreak(_stmt: astStmt.Break): void {
+  throw new Break();
+}
+
+function executeContinue(_stmt: astStmt.Continue): void {
+  throw new Continue();
+}
+
 function executeExpression(stmt: astStmt.Expression): void {
   evaluate(stmt.expression);
 }
@@ -90,6 +107,18 @@ function executeLet(stmt: astStmt.Let): void {
   }
 
   environment.define(stmt.name.lexeme, value);
+}
+
+function executeWhile(stmt: astStmt.While): void {
+  while (isTruthy(evaluate(stmt.condition))) {
+    try {
+      execute(stmt.body);
+    } catch (err) {
+      if (err instanceof Break) break;
+      else if (err instanceof Continue) continue;
+      else throw err;
+    }
+  }
 }
 
 function evaluateAssign(expr: astExpr.Assign): Value {
