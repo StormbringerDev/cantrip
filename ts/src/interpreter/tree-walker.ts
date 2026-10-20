@@ -48,6 +48,8 @@ function evaluate(expr: Expr): Value {
       return evaluateBinary(expr);
     case "Block":
       return evaluateBlock(expr);
+    case "If":
+      return evaluateIf(expr);
     case "Grouping":
       return evaluateGrouping(expr);
     case "Literal":
