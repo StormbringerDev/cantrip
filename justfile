@@ -5,8 +5,8 @@ generate-ast target outdir:
 build-ts:
     cd ts && pnpm install && pnpm build
 
-run-ts path="":
-    cd ts && pnpm dev {{path}}
+run-ts path="": build-ts
+    node ts/dist/index.js {{path}}
 
 build-c:
     cd c && cmake --preset dev && cmake --build --preset dev
@@ -20,8 +20,8 @@ test-ts: build-ts
 test-c: build-c
     ctest --preset dev
 
-conformance-ts:
-    python tools/conformance.py --cmd "python -m cantrip"
+conformance-ts: build-ts
+    python tools/conformance.py --cmd "node ts/dist/index.js"
 
 conformance-c: build-c
     python tools/conformance.py --cmd "./c/build/dev/cantrip"

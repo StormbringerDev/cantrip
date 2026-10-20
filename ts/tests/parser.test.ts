@@ -1,133 +1,266 @@
 import { describe, expect, it } from "vitest";
 
 import { DiagnosticCollector } from "../src/diagnostic/collector.js";
-import type {
-  Binary,
-  Expr,
-  Grouping,
-  Literal,
-  Unary,
-} from "../src/parser/expr.js";
+import * as cantripExpr from "../src/parser/expr.js";
+import * as cantripStmt from "../src/parser/stmt.js";
+import { Stmt } from "../src/parser/stmt.js";
 import { Parser } from "../src/parser/parser.js";
 import { TokenType } from "../src/parser/token.js";
 
 import { tok } from "./test-helpers.js";
 
 describe("parser", () => {
+  describe("statements", () => {
+    describe("let declaration", () => {
+      it("parses a let declaration", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Let, "let"),
+          tok(TokenType.Identifier, "x", null, 4),
+          tok(TokenType.Semicolon, ";", null, 5),
+          tok(TokenType.Eof, "", null, 6),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as Stmt).type).toBe("Let");
+        expect((statements[0] as cantripStmt.Let).name.lexeme).toBe("x");
+        expect((statements[0] as cantripStmt.Let).initializer).toBeNull();
+      });
+
+      it("parses a let declaration with an initializer", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Let, "let"),
+          tok(TokenType.Identifier, "x", null, 4),
+          tok(TokenType.Eq, "=", null, 6),
+          tok(TokenType.Number, "42", 42, 8),
+          tok(TokenType.Semicolon, ";", null, 10),
+          tok(TokenType.Eof, "", null, 11),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as Stmt).type).toBe("Let");
+        expect((statements[0] as cantripStmt.Let).name.lexeme).toBe("x");
+        expect((statements[0] as cantripStmt.Let).initializer).not.toBeNull();
+      });
+
+      it("emits an error on missing semicolon", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Let, "let"),
+          tok(TokenType.Identifier, "x", null, 4),
+          tok(TokenType.Eof, "", null, 5),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(true);
+        expect(statements).toHaveLength(1);
+        expect(statements[0]).toBeNull();
+        const diags = diagnostics.getDiagnostics();
+        expect(diags).toHaveLength(1);
+        expect(diags[0].severity).toBe("error");
+        expect(diags[0].message).toBe("expect ';' after variable declaration");
+      });
+    });
+
+    describe("block", () => {
+      it("parses a block statement", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.LeftBrace, "{", null, 0),
+          tok(TokenType.Let, "let", null, 2),
+          tok(TokenType.Identifier, "x", null, 6),
+          tok(TokenType.Eq, "=", null, 8),
+          tok(TokenType.Number, "42", 42, 10),
+          tok(TokenType.Semicolon, ";", null, 12),
+          tok(TokenType.RightBrace, "}", null, 14),
+          tok(TokenType.Eof, "", null, 15),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as Stmt).type).toBe("Block");
+        expect((statements[0] as cantripStmt.Block).statements).toHaveLength(1);
+      });
+
+      it("parses a block statements and ignores final value", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.LeftBrace, "{", null, 0),
+          tok(TokenType.Let, "let", null, 2),
+          tok(TokenType.Identifier, "x", null, 6),
+          tok(TokenType.Eq, "=", null, 8),
+          tok(TokenType.Number, "10", 10, 10),
+          tok(TokenType.Semicolon, ";", null, 12),
+          tok(TokenType.Identifier, "x", null, 14),
+          tok(TokenType.Plus, "+", null, 16),
+          tok(TokenType.Number, "5", 5, 18),
+          tok(TokenType.RightBrace, "}", null, 20),
+          tok(TokenType.Eof, "", null, 21),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as Stmt).type).toBe("Block");
+        expect((statements[0] as cantripStmt.Block).statements).toHaveLength(1);
+      });
+
+      it("emits an error on missing closing brace", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.LeftBrace, "{", null, 0),
+          tok(TokenType.Let, "let", null, 2),
+          tok(TokenType.Identifier, "x", null, 6),
+          tok(TokenType.Eq, "=", null, 8),
+          tok(TokenType.Number, "42", 42, 10),
+          tok(TokenType.Semicolon, ";", null, 12),
+          tok(TokenType.Eof, "", null, 13),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(true);
+        expect(statements).toHaveLength(1);
+        const diags = diagnostics.getDiagnostics();
+        expect(diags).toHaveLength(1);
+        expect(diags[0].severity).toBe("error");
+        expect(diags[0].message).toBe("expect '}' after block statements");
+      });
+    });
+
+    describe("expression", () => {
+      it("parses an expression statement", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Number, "40", 40),
+          tok(TokenType.Plus, "+", null, 3),
+          tok(TokenType.Number, "2", 2, 5),
+          tok(TokenType.Semicolon, ";", null, 6),
+          tok(TokenType.Eof, "", null, 7),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as Stmt).type).toBe("Expression");
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Binary",
+        );
+      });
+
+      it("emits an error on missing semicolon", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Number, "40", 40),
+          tok(TokenType.Plus, "+", null, 3),
+          tok(TokenType.Number, "2", 2, 5),
+          tok(TokenType.Eof, "", null, 6),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(true);
+        expect(statements).toHaveLength(1);
+        expect(statements[0]).toBeNull();
+        const diags = diagnostics.getDiagnostics();
+        expect(diags).toHaveLength(1);
+        expect(diags[0].severity).toBe("error");
+        expect(diags[0].message).toBe("expect ';' after expression");
+      });
+    });
+  });
+
   describe("expressions", () => {
+    describe("assign", () => {
+      it("parses an assignment expression", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Identifier, "x"),
+          tok(TokenType.Eq, "=", null, 3),
+          tok(TokenType.Number, "42", 42, 5),
+          tok(TokenType.Semicolon, ";", null, 7),
+          tok(TokenType.Eof, "", null, 8),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Assign",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Assign
+          ).name.lexeme,
+        ).toBe("x");
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Assign
+          ).value.type,
+        ).toBe("Literal");
+      });
+
+      it("emits an error if left side is not a variable", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.String, '"x"', "x"),
+          tok(TokenType.Eq, "=", null, 4),
+          tok(TokenType.Number, "42", 42, 6),
+          tok(TokenType.Semicolon, ";", null, 8),
+          tok(TokenType.Eof, "", null, 9),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(true);
+        expect(statements).toHaveLength(1);
+        const diags = diagnostics.getDiagnostics();
+        expect(diags).toHaveLength(1);
+        expect(diags[0].severity).toBe("error");
+        expect(diags[0].message).toBe("invalid assignment target");
+      });
+    });
+
     describe("binary", () => {
-      it("parses an addition expression", () => {
-        const diagnostics = new DiagnosticCollector();
-        const tokens = [
-          tok(TokenType.Number, "1", 1),
-          tok(TokenType.Plus, "+", null, 2),
-          tok(TokenType.Number, "2", 4),
-          tok(TokenType.Eof, "", null, 5),
-        ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
-
-        expect(diagnostics.hasError()).toBe(false);
-        expect(ast).not.toBeNull();
-        expect((ast as Expr).type).toBe("Binary");
-        expect((ast as Binary).left.type).toBe("Literal");
-        expect((ast as Binary).operator.type).toBe(TokenType.Plus);
-        expect((ast as Binary).right.type).toBe("Literal");
-      });
-
-      it("parses a subtraction expression", () => {
-        const diagnostics = new DiagnosticCollector();
-        const tokens = [
-          tok(TokenType.Number, "1", 1),
-          tok(TokenType.Minus, "-", null, 2),
-          tok(TokenType.Number, "2", 4),
-          tok(TokenType.Eof, "", null, 5),
-        ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
-
-        expect(diagnostics.hasError()).toBe(false);
-        expect(ast).not.toBeNull();
-        expect((ast as Expr).type).toBe("Binary");
-        expect((ast as Binary).left.type).toBe("Literal");
-        expect((ast as Binary).operator.type).toBe(TokenType.Minus);
-        expect((ast as Binary).right.type).toBe("Literal");
-      });
-
-      it("parses a multiplication expression", () => {
-        const diagnostics = new DiagnosticCollector();
-        const tokens = [
-          tok(TokenType.Number, "1", 1),
-          tok(TokenType.Star, "*", null, 2),
-          tok(TokenType.Number, "2", 4),
-          tok(TokenType.Eof, "", null, 5),
-        ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
-
-        expect(diagnostics.hasError()).toBe(false);
-        expect(ast).not.toBeNull();
-        expect((ast as Expr).type).toBe("Binary");
-        expect((ast as Binary).left.type).toBe("Literal");
-        expect((ast as Binary).operator.type).toBe(TokenType.Star);
-        expect((ast as Binary).right.type).toBe("Literal");
-      });
-
-      it("parses a division expression", () => {
-        const diagnostics = new DiagnosticCollector();
-        const tokens = [
-          tok(TokenType.Number, "1", 1),
-          tok(TokenType.Slash, "/", null, 2),
-          tok(TokenType.Number, "2", 4),
-          tok(TokenType.Eof, "", null, 5),
-        ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
-
-        expect(diagnostics.hasError()).toBe(false);
-        expect(ast).not.toBeNull();
-        expect((ast as Expr).type).toBe("Binary");
-        expect((ast as Binary).left.type).toBe("Literal");
-        expect((ast as Binary).operator.type).toBe(TokenType.Slash);
-        expect((ast as Binary).right.type).toBe("Literal");
-      });
-
-      it("parses a modulo expression", () => {
-        const diagnostics = new DiagnosticCollector();
-        const tokens = [
-          tok(TokenType.Number, "1", 1),
-          tok(TokenType.Percent, "%", null, 2),
-          tok(TokenType.Number, "2", 4),
-          tok(TokenType.Eof, "", null, 5),
-        ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
-
-        expect(diagnostics.hasError()).toBe(false);
-        expect(ast).not.toBeNull();
-        expect((ast as Expr).type).toBe("Binary");
-        expect((ast as Binary).left.type).toBe("Literal");
-        expect((ast as Binary).operator.type).toBe(TokenType.Percent);
-        expect((ast as Binary).right.type).toBe("Literal");
-      });
-
       it("parses an equality expression", () => {
         const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Number, "1", 1),
           tok(TokenType.EqEq, "==", null, 2),
           tok(TokenType.Number, "2", 5),
-          tok(TokenType.Eof, "", null, 6),
+          tok(TokenType.Semicolon, ";", null, 6),
+          tok(TokenType.Eof, "", null, 7),
         ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
+        const statements = new Parser(tokens, diagnostics).parse();
 
         expect(diagnostics.hasError()).toBe(false);
-        expect(ast).not.toBeNull();
-        expect((ast as Expr).type).toBe("Binary");
-        expect((ast as Binary).left.type).toBe("Literal");
-        expect((ast as Binary).operator.type).toBe(TokenType.EqEq);
-        expect((ast as Binary).right.type).toBe("Literal");
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Binary",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).left.type,
+        ).toBe("Literal");
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).operator.type,
+        ).toBe(TokenType.EqEq);
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).right.type,
+        ).toBe("Literal");
       });
 
       it("parses an inequality expression", () => {
@@ -136,17 +269,34 @@ describe("parser", () => {
           tok(TokenType.Number, "1", 1),
           tok(TokenType.BangEq, "!=", null, 2),
           tok(TokenType.Number, "2", 5),
-          tok(TokenType.Eof, "", null, 6),
+          tok(TokenType.Semicolon, ";", null, 6),
+          tok(TokenType.Eof, "", null, 7),
         ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
+        const statements = new Parser(tokens, diagnostics).parse();
 
         expect(diagnostics.hasError()).toBe(false);
-        expect(ast).not.toBeNull();
-        expect((ast as Expr).type).toBe("Binary");
-        expect((ast as Binary).left.type).toBe("Literal");
-        expect((ast as Binary).operator.type).toBe(TokenType.BangEq);
-        expect((ast as Binary).right.type).toBe("Literal");
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Binary",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).left.type,
+        ).toBe("Literal");
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).operator.type,
+        ).toBe(TokenType.BangEq);
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).right.type,
+        ).toBe("Literal");
       });
 
       it("parses a greater than expression", () => {
@@ -155,17 +305,34 @@ describe("parser", () => {
           tok(TokenType.Number, "1", 1),
           tok(TokenType.Greater, ">", null, 2),
           tok(TokenType.Number, "2", 4),
-          tok(TokenType.Eof, "", null, 5),
+          tok(TokenType.Semicolon, ";", null, 5),
+          tok(TokenType.Eof, "", null, 6),
         ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
+        const statements = new Parser(tokens, diagnostics).parse();
 
         expect(diagnostics.hasError()).toBe(false);
-        expect(ast).not.toBeNull();
-        expect((ast as Expr).type).toBe("Binary");
-        expect((ast as Binary).left.type).toBe("Literal");
-        expect((ast as Binary).operator.type).toBe(TokenType.Greater);
-        expect((ast as Binary).right.type).toBe("Literal");
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Binary",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).left.type,
+        ).toBe("Literal");
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).operator.type,
+        ).toBe(TokenType.Greater);
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).right.type,
+        ).toBe("Literal");
       });
 
       it("parses a greater equal expression", () => {
@@ -174,17 +341,34 @@ describe("parser", () => {
           tok(TokenType.Number, "1", 1),
           tok(TokenType.GreaterEq, ">=", null, 2),
           tok(TokenType.Number, "2", 5),
-          tok(TokenType.Eof, "", null, 6),
+          tok(TokenType.Semicolon, ";", null, 6),
+          tok(TokenType.Eof, "", null, 7),
         ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
+        const statements = new Parser(tokens, diagnostics).parse();
 
         expect(diagnostics.hasError()).toBe(false);
-        expect(ast).not.toBeNull();
-        expect((ast as Expr).type).toBe("Binary");
-        expect((ast as Binary).left.type).toBe("Literal");
-        expect((ast as Binary).operator.type).toBe(TokenType.GreaterEq);
-        expect((ast as Binary).right.type).toBe("Literal");
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Binary",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).left.type,
+        ).toBe("Literal");
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).operator.type,
+        ).toBe(TokenType.GreaterEq);
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).right.type,
+        ).toBe("Literal");
       });
 
       it("parses a less than expression", () => {
@@ -193,17 +377,34 @@ describe("parser", () => {
           tok(TokenType.Number, "1", 1),
           tok(TokenType.Less, "<", null, 2),
           tok(TokenType.Number, "2", 4),
-          tok(TokenType.Eof, "", null, 5),
+          tok(TokenType.Semicolon, ";", null, 5),
+          tok(TokenType.Eof, "", null, 6),
         ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
+        const statements = new Parser(tokens, diagnostics).parse();
 
         expect(diagnostics.hasError()).toBe(false);
-        expect(ast).not.toBeNull();
-        expect((ast as Expr).type).toBe("Binary");
-        expect((ast as Binary).left.type).toBe("Literal");
-        expect((ast as Binary).operator.type).toBe(TokenType.Less);
-        expect((ast as Binary).right.type).toBe("Literal");
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Binary",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).left.type,
+        ).toBe("Literal");
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).operator.type,
+        ).toBe(TokenType.Less);
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).right.type,
+        ).toBe("Literal");
       });
 
       it("parses a less equal expression", () => {
@@ -212,17 +413,327 @@ describe("parser", () => {
           tok(TokenType.Number, "1", 1),
           tok(TokenType.LessEq, "<=", null, 2),
           tok(TokenType.Number, "2", 5),
-          tok(TokenType.Eof, "", null, 6),
+          tok(TokenType.Semicolon, ";", null, 6),
+          tok(TokenType.Eof, "", null, 7),
         ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
+        const statements = new Parser(tokens, diagnostics).parse();
 
         expect(diagnostics.hasError()).toBe(false);
-        expect(ast).not.toBeNull();
-        expect((ast as Expr).type).toBe("Binary");
-        expect((ast as Binary).left.type).toBe("Literal");
-        expect((ast as Binary).operator.type).toBe(TokenType.LessEq);
-        expect((ast as Binary).right.type).toBe("Literal");
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Binary",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).left.type,
+        ).toBe("Literal");
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).operator.type,
+        ).toBe(TokenType.LessEq);
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).right.type,
+        ).toBe("Literal");
+      });
+
+      it("parses an addition expression", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Number, "1", 1),
+          tok(TokenType.Plus, "+", null, 2),
+          tok(TokenType.Number, "2", 2, 4),
+          tok(TokenType.Semicolon, ";", null, 5),
+          tok(TokenType.Eof, "", null, 6),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Binary",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).left.type,
+        ).toBe("Literal");
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).operator.type,
+        ).toBe(TokenType.Plus);
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).right.type,
+        ).toBe("Literal");
+      });
+
+      it("parses a subtraction expression", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Number, "1", 1),
+          tok(TokenType.Minus, "-", null, 2),
+          tok(TokenType.Number, "2", 2, 4),
+          tok(TokenType.Semicolon, ";", null, 5),
+          tok(TokenType.Eof, "", null, 6),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Binary",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).left.type,
+        ).toBe("Literal");
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).operator.type,
+        ).toBe(TokenType.Minus);
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).right.type,
+        ).toBe("Literal");
+      });
+
+      it("parses a multiplication expression", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Number, "1", 1),
+          tok(TokenType.Star, "*", null, 2),
+          tok(TokenType.Number, "2", 2, 4),
+          tok(TokenType.Semicolon, ";", null, 4),
+          tok(TokenType.Eof, "", null, 5),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Binary",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).left.type,
+        ).toBe("Literal");
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).operator.type,
+        ).toBe(TokenType.Star);
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).right.type,
+        ).toBe("Literal");
+      });
+
+      it("parses a division expression", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Number, "1", 1),
+          tok(TokenType.Slash, "/", null, 2),
+          tok(TokenType.Number, "2", 2, 4),
+          tok(TokenType.Semicolon, ";", null, 5),
+          tok(TokenType.Eof, "", null, 6),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Binary",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).left.type,
+        ).toBe("Literal");
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).operator.type,
+        ).toBe(TokenType.Slash);
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).right.type,
+        ).toBe("Literal");
+      });
+
+      it("parses a modulo expression", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Number, "1", 1),
+          tok(TokenType.Percent, "%", null, 2),
+          tok(TokenType.Number, "2", 4),
+          tok(TokenType.Semicolon, ";", null, 5),
+          tok(TokenType.Eof, "", null, 6),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Binary",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).left.type,
+        ).toBe("Literal");
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).operator.type,
+        ).toBe(TokenType.Percent);
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Binary
+          ).right.type,
+        ).toBe("Literal");
+      });
+    });
+
+    describe("block", () => {
+      it("parses a block expression", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.LeftParen, "("),
+          tok(TokenType.LeftBrace, "{", null, 1),
+          tok(TokenType.Let, "let", null, 3),
+          tok(TokenType.Identifier, "x", null, 7),
+          tok(TokenType.Eq, "=", null, 9),
+          tok(TokenType.Number, "42", 42, 11),
+          tok(TokenType.Semicolon, ";", null, 13),
+          tok(TokenType.RightBrace, "}", null, 15),
+          tok(TokenType.RightParen, ")", null, 16),
+          tok(TokenType.Semicolon, ";", null, 17),
+          tok(TokenType.Eof, "", null, 18),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Grouping
+          ).expression.type,
+        ).toBe("Block");
+        expect(
+          (
+            (
+              (statements[0] as cantripStmt.Expression)
+                .expression as cantripExpr.Grouping
+            ).expression as cantripExpr.Block
+          ).statements,
+        ).toHaveLength(1);
+        expect(
+          (
+            (
+              (statements[0] as cantripStmt.Expression)
+                .expression as cantripExpr.Grouping
+            ).expression as cantripExpr.Block
+          ).value,
+        ).toBeNull();
+      });
+
+      it("parses a block expression with final value", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.LeftParen, "("),
+          tok(TokenType.LeftBrace, "{", null, 1),
+          tok(TokenType.Let, "let", null, 3),
+          tok(TokenType.Identifier, "x", null, 7),
+          tok(TokenType.Eq, "=", null, 9),
+          tok(TokenType.Number, "10", 10, 11),
+          tok(TokenType.Semicolon, ";", null, 13),
+          tok(TokenType.Identifier, "x", null, 15),
+          tok(TokenType.Plus, "+", null, 17),
+          tok(TokenType.Number, "5", 5, 19),
+          tok(TokenType.RightBrace, "}", null, 21),
+          tok(TokenType.RightParen, ")", null, 22),
+          tok(TokenType.Semicolon, ";", null, 23),
+          tok(TokenType.Eof, "", null, 24),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Grouping
+          ).expression.type,
+        ).toBe("Block");
+        expect(
+          (
+            (
+              (statements[0] as cantripStmt.Expression)
+                .expression as cantripExpr.Grouping
+            ).expression as cantripExpr.Block
+          ).statements,
+        ).toHaveLength(1);
+        expect(
+          (
+            (
+              (statements[0] as cantripStmt.Expression)
+                .expression as cantripExpr.Grouping
+            ).expression as cantripExpr.Block
+          ).value,
+        ).not.toBeNull();
+      });
+
+      it("emits an error on missing closing brace", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.LeftParen, "("),
+          tok(TokenType.LeftBrace, "{", null, 1),
+          tok(TokenType.Let, "let", null, 3),
+          tok(TokenType.Identifier, "x", null, 7),
+          tok(TokenType.Eq, "=", null, 9),
+          tok(TokenType.Number, "42", 42, 11),
+          tok(TokenType.Semicolon, ";", null, 13),
+          tok(TokenType.Eof, "", null, 14),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(true);
+        expect(statements).toHaveLength(1);
+        const diags = diagnostics.getDiagnostics();
+        expect(diags).toHaveLength(1);
+        expect(diags[0].severity).toBe("error");
+        expect(diags[0].message).toBe("expect '}' after block statements");
       });
     });
 
@@ -235,15 +746,22 @@ describe("parser", () => {
           tok(TokenType.Plus, "+", null, 3),
           tok(TokenType.Number, "2", 5),
           tok(TokenType.RightParen, ")", null, 6),
-          tok(TokenType.Eof, "", null, 7),
+          tok(TokenType.Semicolon, ";", null, 7),
+          tok(TokenType.Eof, "", null, 8),
         ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
+        const statements = new Parser(tokens, diagnostics).parse();
 
         expect(diagnostics.hasError()).toBe(false);
-        expect(ast).not.toBeNull();
-        expect((ast as Expr).type).toBe("Grouping");
-        expect((ast as Grouping).expression.type).toBe("Binary");
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Grouping",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Grouping
+          ).expression.type,
+        ).toBe("Binary");
       });
 
       it("emits an error on missing closing paren", () => {
@@ -255,13 +773,12 @@ describe("parser", () => {
           tok(TokenType.Number, "2", 5),
           tok(TokenType.Eof, "", null, 6),
         ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
+        const statements = new Parser(tokens, diagnostics).parse();
 
         expect(diagnostics.hasError()).toBe(true);
-        expect(ast).toBeNull();
+        expect(statements).toHaveLength(1);
+        expect(statements[0]).toBeNull();
         const diags = diagnostics.getDiagnostics();
-        expect(diags).toHaveLength(1);
         expect(diags[0].message).toBe("expect `)` after expression");
       });
     });
@@ -271,75 +788,110 @@ describe("parser", () => {
         const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Number, "42", 42),
-          tok(TokenType.Eof, "", null, 2),
+          tok(TokenType.Semicolon, ";", null, 2),
+          tok(TokenType.Eof, "", null, 3),
         ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
+        const statements = new Parser(tokens, diagnostics).parse();
 
         expect(diagnostics.hasError()).toBe(false);
-        expect(ast).not.toBeNull();
-        expect((ast as Expr).type).toBe("Literal");
-        expect((ast as Literal).value).toBe(42);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Literal",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Literal
+          ).value,
+        ).toBe(42);
       });
 
       it("parses a string literal", () => {
         const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.String, '"Hello!"', "Hello!"),
-          tok(TokenType.Eof, "", null, 8),
+          tok(TokenType.Semicolon, ";", null, 8),
+          tok(TokenType.Eof, "", null, 9),
         ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
+        const statements = new Parser(tokens, diagnostics).parse();
 
         expect(diagnostics.hasError()).toBe(false);
-        expect(ast).not.toBeNull();
-        expect((ast as Expr).type).toBe("Literal");
-        expect((ast as Literal).value).toBe("Hello!");
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Literal",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Literal
+          ).value,
+        ).toBe("Hello!");
       });
 
       it("parses literal 'true'", () => {
         const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.True, "true"),
-          tok(TokenType.Eof, "", null, 4),
+          tok(TokenType.Semicolon, ";", null, 4),
+          tok(TokenType.Eof, "", null, 5),
         ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
+        const statements = new Parser(tokens, diagnostics).parse();
 
         expect(diagnostics.hasError()).toBe(false);
-        expect(ast).not.toBeNull();
-        expect((ast as Expr).type).toBe("Literal");
-        expect((ast as Literal).value).toBe(true);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Literal",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Literal
+          ).value,
+        ).toBe(true);
       });
 
       it("parses literal 'false'", () => {
         const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.False, "false"),
-          tok(TokenType.Eof, "", null, 5),
+          tok(TokenType.Semicolon, ";", null, 5),
+          tok(TokenType.Eof, "", null, 6),
         ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
+        const statements = new Parser(tokens, diagnostics).parse();
 
         expect(diagnostics.hasError()).toBe(false);
-        expect(ast).not.toBeNull();
-        expect((ast as Expr).type).toBe("Literal");
-        expect((ast as Literal).value).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Literal",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Literal
+          ).value,
+        ).toBe(false);
       });
 
       it("parses literal 'nil'", () => {
         const diagnostics = new DiagnosticCollector();
         const tokens = [
           tok(TokenType.Nil, "nil"),
-          tok(TokenType.Eof, "", null, 3),
+          tok(TokenType.Semicolon, ";", null, 3),
+          tok(TokenType.Eof, "", null, 4),
         ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
+        const statements = new Parser(tokens, diagnostics).parse();
 
         expect(diagnostics.hasError()).toBe(false);
-        expect(ast).not.toBeNull();
-        expect((ast as Expr).type).toBe("Literal");
-        expect((ast as Literal).value).toBe(null);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Literal",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Literal
+          ).value,
+        ).toBe(null);
       });
     });
 
@@ -349,16 +901,28 @@ describe("parser", () => {
         const tokens = [
           tok(TokenType.Minus, "-"),
           tok(TokenType.Number, "5", 5, 1),
-          tok(TokenType.Eof, "", null, 2),
+          tok(TokenType.Semicolon, ";", null, 2),
+          tok(TokenType.Eof, "", null, 3),
         ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
+        const statements = new Parser(tokens, diagnostics).parse();
 
         expect(diagnostics.hasError()).toBe(false);
-        expect(ast).not.toBeNull();
-        expect((ast as Expr).type).toBe("Unary");
-        expect((ast as Unary).operator.type).toBe(TokenType.Minus);
-        expect((ast as Unary).right.type).toBe("Literal");
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Unary",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Unary
+          ).operator.type,
+        ).toBe(TokenType.Minus);
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Unary
+          ).right.type,
+        ).toBe("Literal");
       });
 
       it("parses a logical not expression", () => {
@@ -366,16 +930,52 @@ describe("parser", () => {
         const tokens = [
           tok(TokenType.Bang, "!"),
           tok(TokenType.True, "true", null, 1),
-          tok(TokenType.Eof, "", null, 5),
+          tok(TokenType.Semicolon, ";", null, 5),
+          tok(TokenType.Eof, "", null, 6),
         ];
-        const parser = new Parser(tokens, diagnostics);
-        const ast = parser.parse();
+        const statements = new Parser(tokens, diagnostics).parse();
 
         expect(diagnostics.hasError()).toBe(false);
-        expect(ast).not.toBeNull();
-        expect((ast as Expr).type).toBe("Unary");
-        expect((ast as Unary).operator.type).toBe(TokenType.Bang);
-        expect((ast as Unary).right.type).toBe("Literal");
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Unary",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Unary
+          ).operator.type,
+        ).toBe(TokenType.Bang);
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Unary
+          ).right.type,
+        ).toBe("Literal");
+      });
+    });
+
+    describe("variable", () => {
+      it("parses a variable expression", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Identifier, "total"),
+          tok(TokenType.Semicolon, ";", null, 5),
+          tok(TokenType.Eof, "", null, 6),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+          "Variable",
+        );
+        expect(
+          (
+            (statements[0] as cantripStmt.Expression)
+              .expression as cantripExpr.Variable
+          ).name.lexeme,
+        ).toBe("total");
       });
     });
   });
@@ -387,11 +987,11 @@ describe("parser", () => {
         tok(TokenType.Bang, "!"),
         tok(TokenType.Eof, "", null, 1),
       ];
-      const parser = new Parser(tokens, diagnostics);
-      const ast = parser.parse();
+      const statements = new Parser(tokens, diagnostics).parse();
 
       expect(diagnostics.hasError()).toBe(true);
-      expect(ast).toBeNull();
+      expect(statements).toHaveLength(1);
+      expect(statements[0]).toBeNull();
       const diags = diagnostics.getDiagnostics();
       expect(diags).toHaveLength(1);
       expect(diags[0].message).toBe("expect expression");

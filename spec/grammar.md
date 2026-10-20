@@ -47,7 +47,7 @@ primary      = "true" | "false" | "nil"
 
 ifExpr       = "if" expression block ( "else" ( block | ifExpr ) )? ;
 fnExpr       = "fn" "(" parameters? ")" block ;
-block        = "{" declaration* "}" ;
+block        = "{" declaration* expr? "}" ;
 
 parameters   = IDENTIFIER ( "," IDENTIFIER )* ","? ;
 arguments    = expression ( "," expression )* ","? ;

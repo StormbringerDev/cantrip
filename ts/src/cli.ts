@@ -33,14 +33,17 @@ export async function run(argv: string[]) {
 function runSource(source: string, name?: string): boolean {
   const diagnostics = new DiagnosticCollector();
   const tokens = new Lexer(source, diagnostics).scan();
-  const expr = new Parser(tokens, diagnostics).parse();
+  const stmts = new Parser(tokens, diagnostics).parse();
 
-  if (diagnostics.hasError() || expr === null) {
+  if (diagnostics.hasError() || stmts.includes(null)) {
     report(diagnostics, source, name);
     return false;
   }
 
-  interpret(expr, diagnostics);
+  interpret(
+    stmts.filter((s) => s !== null),
+    diagnostics,
+  );
   if (diagnostics.hasError()) {
     report(diagnostics, source, name);
     return false;

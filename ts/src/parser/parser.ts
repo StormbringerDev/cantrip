@@ -1,6 +1,10 @@
 import { DiagnosticCollector } from "../diagnostic/collector.js";
 import { error as diagnosticError } from "../diagnostic/create.js";
-import { binary, grouping, literal, unary, type Expr } from "./expr.js";
+import { Position } from "../types/location.js";
+import * as astExpr from "./expr.js";
+import type { Expr } from "./expr.js";
+import * as astStmt from "./stmt.js";
+import type { Stmt } from "./stmt.js";
 import { TokenType, type Token } from "./token.js";
 
 class ParseError extends Error {
@@ -20,16 +24,84 @@ export class Parser {
     this.diagnostics = diagnostics;
   }
 
-  parse(): Expr | null {
+  parse(): (Stmt | null)[] {
+    const statements: (Stmt | null)[] = [];
+    while (!this.isAtEnd()) {
+      statements.push(this.declaration());
+    }
+
+    return statements;
+  }
+
+  private declaration(): Stmt | null {
     try {
-      return this.expression();
-    } catch {
+      if (this.match(TokenType.Let)) return this.letDeclaration();
+
+      return this.statement();
+    } catch (err) {
+      if (!(err instanceof ParseError)) throw err;
+      this.synchronize();
       return null;
     }
   }
 
+  private letDeclaration(): Stmt {
+    const start = this.previous().span.start;
+    const name = this.consume(TokenType.Identifier, "expect variable name");
+
+    let initializer: Expr | null = null;
+    if (this.match(TokenType.Eq)) initializer = this.expression();
+
+    const end = this.consume(
+      TokenType.Semicolon,
+      "expect ';' after variable declaration",
+    ).span.end;
+    return astStmt.let_(name, initializer, { start, end });
+  }
+
+  private statement(): Stmt {
+    // A block where a statement is expected is parsed as a statement
+    if (this.match(TokenType.LeftBrace)) return this.blockStatement();
+
+    return this.expressionStatement();
+  }
+
+  private blockStatement(): Stmt {
+    const start = this.previous().span.start;
+    const { statements, end } = this.parseBlock();
+    return astStmt.block(statements, { start, end });
+  }
+
+  private expressionStatement(): Stmt {
+    const expr = this.expression();
+    const end = this.consume(TokenType.Semicolon, "expect ';' after expression")
+      .span.end;
+    return astStmt.expression(expr, { start: expr.span.start, end });
+  }
+
   private expression(): Expr {
-    return this.equality();
+    return this.assignment();
+  }
+
+  private assignment(): Expr {
+    const expr = this.equality();
+
+    if (this.match(TokenType.Eq)) {
+      const equals = this.previous();
+      const value = this.assignment();
+
+      if (expr.type === "Variable") {
+        const name = expr.name;
+        return astExpr.assign(name, value, {
+          start: name.span.start,
+          end: value.span.end,
+        });
+      }
+
+      this.error(equals, "invalid assignment target");
+    }
+
+    return expr;
   }
 
   private equality(): Expr {
@@ -38,7 +110,7 @@ export class Parser {
     while (this.match(TokenType.EqEq, TokenType.BangEq)) {
       const operator = this.previous();
       const right = this.comparison();
-      expr = binary(expr, operator, right, {
+      expr = astExpr.binary(expr, operator, right, {
         start: expr.span.start,
         end: right.span.end,
       });
@@ -60,7 +132,7 @@ export class Parser {
     ) {
       const operator = this.previous();
       const right = this.term();
-      expr = binary(expr, operator, right, {
+      expr = astExpr.binary(expr, operator, right, {
         start: expr.span.start,
         end: right.span.end,
       });
@@ -75,7 +147,7 @@ export class Parser {
     while (this.match(TokenType.Plus, TokenType.Minus)) {
       const operator = this.previous();
       const right = this.factor();
-      expr = binary(expr, operator, right, {
+      expr = astExpr.binary(expr, operator, right, {
         start: expr.span.start,
         end: right.span.end,
       });
@@ -90,7 +162,7 @@ export class Parser {
     while (this.match(TokenType.Star, TokenType.Slash, TokenType.Percent)) {
       const operator = this.previous();
       const right = this.unary();
-      expr = binary(expr, operator, right, {
+      expr = astExpr.binary(expr, operator, right, {
         start: expr.span.start,
         end: right.span.end,
       });
@@ -103,7 +175,7 @@ export class Parser {
     if (this.match(TokenType.Minus, TokenType.Bang)) {
       const operator = this.previous();
       const right = this.unary();
-      return unary(operator, right, {
+      return astExpr.unary(operator, right, {
         start: operator.span.start,
         end: right.span.end,
       });
@@ -113,13 +185,18 @@ export class Parser {
   }
 
   private primary(): Expr {
-    if (this.match(TokenType.True)) return literal(true, this.previous().span);
+    if (this.match(TokenType.True))
+      return astExpr.literal(true, this.previous().span);
     if (this.match(TokenType.False))
-      return literal(false, this.previous().span);
-    if (this.match(TokenType.Nil)) return literal(null, this.previous().span);
+      return astExpr.literal(false, this.previous().span);
+    if (this.match(TokenType.Nil))
+      return astExpr.literal(null, this.previous().span);
 
     if (this.match(TokenType.Number, TokenType.String))
-      return literal(this.previous().literal, this.previous().span);
+      return astExpr.literal(this.previous().literal, this.previous().span);
+
+    if (this.match(TokenType.Identifier))
+      return astExpr.variable(this.previous(), this.previous().span);
 
     if (this.match(TokenType.LeftParen)) {
       const start = this.previous().span.start;
@@ -128,10 +205,60 @@ export class Parser {
         TokenType.RightParen,
         "expect `)` after expression",
       ).span.end;
-      return grouping(expr, { start, end });
+      return astExpr.grouping(expr, { start, end });
+    }
+
+    // A block where an expression is expected is parsed as an expression
+    if (this.match(TokenType.LeftBrace)) {
+      return this.blockExpression();
     }
 
     throw this.error(this.peek(), "expect expression");
+  }
+
+  private blockExpression(): Expr {
+    const start = this.previous().span.start;
+    const { statements, value, end } = this.parseBlock();
+    return astExpr.block(statements, value, { start, end });
+  }
+
+  private parseBlock(): {
+    statements: (Stmt | null)[];
+    value: Expr | null;
+    end: Position;
+  } {
+    const statements: (Stmt | null)[] = [];
+    let value: Expr | null = null;
+
+    while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
+      // Check for tokens indicating a statement
+      if ([TokenType.LeftBrace, TokenType.Let].includes(this.peek().type)) {
+        statements.push(this.declaration());
+        continue;
+      }
+
+      // Parse an expression if unsure
+      const expr = this.expression();
+
+      // Check for semicolon
+      if (this.match(TokenType.Semicolon)) {
+        // Push the expression as an expression statement
+        const end = this.previous().span.end;
+        statements.push(
+          astStmt.expression(expr, { start: expr.span.start, end }),
+        );
+      } else if (this.check(TokenType.RightBrace)) {
+        // Set the value if the next token ends the block
+        value = expr;
+        break;
+      }
+    }
+
+    const end = this.consume(
+      TokenType.RightBrace,
+      "expect '}' after block statements",
+    ).span.end;
+    return { statements, value, end };
   }
 
   // --- Token management ------------------------------------------------------
