@@ -28,6 +28,14 @@ export interface Block {
   readonly span: Span;
 }
 
+export interface If {
+  readonly type: "If";
+  readonly condition: Expr;
+  readonly thenBranch: Expr;
+  readonly elseBranch: Expr | null;
+  readonly span: Span;
+}
+
 export interface Grouping {
   readonly type: "Grouping";
   readonly expression: Expr;
@@ -54,7 +62,7 @@ export interface Variable {
 }
 
 export type Expr =
-  Assign | Binary | Block | Grouping | Literal | Unary | Variable;
+  Assign | Binary | Block | If | Grouping | Literal | Unary | Variable;
 
 export function assign(name: Token, value: Expr, span: Span): Assign {
   return { type: "Assign", name, value, span };
@@ -75,6 +83,15 @@ export function block(
   span: Span,
 ): Block {
   return { type: "Block", statements, value, span };
+}
+
+export function if_(
+  condition: Expr,
+  thenBranch: Expr,
+  elseBranch: Expr | null,
+  span: Span,
+): If {
+  return { type: "If", condition, thenBranch, elseBranch, span };
 }
 
 export function grouping(expression: Expr, span: Span): Grouping {

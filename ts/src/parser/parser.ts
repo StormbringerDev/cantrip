@@ -62,6 +62,8 @@ export class Parser {
   private statement(): Stmt {
     // A block where a statement is expected is parsed as a statement
     if (this.match(TokenType.LeftBrace)) return this.blockStatement();
+    // Bypass to remove requirement for semicolon on lone if expression
+    if (this.match(TokenType.If)) return this.ifStatement();
 
     return this.expressionStatement();
   }
@@ -70,6 +72,11 @@ export class Parser {
     const start = this.previous().span.start;
     const { statements, end } = this.parseBlock();
     return astStmt.block(statements, { start, end });
+  }
+
+  private ifStatement(): Stmt {
+    const expr = this.ifExpression();
+    return astStmt.expression(expr, expr.span);
   }
 
   private expressionStatement(): Stmt {
@@ -208,12 +215,36 @@ export class Parser {
       return astExpr.grouping(expr, { start, end });
     }
 
+    if (this.match(TokenType.If)) return this.ifExpression();
+
     // A block where an expression is expected is parsed as an expression
     if (this.match(TokenType.LeftBrace)) {
       return this.blockExpression();
     }
 
     throw this.error(this.peek(), "expect expression");
+  }
+
+  private ifExpression(): Expr {
+    const start = this.previous().span.start;
+    const condition = this.expression();
+    this.consume(TokenType.LeftBrace, "expect '{' after if condition");
+
+    const thenBranch = this.blockExpression();
+    let end = thenBranch.span.end;
+    let elseBranch: Expr | null = null;
+    if (this.match(TokenType.Else)) {
+      if (this.match(TokenType.If)) {
+        elseBranch = this.ifExpression();
+        end = elseBranch.span.end;
+      } else {
+        this.consume(TokenType.LeftBrace, "expect '{' or 'if' after 'else'");
+        elseBranch = this.blockExpression();
+        end = elseBranch.span.end;
+      }
+    }
+
+    return astExpr.if_(condition, thenBranch, elseBranch, { start, end });
   }
 
   private blockExpression(): Expr {

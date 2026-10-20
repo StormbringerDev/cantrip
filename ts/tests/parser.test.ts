@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { DiagnosticCollector } from "../src/diagnostic/collector.js";
-import * as cantripExpr from "../src/parser/expr.js";
-import * as cantripStmt from "../src/parser/stmt.js";
+import * as astExpr from "../src/parser/expr.js";
+import { Expr } from "../src/parser/expr.js";
+import * as astStmt from "../src/parser/stmt.js";
 import { Stmt } from "../src/parser/stmt.js";
 import { Parser } from "../src/parser/parser.js";
 import { TokenType } from "../src/parser/token.js";
@@ -25,8 +26,8 @@ describe("parser", () => {
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
         expect((statements[0] as Stmt).type).toBe("Let");
-        expect((statements[0] as cantripStmt.Let).name.lexeme).toBe("x");
-        expect((statements[0] as cantripStmt.Let).initializer).toBeNull();
+        expect((statements[0] as astStmt.Let).name.lexeme).toBe("x");
+        expect((statements[0] as astStmt.Let).initializer).toBeNull();
       });
 
       it("parses a let declaration with an initializer", () => {
@@ -44,8 +45,8 @@ describe("parser", () => {
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
         expect((statements[0] as Stmt).type).toBe("Let");
-        expect((statements[0] as cantripStmt.Let).name.lexeme).toBe("x");
-        expect((statements[0] as cantripStmt.Let).initializer).not.toBeNull();
+        expect((statements[0] as astStmt.Let).name.lexeme).toBe("x");
+        expect((statements[0] as astStmt.Let).initializer).not.toBeNull();
       });
 
       it("emits an error on missing semicolon", () => {
@@ -85,7 +86,7 @@ describe("parser", () => {
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
         expect((statements[0] as Stmt).type).toBe("Block");
-        expect((statements[0] as cantripStmt.Block).statements).toHaveLength(1);
+        expect((statements[0] as astStmt.Block).statements).toHaveLength(1);
       });
 
       it("parses a block statements and ignores final value", () => {
@@ -108,7 +109,7 @@ describe("parser", () => {
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
         expect((statements[0] as Stmt).type).toBe("Block");
-        expect((statements[0] as cantripStmt.Block).statements).toHaveLength(1);
+        expect((statements[0] as astStmt.Block).statements).toHaveLength(1);
       });
 
       it("emits an error on missing closing brace", () => {
@@ -148,7 +149,7 @@ describe("parser", () => {
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
         expect((statements[0] as Stmt).type).toBe("Expression");
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Binary",
         );
       });
@@ -189,20 +190,16 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Assign",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Assign
-          ).name.lexeme,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Assign)
+            .name.lexeme,
         ).toBe("x");
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Assign
-          ).value.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Assign)
+            .value.type,
         ).toBe("Literal");
       });
 
@@ -240,26 +237,20 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Binary",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).left.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .left.type,
         ).toBe("Literal");
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).operator.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .operator.type,
         ).toBe(TokenType.EqEq);
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).right.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .right.type,
         ).toBe("Literal");
       });
 
@@ -276,26 +267,20 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Binary",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).left.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .left.type,
         ).toBe("Literal");
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).operator.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .operator.type,
         ).toBe(TokenType.BangEq);
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).right.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .right.type,
         ).toBe("Literal");
       });
 
@@ -312,26 +297,20 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Binary",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).left.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .left.type,
         ).toBe("Literal");
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).operator.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .operator.type,
         ).toBe(TokenType.Greater);
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).right.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .right.type,
         ).toBe("Literal");
       });
 
@@ -348,26 +327,20 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Binary",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).left.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .left.type,
         ).toBe("Literal");
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).operator.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .operator.type,
         ).toBe(TokenType.GreaterEq);
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).right.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .right.type,
         ).toBe("Literal");
       });
 
@@ -384,26 +357,20 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Binary",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).left.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .left.type,
         ).toBe("Literal");
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).operator.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .operator.type,
         ).toBe(TokenType.Less);
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).right.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .right.type,
         ).toBe("Literal");
       });
 
@@ -420,26 +387,20 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Binary",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).left.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .left.type,
         ).toBe("Literal");
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).operator.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .operator.type,
         ).toBe(TokenType.LessEq);
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).right.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .right.type,
         ).toBe("Literal");
       });
 
@@ -456,26 +417,20 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Binary",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).left.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .left.type,
         ).toBe("Literal");
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).operator.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .operator.type,
         ).toBe(TokenType.Plus);
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).right.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .right.type,
         ).toBe("Literal");
       });
 
@@ -492,26 +447,20 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Binary",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).left.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .left.type,
         ).toBe("Literal");
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).operator.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .operator.type,
         ).toBe(TokenType.Minus);
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).right.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .right.type,
         ).toBe("Literal");
       });
 
@@ -528,26 +477,20 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Binary",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).left.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .left.type,
         ).toBe("Literal");
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).operator.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .operator.type,
         ).toBe(TokenType.Star);
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).right.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .right.type,
         ).toBe("Literal");
       });
 
@@ -564,26 +507,20 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Binary",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).left.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .left.type,
         ).toBe("Literal");
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).operator.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .operator.type,
         ).toBe(TokenType.Slash);
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).right.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .right.type,
         ).toBe("Literal");
       });
 
@@ -600,26 +537,20 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Binary",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).left.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .left.type,
         ).toBe("Literal");
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).operator.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .operator.type,
         ).toBe(TokenType.Percent);
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Binary
-          ).right.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Binary)
+            .right.type,
         ).toBe("Literal");
       });
     });
@@ -645,25 +576,23 @@ describe("parser", () => {
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Grouping
-          ).expression.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Grouping)
+            .expression.type,
         ).toBe("Block");
         expect(
           (
             (
-              (statements[0] as cantripStmt.Expression)
-                .expression as cantripExpr.Grouping
-            ).expression as cantripExpr.Block
+              (statements[0] as astStmt.Expression)
+                .expression as astExpr.Grouping
+            ).expression as astExpr.Block
           ).statements,
         ).toHaveLength(1);
         expect(
           (
             (
-              (statements[0] as cantripStmt.Expression)
-                .expression as cantripExpr.Grouping
-            ).expression as cantripExpr.Block
+              (statements[0] as astStmt.Expression)
+                .expression as astExpr.Grouping
+            ).expression as astExpr.Block
           ).value,
         ).toBeNull();
       });
@@ -691,25 +620,23 @@ describe("parser", () => {
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Grouping
-          ).expression.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Grouping)
+            .expression.type,
         ).toBe("Block");
         expect(
           (
             (
-              (statements[0] as cantripStmt.Expression)
-                .expression as cantripExpr.Grouping
-            ).expression as cantripExpr.Block
+              (statements[0] as astStmt.Expression)
+                .expression as astExpr.Grouping
+            ).expression as astExpr.Block
           ).statements,
         ).toHaveLength(1);
         expect(
           (
             (
-              (statements[0] as cantripStmt.Expression)
-                .expression as cantripExpr.Grouping
-            ).expression as cantripExpr.Block
+              (statements[0] as astStmt.Expression)
+                .expression as astExpr.Grouping
+            ).expression as astExpr.Block
           ).value,
         ).not.toBeNull();
       });
@@ -737,6 +664,118 @@ describe("parser", () => {
       });
     });
 
+    describe("if", () => {
+      it("parses an if expression", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.If, "if"),
+          tok(TokenType.True, "true", null, 3),
+          tok(TokenType.LeftBrace, "{", null, 8),
+          tok(TokenType.Number, "5", 5, 10),
+          tok(TokenType.RightBrace, "}", null, 12),
+          tok(TokenType.Eof, "", null, 13),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as Stmt).type).toBe("Expression");
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
+          "If",
+        );
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.If)
+            .condition.type,
+        ).toBe("Literal");
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.If)
+            .thenBranch.type,
+        ).toBe("Block");
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.If)
+            .elseBranch,
+        ).toBeNull();
+      });
+
+      it("parses an if-else expression", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.If, "if"),
+          tok(TokenType.True, "true", null, 3),
+          tok(TokenType.LeftBrace, "{", null, 8),
+          tok(TokenType.Number, "5", 5, 10),
+          tok(TokenType.RightBrace, "}", null, 12),
+          tok(TokenType.Else, "else", null, 14),
+          tok(TokenType.LeftBrace, "{", null, 19),
+          tok(TokenType.Number, "8", 8, 21),
+          tok(TokenType.RightBrace, "}", null, 23),
+          tok(TokenType.Eof, "", null, 24),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as Stmt).type).toBe("Expression");
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
+          "If",
+        );
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.If)
+            .condition.type,
+        ).toBe("Literal");
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.If)
+            .thenBranch.type,
+        ).toBe("Block");
+        expect(
+          (
+            ((statements[0] as astStmt.Expression).expression as astExpr.If)
+              .elseBranch as Expr
+          ).type,
+        ).toBe("Block");
+      });
+
+      it("parses an if-else-if expression", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.If, "if"),
+          tok(TokenType.True, "true", null, 3),
+          tok(TokenType.LeftBrace, "{", null, 8),
+          tok(TokenType.Number, "5", 5, 10),
+          tok(TokenType.RightBrace, "}", null, 12),
+          tok(TokenType.Else, "else", null, 14),
+          tok(TokenType.If, "if", null, 19),
+          tok(TokenType.False, "false", null, 22),
+          tok(TokenType.LeftBrace, "{", null, 28),
+          tok(TokenType.Number, "8", 8, 30),
+          tok(TokenType.RightBrace, "}", null, 32),
+          tok(TokenType.Eof, "", null, 33),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as Stmt).type).toBe("Expression");
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
+          "If",
+        );
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.If)
+            .condition.type,
+        ).toBe("Literal");
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.If)
+            .thenBranch.type,
+        ).toBe("Block");
+        expect(
+          (
+            ((statements[0] as astStmt.Expression).expression as astExpr.If)
+              .elseBranch as Expr
+          ).type,
+        ).toBe("If");
+      });
+    });
+
     describe("grouping", () => {
       it("parses a grouping expression", () => {
         const diagnostics = new DiagnosticCollector();
@@ -753,14 +792,12 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Grouping",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Grouping
-          ).expression.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Grouping)
+            .expression.type,
         ).toBe("Binary");
       });
 
@@ -795,14 +832,12 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Literal",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Literal
-          ).value,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Literal)
+            .value,
         ).toBe(42);
       });
 
@@ -817,14 +852,12 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Literal",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Literal
-          ).value,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Literal)
+            .value,
         ).toBe("Hello!");
       });
 
@@ -839,14 +872,12 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Literal",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Literal
-          ).value,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Literal)
+            .value,
         ).toBe(true);
       });
 
@@ -861,14 +892,12 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Literal",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Literal
-          ).value,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Literal)
+            .value,
         ).toBe(false);
       });
 
@@ -883,14 +912,12 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Literal",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Literal
-          ).value,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Literal)
+            .value,
         ).toBe(null);
       });
     });
@@ -908,20 +935,16 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Unary",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Unary
-          ).operator.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Unary)
+            .operator.type,
         ).toBe(TokenType.Minus);
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Unary
-          ).right.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Unary)
+            .right.type,
         ).toBe("Literal");
       });
 
@@ -937,20 +960,16 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Unary",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Unary
-          ).operator.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Unary)
+            .operator.type,
         ).toBe(TokenType.Bang);
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Unary
-          ).right.type,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Unary)
+            .right.type,
         ).toBe("Literal");
       });
     });
@@ -967,14 +986,12 @@ describe("parser", () => {
 
         expect(diagnostics.hasError()).toBe(false);
         expect(statements).toHaveLength(1);
-        expect((statements[0] as cantripStmt.Expression).expression.type).toBe(
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
           "Variable",
         );
         expect(
-          (
-            (statements[0] as cantripStmt.Expression)
-              .expression as cantripExpr.Variable
-          ).name.lexeme,
+          ((statements[0] as astStmt.Expression).expression as astExpr.Variable)
+            .name.lexeme,
         ).toBe("total");
       });
     });

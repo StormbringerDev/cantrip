@@ -7,16 +7,14 @@ import { TokenType } from "../src/parser/token.js";
 describe("lexer", () => {
   it("emits Eof token on empty string", () => {
     const diagnostics = new DiagnosticCollector();
-    const lexer = new Lexer("", diagnostics);
-    const tokens = lexer.scan();
+    const tokens = new Lexer("", diagnostics).scan();
 
     expect(tokens.map((t) => t.type)).toEqual([TokenType.Eof]);
   });
 
   it("scans punctuation", () => {
     const diagnostics = new DiagnosticCollector();
-    const lexer = new Lexer("(){},.;", diagnostics);
-    const tokens = lexer.scan();
+    const tokens = new Lexer("(){},.;", diagnostics).scan();
 
     expect(diagnostics.hasError()).toBe(false);
     const expected = [
@@ -35,8 +33,7 @@ describe("lexer", () => {
   it("ignores whitespace", () => {
     const diagnostics = new DiagnosticCollector();
     const source = " \r\t\n";
-    const lexer = new Lexer(source, diagnostics);
-    const tokens = lexer.scan();
+    const tokens = new Lexer(source, diagnostics).scan();
 
     expect(diagnostics.hasError()).toBe(false);
     expect(tokens.map((t) => t.type)).toEqual([TokenType.Eof]);
@@ -45,8 +42,7 @@ describe("lexer", () => {
   it("scans arithmetic and comparison operators", () => {
     const diagnostics = new DiagnosticCollector();
     const source = "+-*/% ! != = == > >= < <=";
-    const lexer = new Lexer(source, diagnostics);
-    const tokens = lexer.scan();
+    const tokens = new Lexer(source, diagnostics).scan();
 
     expect(diagnostics.hasError()).toBe(false);
     const expected = [
@@ -71,8 +67,7 @@ describe("lexer", () => {
   it("scans identifiers and string & number literals", () => {
     const diagnostics = new DiagnosticCollector();
     const source = `total total_2 Location "Hello!" 'Hi!' 42 3.14`;
-    const lexer = new Lexer(source, diagnostics);
-    const tokens = lexer.scan();
+    const tokens = new Lexer(source, diagnostics).scan();
 
     expect(diagnostics.hasError()).toBe(false);
     const expected = [
@@ -94,6 +89,7 @@ describe("lexer", () => {
       "and",
       "break",
       "continue",
+      "else",
       "false",
       "fn",
       "if",
@@ -103,15 +99,15 @@ describe("lexer", () => {
       "return",
       "true",
       "while",
-    ];
-    const lexer = new Lexer(source.join(" "), diagnostics);
-    const tokens = lexer.scan();
+    ].join(" ");
+    const tokens = new Lexer(source, diagnostics).scan();
 
     expect(diagnostics.hasError()).toBe(false);
     const expected = [
       TokenType.And,
       TokenType.Break,
       TokenType.Continue,
+      TokenType.Else,
       TokenType.False,
       TokenType.Fn,
       TokenType.If,
@@ -129,8 +125,7 @@ describe("lexer", () => {
   it("ignores comments", () => {
     const diagnostics = new DiagnosticCollector();
     const source = "// This is a comment.\n/*\nThis is also a comment.\n*/";
-    const lexer = new Lexer(source, diagnostics);
-    const tokens = lexer.scan();
+    const tokens = new Lexer(source, diagnostics).scan();
 
     expect(diagnostics.hasError()).toBe(false);
     expect(tokens.map((t) => t.type)).toEqual([TokenType.Eof]);

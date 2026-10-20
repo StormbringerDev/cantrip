@@ -163,6 +163,15 @@ function evaluateBlock(expr: astExpr.Block): Value {
   return value;
 }
 
+function evaluateIf(expr: astExpr.If): Value {
+  if (isTruthy(evaluate(expr.condition))) {
+    return evaluate(expr.thenBranch);
+  } else if (expr.elseBranch !== null) {
+    return evaluate(expr.elseBranch);
+  }
+  return null;
+}
+
 function evaluateGrouping(expr: astExpr.Grouping): Value {
   return evaluate(expr.expression);
 }

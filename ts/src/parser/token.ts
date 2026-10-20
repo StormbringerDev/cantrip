@@ -31,6 +31,7 @@ export enum TokenType {
   And = "And",
   Break = "Break",
   Continue = "Continue",
+  Else = "Else",
   False = "False",
   Fn = "Fn",
   If = "If",

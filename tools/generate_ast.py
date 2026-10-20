@@ -21,7 +21,7 @@ TS_TYPES = {
     "LiteralValue": "LiteralValue",
 }
 
-TS_RESERVED = ["let"]
+TS_RESERVED = ["if", "let"]
 
 C_TYPES = {
     "Expr": "Expr *",
@@ -39,6 +39,15 @@ EXPRESSIONS: list[Node] = [
         [("left", "Expr"), ("operator", "Token"), ("right", "Expr"), ("span", "Span")],
     ),
     ("Block", [("statements", "Stmt[]"), ("value", "Expr?"), ("span", "Span")]),
+    (
+        "If",
+        [
+            ("condition", "Expr"),
+            ("thenBranch", "Expr"),
+            ("elseBranch", "Expr?"),
+            ("span", "Span"),
+        ],
+    ),
     ("Grouping", [("expression", "Expr"), ("span", "Span")]),
     ("Literal", [("value", "LiteralValue"), ("span", "Span")]),
     ("Unary", [("operator", "Token"), ("right", "Expr"), ("span", "Span")]),

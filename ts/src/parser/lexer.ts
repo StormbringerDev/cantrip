@@ -21,6 +21,7 @@ const keywords = new Map<string, TokenType>([
   ["and", TokenType.And],
   ["break", TokenType.Break],
   ["continue", TokenType.Continue],
+  ["else", TokenType.Else],
   ["false", TokenType.False],
   ["fn", TokenType.Fn],
   ["if", TokenType.If],
