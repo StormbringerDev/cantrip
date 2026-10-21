@@ -7,7 +7,8 @@ import type { Stmt } from "../parser/stmt.js";
 import { TokenType, type Token } from "../parser/token.js";
 import { Environment } from "./environment.js";
 import { Break, Continue, RuntimeError } from "./exceptions.js";
-import { UNIT, type Value } from "./types.js";
+import { stringify, UNIT, type Value } from "./runtime-types.js";
+import * as stdlib from "./stdlib.js";
 
 export function interpret(
   statements: Stmt[],
@@ -23,7 +24,11 @@ export function interpret(
   }
 }
 
-let environment = new Environment();
+const globals = new Environment();
+let environment = globals;
+
+globals.define("print", stdlib.printNative);
+globals.define("time", stdlib.timeNative);
 
 function execute(stmt: Stmt): void {
   switch (stmt.type) {
@@ -61,6 +66,8 @@ function evaluate(expr: Expr): Value {
       return evaluateBinary(expr);
     case "Block":
       return evaluateBlock(expr);
+    case "Call":
+      return evaluateCall(expr);
     case "If":
       return evaluateIf(expr);
     case "Grouping":
@@ -209,6 +216,28 @@ function evaluateBlock(expr: astExpr.Block): Value {
   return value;
 }
 
+function evaluateCall(expr: astExpr.Call): Value {
+  const callee = evaluate(expr.callee);
+
+  const args: Value[] = [];
+  for (const argument of expr.args) {
+    args.push(evaluate(argument));
+  }
+
+  if (
+    callee === null ||
+    callee === UNIT ||
+    typeof callee === "number" ||
+    typeof callee === "string" ||
+    typeof callee === "boolean"
+  ) {
+    throw new RuntimeError(expr.paren, "can only call functions");
+  }
+
+  const func = callee;
+  return func.call(args);
+}
+
 function evaluateIf(expr: astExpr.If): Value {
   if (isTruthy(evaluate(expr.condition))) {
     return evaluate(expr.thenBranch);
@@ -248,13 +277,6 @@ function isTruthy(value: Value): boolean {
   if (value === null || value === UNIT) return false;
   if (typeof value === "boolean") return value;
   return true;
-}
-
-function stringify(value: Value): string {
-  if (value === null) return "nil";
-  if (value === UNIT) return "()";
-
-  return value.toString();
 }
 
 function checkNumberOperand(operator: Token, operand: Value) {

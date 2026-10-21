@@ -15,6 +15,7 @@ Node = tuple[str, list[Field]]
 TS_TYPES = {
     "Expr": "Expr",
     "Expr?": "Expr | null",
+    "Expr[]": "Expr[]",
     "Stmt": "Stmt",
     "Stmt[]": "(Stmt | null)[]",
     "Token": "Token",
@@ -27,6 +28,7 @@ TS_RESERVED = ["break", "const", "continue", "if", "let", "while"]
 C_TYPES = {
     "Expr": "Expr *",
     "Expr?": "Expr *",
+    "Expr[]": "Expr **",
     "Stmt": "Stmt *",
     "Stmt[]": "Stmt **",
     "Token": "Token",
@@ -43,6 +45,15 @@ EXPRESSIONS: list[Node] = [
         [("left", "Expr"), ("operator", "Token"), ("right", "Expr"), ("span", "Span")],
     ),
     ("Block", [("statements", "Stmt[]"), ("value", "Expr?"), ("span", "Span")]),
+    (
+        "Call",
+        [
+            ("callee", "Expr"),
+            ("paren", "Token"),
+            ("args", "Expr[]"),
+            ("span", "Span"),
+        ],
+    ),
     (
         "If",
         [

@@ -28,6 +28,14 @@ export interface Block {
   readonly span: Span;
 }
 
+export interface Call {
+  readonly type: "Call";
+  readonly callee: Expr;
+  readonly paren: Token;
+  readonly args: Expr[];
+  readonly span: Span;
+}
+
 export interface If {
   readonly type: "If";
   readonly condition: Expr;
@@ -62,7 +70,7 @@ export interface Variable {
 }
 
 export type Expr =
-  Assign | Binary | Block | If | Grouping | Literal | Unary | Variable;
+  Assign | Binary | Block | Call | If | Grouping | Literal | Unary | Variable;
 
 export function assign(name: Token, value: Expr, span: Span): Assign {
   return { type: "Assign", name, value, span };
@@ -83,6 +91,15 @@ export function block(
   span: Span,
 ): Block {
   return { type: "Block", statements, value, span };
+}
+
+export function call(
+  callee: Expr,
+  paren: Token,
+  args: Expr[],
+  span: Span,
+): Call {
+  return { type: "Call", callee, paren, args, span };
 }
 
 export function if_(

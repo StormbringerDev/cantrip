@@ -1,6 +1,6 @@
 import { Token } from "../parser/token.js";
 import { RuntimeError } from "./exceptions.js";
-import type { Value } from "./types.js";
+import type { Value } from "./runtime-types.js";
 
 export class Environment {
   readonly enclosing: Environment | null;

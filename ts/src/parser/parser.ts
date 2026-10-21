@@ -258,7 +258,45 @@ export class Parser {
       });
     }
 
-    return this.primary();
+    return this.call();
+  }
+
+  private finishCall(callee: Expr) {
+    const args: Expr[] = [];
+
+    while (this.peek().type !== TokenType.RightParen) {
+      if (args.length >= 255) {
+        this.error(this.peek(), "can't have more than 255 arguments");
+      }
+      args.push(this.expression());
+      if (this.match(TokenType.Comma) && this.check(TokenType.RightParen)) {
+        break;
+      }
+    }
+
+    const paren = this.consume(
+      TokenType.RightParen,
+      "expect ')' after arguments",
+    );
+
+    return astExpr.call(callee, paren, args, {
+      start: callee.span.start,
+      end: paren.span.end,
+    });
+  }
+
+  private call(): Expr {
+    let expr = this.primary();
+
+    for (;;) {
+      if (this.match(TokenType.LeftParen)) {
+        expr = this.finishCall(expr);
+      } else {
+        break;
+      }
+    }
+
+    return expr;
   }
 
   private primary(): Expr {

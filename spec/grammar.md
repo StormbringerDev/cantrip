@@ -7,7 +7,8 @@ This document describes the syntax and lexical rules of Cantrip.
 ```ebnf
 program      = declaration* EOF ;
 
-declaration  = fnDecl
+declaration  = constDecl
+             | fnDecl
              | letDecl
              | statement ;
 

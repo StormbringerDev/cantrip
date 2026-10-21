@@ -806,6 +806,105 @@ describe("parser", () => {
       });
     });
 
+    describe("call", () => {
+      it("parses a call expression", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Identifier, "time"),
+          tok(TokenType.LeftParen, "(", null, 4),
+          tok(TokenType.RightParen, ")", null, 5),
+          tok(TokenType.Semicolon, ";", null, 6),
+          tok(TokenType.Eof, "", null, 7),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
+          "Call",
+        );
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.Call)
+            .callee.type,
+        ).toBe("Variable");
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.Call)
+            .paren.type,
+        ).toBe(TokenType.RightParen);
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.Call)
+            .args,
+        ).toHaveLength(0);
+      });
+
+      it("parses a call expression with arguments", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Identifier, "add"),
+          tok(TokenType.LeftParen, "(", null, 3),
+          tok(TokenType.Number, "40", 40, 4),
+          tok(TokenType.Comma, ",", null, 6),
+          tok(TokenType.Number, "2", 2, 8),
+          tok(TokenType.RightParen, ")", null, 9),
+          tok(TokenType.Semicolon, ";", null, 10),
+          tok(TokenType.Eof, "", null, 11),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
+          "Call",
+        );
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.Call)
+            .callee.type,
+        ).toBe("Variable");
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.Call)
+            .paren.type,
+        ).toBe(TokenType.RightParen);
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.Call)
+            .args,
+        ).toHaveLength(2);
+      });
+
+      it("parses a call expression with arguments and a trailing comma", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Identifier, "add"),
+          tok(TokenType.LeftParen, "(", null, 3),
+          tok(TokenType.Number, "40", 40, 4),
+          tok(TokenType.Comma, ",", null, 6),
+          tok(TokenType.Number, "2", 2, 8),
+          tok(TokenType.Comma, ",", null, 9),
+          tok(TokenType.RightParen, ")", null, 10),
+          tok(TokenType.Semicolon, ";", null, 11),
+          tok(TokenType.Eof, "", null, 12),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as astStmt.Expression).expression.type).toBe(
+          "Call",
+        );
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.Call)
+            .callee.type,
+        ).toBe("Variable");
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.Call)
+            .paren.type,
+        ).toBe(TokenType.RightParen);
+        expect(
+          ((statements[0] as astStmt.Expression).expression as astExpr.Call)
+            .args,
+        ).toHaveLength(2);
+      });
+    });
+
     describe("if", () => {
       it("parses an if expression", () => {
         const diagnostics = new DiagnosticCollector();

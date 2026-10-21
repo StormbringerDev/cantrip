@@ -58,7 +58,7 @@ describe("cantrip cli", () => {
   });
 
   it("evaluates REPL lines and continues after errors", async () => {
-    const result = await run([], "40 + 2\n1 + @\n1 + true\n");
+    const result = await run([], "print(40 + 2);\n1 + @\n1 + true;\n");
 
     expect(result).toSucceed();
     expect(result).toExitWith(0);
@@ -75,7 +75,7 @@ describe("cantrip cli", () => {
   it("runs a script from the scratch directory", async () => {
     const script = await directory.file({
       filename: "hello.cantrip",
-      content: "40 + 2\n",
+      content: "print(40 + 2);\n",
     });
 
     const result = await run([script.path]);
@@ -83,7 +83,7 @@ describe("cantrip cli", () => {
     expect(result).toSucceed();
     expect(result).toHaveStdout("42");
     expect(result.cwd).toBe(directory.path);
-    expect(await script.text()).toBe("40 + 2\n");
+    expect(await script.text()).toBe("print(40 + 2);\n");
   });
 
   it("fails a script when lexing and parsing report errors", async () => {
@@ -105,7 +105,7 @@ describe("cantrip cli", () => {
   it("fails a script on a runtime error", async () => {
     const script = await directory.file({
       filename: "runtime.cantrip",
-      content: "1 + true\n",
+      content: "1 + true;\n",
     });
 
     const result = await run([script.path]);
