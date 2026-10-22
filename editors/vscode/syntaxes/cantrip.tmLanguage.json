@@ -82,6 +82,13 @@
         { "name": "punctuation.separator.parameter.cantrip", "match": "," }
       ]
     },
+    "const-declaration": {
+      "match": "\\b(const)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+      "captures": {
+        "1": { "name": "storage.type.cantrip" },
+        "2": { "name": "variable.other.read.cantrip" }
+      }
+    },
     "let-declaration": {
       "match": "\\b(let)\\s+([A-Za-z_][A-Za-z0-9_]*)",
       "captures": {
@@ -113,7 +120,7 @@
         },
         {
           "name": "storage.type.cantrip",
-          "match": "\\b(let)\\b"
+          "match": "\\b(const|let)\\b"
         }
       ]
     },
