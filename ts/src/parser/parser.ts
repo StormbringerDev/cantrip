@@ -371,13 +371,35 @@ export class Parser {
 
     while (!this.check(TokenType.RightBrace) && !this.isAtEnd()) {
       // Check for tokens indicating a statement
-      if ([TokenType.LeftBrace, TokenType.Let].includes(this.peek().type)) {
+      if (
+        [
+          TokenType.LeftBrace,
+          TokenType.Const,
+          TokenType.Let,
+          TokenType.Break,
+          TokenType.Continue,
+          TokenType.While,
+        ].includes(this.peek().type)
+      ) {
         statements.push(this.declaration());
         continue;
       }
 
       // Parse an expression if unsure
       const expr = this.expression();
+
+      // Check if the expression is an 'if'
+      if (expr.type === "If") {
+        if (this.peek().type === TokenType.RightBrace) {
+          // Set as the value if the next token ends the block
+          value = expr;
+          break;
+        } else {
+          // Push expression statement and jump to beginning otherwise
+          statements.push(astStmt.expression(expr, expr.span));
+          continue;
+        }
+      }
 
       // Check for semicolon
       if (this.match(TokenType.Semicolon)) {
