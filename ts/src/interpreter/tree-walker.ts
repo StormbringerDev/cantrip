@@ -42,11 +42,12 @@ import * as stdlib from "./stdlib.js";
 
 export function interpret(
   statements: Stmt[],
+  locals: Map<Expr, number>,
   diagnostics: DiagnosticCollector,
 ): void {
   try {
     for (const statement of statements) {
-      execute(statement);
+      execute(statement, locals);
     }
   } catch (caught) {
     if (!(caught instanceof RuntimeError)) throw caught;
@@ -60,59 +61,59 @@ let environment = globals;
 globals.define("print", stdlib.printNative);
 globals.define("time", stdlib.timeNative);
 
-function execute(stmt: Stmt): void {
+function execute(stmt: Stmt, locals: Map<Expr, number>): void {
   switch (stmt.type) {
     case "BlockStmt":
-      executeBlockStmt(stmt);
+      executeBlockStmt(stmt, locals);
       break;
     case "Break":
-      executeBreak(stmt);
+      executeBreak(stmt, locals);
       break;
     case "Const":
-      executeConst(stmt);
+      executeConst(stmt, locals);
       break;
     case "Continue":
-      executeContinue(stmt);
+      executeContinue(stmt, locals);
       break;
     case "Expression":
-      executeExpression(stmt);
+      executeExpression(stmt, locals);
       break;
     case "Let":
-      executeLet(stmt);
+      executeLet(stmt, locals);
       break;
     case "Return":
-      executeReturn(stmt);
+      executeReturn(stmt, locals);
       break;
     case "While":
-      executeWhile(stmt);
+      executeWhile(stmt, locals);
       break;
     default:
       stmt satisfies never;
   }
 }
 
-function evaluate(expr: Expr): Value {
+function evaluate(expr: Expr, locals: Map<Expr, number>): Value {
   switch (expr.type) {
     case "Assign":
-      return evaluateAssign(expr);
+      return evaluateAssign(expr, locals);
     case "Binary":
-      return evaluateBinary(expr);
+      return evaluateBinary(expr, locals);
     case "BlockExpr":
-      return evaluateBlockExpr(expr);
+      return evaluateBlockExpr(expr, locals);
     case "Call":
-      return evaluateCall(expr);
+      return evaluateCall(expr, locals);
     case "Fn":
-      return evaluateFn(expr);
+      return evaluateFn(expr, locals);
     case "If":
-      return evaluateIf(expr);
+      return evaluateIf(expr, locals);
     case "Grouping":
-      return evaluateGrouping(expr);
+      return evaluateGrouping(expr, locals);
     case "Literal":
-      return evaluateLiteral(expr);
+      return evaluateLiteral(expr, locals);
     case "Unary":
-      return evaluateUnary(expr);
+      return evaluateUnary(expr, locals);
     case "Variable":
-      return evaluateVariable(expr);
+      return evaluateVariable(expr, locals);
     default:
       expr satisfies never;
   }
@@ -121,54 +122,54 @@ function evaluate(expr: Expr): Value {
   return UNIT;
 }
 
-function executeBlockStmt(stmt: BlockStmt): void {
+function executeBlockStmt(stmt: BlockStmt, locals: Map<Expr, number>): void {
   const previous = environment;
   try {
     environment = new Environment(previous);
 
     for (const statement of stmt.statements.filter((s) => s !== null))
-      execute(statement);
+      execute(statement, locals);
   } finally {
     environment = previous;
   }
 }
 
-function executeBreak(_stmt: Break): void {
+function executeBreak(_stmt: Break, _locals: Map<Expr, number>): void {
   throw new BreakException();
 }
 
-function executeConst(stmt: Const): void {
-  environment.define(stmt.name.lexeme, evaluate(stmt.initializer));
+function executeConst(stmt: Const, locals: Map<Expr, number>): void {
+  environment.define(stmt.name.lexeme, evaluate(stmt.initializer, locals));
 }
 
-function executeContinue(_stmt: Continue): void {
+function executeContinue(_stmt: Continue, _locals: Map<Expr, number>): void {
   throw new ContinueException();
 }
 
-function executeExpression(stmt: Expression): void {
-  evaluate(stmt.expression);
+function executeExpression(stmt: Expression, locals: Map<Expr, number>): void {
+  evaluate(stmt.expression, locals);
 }
 
-function executeLet(stmt: Let): void {
+function executeLet(stmt: Let, locals: Map<Expr, number>): void {
   let value: Value = UNIT;
   if (stmt.initializer != null) {
-    value = evaluate(stmt.initializer);
+    value = evaluate(stmt.initializer, locals);
   }
 
   environment.define(stmt.name.lexeme, value);
 }
 
-function executeReturn(stmt: Return): void {
+function executeReturn(stmt: Return, locals: Map<Expr, number>): void {
   let value: Value = UNIT;
-  if (stmt.value != null) value = evaluate(stmt.value);
+  if (stmt.value != null) value = evaluate(stmt.value, locals);
 
   throw new ReturnException(value);
 }
 
-function executeWhile(stmt: While): void {
-  while (isTruthy(evaluate(stmt.condition))) {
+function executeWhile(stmt: While, locals: Map<Expr, number>): void {
+  while (isTruthy(evaluate(stmt.condition, locals))) {
     try {
-      execute(stmt.body);
+      execute(stmt.body, locals);
     } catch (err) {
       if (err instanceof BreakException) break;
       else if (err instanceof ContinueException) continue;
@@ -177,22 +178,29 @@ function executeWhile(stmt: While): void {
   }
 }
 
-function evaluateAssign(expr: Assign): Value {
-  const value = evaluate(expr.value);
-  environment.assign(expr.name, value);
+function evaluateAssign(expr: Assign, locals: Map<Expr, number>): Value {
+  const value = evaluate(expr.value, locals);
+
+  const distance = locals.get(expr);
+  if (distance !== undefined) {
+    environment.assignAt(distance, expr.name, value);
+  } else {
+    globals.assign(expr.name, value);
+  }
+
   return value;
 }
 
-function evaluateBinary(expr: Binary): Value {
-  const left = evaluate(expr.left);
+function evaluateBinary(expr: Binary, locals: Map<Expr, number>): Value {
+  const left = evaluate(expr.left, locals);
 
   if (expr.operator.type === TokenType.Or) {
-    return isTruthy(left) ? left : evaluate(expr.right);
+    return isTruthy(left) ? left : evaluate(expr.right, locals);
   } else if (expr.operator.type === TokenType.And) {
-    return !isTruthy(left) ? left : evaluate(expr.right);
+    return !isTruthy(left) ? left : evaluate(expr.right, locals);
   }
 
-  const right = evaluate(expr.right);
+  const right = evaluate(expr.right, locals);
 
   switch (expr.operator.type) {
     case TokenType.BangEq:
@@ -242,28 +250,28 @@ function evaluateBinary(expr: Binary): Value {
   return UNIT;
 }
 
-function evaluateBlockExpr(expr: BlockExpr): Value {
+function evaluateBlockExpr(expr: BlockExpr, locals: Map<Expr, number>): Value {
   const previous = environment;
   let value: Value = UNIT;
   try {
     environment = new Environment(previous);
 
     for (const statement of expr.statements.filter((s) => s !== null)) {
-      execute(statement);
+      execute(statement, locals);
     }
   } finally {
-    if (expr.value !== null) value = evaluate(expr.value);
+    if (expr.value !== null) value = evaluate(expr.value, locals);
     environment = previous;
   }
   return value;
 }
 
-function evaluateCall(expr: Call): Value {
-  const callee = evaluate(expr.callee);
+function evaluateCall(expr: Call, locals: Map<Expr, number>): Value {
+  const callee = evaluate(expr.callee, locals);
 
   const args: Value[] = [];
   for (const argument of expr.args) {
-    args.push(evaluate(argument));
+    args.push(evaluate(argument, locals));
   }
 
   if (
@@ -287,7 +295,7 @@ function evaluateCall(expr: Call): Value {
   return func.call(args);
 }
 
-function evaluateFn(expr: Fn): Value {
+function evaluateFn(expr: Fn, locals: Map<Expr, number>): Value {
   const func: CantripFunction = {
     arity: expr.params.length,
     call: (args) => {
@@ -297,7 +305,7 @@ function evaluateFn(expr: Fn): Value {
       }
 
       try {
-        return evaluate(expr.body);
+        return evaluate(expr.body, locals);
       } catch (err) {
         if (err instanceof ReturnException) return err.value;
         throw err;
@@ -308,25 +316,25 @@ function evaluateFn(expr: Fn): Value {
   return func;
 }
 
-function evaluateIf(expr: If): Value {
-  if (isTruthy(evaluate(expr.condition))) {
-    return evaluate(expr.thenBranch);
+function evaluateIf(expr: If, locals: Map<Expr, number>): Value {
+  if (isTruthy(evaluate(expr.condition, locals))) {
+    return evaluate(expr.thenBranch, locals);
   } else if (expr.elseBranch !== null) {
-    return evaluate(expr.elseBranch);
+    return evaluate(expr.elseBranch, locals);
   }
   return UNIT;
 }
 
-function evaluateGrouping(expr: Grouping): Value {
-  return evaluate(expr.expression);
+function evaluateGrouping(expr: Grouping, locals: Map<Expr, number>): Value {
+  return evaluate(expr.expression, locals);
 }
 
-function evaluateLiteral(expr: Literal): Value {
+function evaluateLiteral(expr: Literal, _locals: Map<Expr, number>): Value {
   return expr.value;
 }
 
-function evaluateUnary(expr: Unary): Value {
-  const right = evaluate(expr.right);
+function evaluateUnary(expr: Unary, locals: Map<Expr, number>): Value {
+  const right = evaluate(expr.right, locals);
 
   switch (expr.operator.type) {
     case TokenType.Minus:
@@ -339,8 +347,21 @@ function evaluateUnary(expr: Unary): Value {
   }
 }
 
-function evaluateVariable(expr: Variable): Value {
-  return environment.get(expr.name);
+function evaluateVariable(expr: Variable, locals: Map<Expr, number>): Value {
+  return lookUpVariable(expr.name, expr, locals);
+}
+
+function lookUpVariable(
+  name: Token,
+  expr: Expr,
+  locals: Map<Expr, number>,
+): Value {
+  const distance = locals.get(expr);
+  if (distance !== undefined) {
+    return environment.getAt(distance, name.lexeme);
+  } else {
+    return globals.get(name);
+  }
 }
 
 function isTruthy(value: Value): boolean {

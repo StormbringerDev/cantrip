@@ -8,6 +8,7 @@ import { formatDiagnostics } from "./diagnostic/format.js";
 import { interpret } from "./interpreter/tree-walker.js";
 import { Lexer } from "./parser/lexer.js";
 import { Parser } from "./parser/parser.js";
+import { resolve } from "./analysis/resolver.js";
 
 export const version = "0.1.0";
 
@@ -40,8 +41,19 @@ function runSource(source: string, name?: string): boolean {
     return false;
   }
 
+  const locals = resolve(
+    stmts.filter((s) => s !== null),
+    diagnostics,
+  );
+
+  if (diagnostics.hasError()) {
+    report(diagnostics, source, name);
+    return false;
+  }
+
   interpret(
     stmts.filter((s) => s !== null),
+    locals,
     diagnostics,
   );
   if (diagnostics.hasError()) {

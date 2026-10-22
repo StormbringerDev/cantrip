@@ -9,6 +9,7 @@ import * as stdlib from "../src/interpreter/stdlib.js";
 import { interpret } from "../src/interpreter/tree-walker.js";
 import {
   call,
+  type Expr,
   variable,
   literal,
   binary,
@@ -24,7 +25,7 @@ import {
   continue_,
   expression,
   let_,
-  Stmt,
+  type Stmt,
   while_,
 } from "../src/parser/stmt.js";
 import { TokenType } from "../src/parser/token.js";
@@ -37,16 +38,19 @@ describe("interpreter", () => {
       it("prints a value to stdout", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 8),
-            [literal(42, makeSpan(6, 8))],
-            makeSpan(0, 9),
+        const statements: Stmt[] = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 8),
+              [literal(42, makeSpan(6, 8))],
+              makeSpan(0, 9),
+            ),
+            makeSpan(0, 10),
           ),
-          makeSpan(0, 10),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("42");
@@ -55,26 +59,29 @@ describe("interpreter", () => {
       it("returns unit type", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 15),
-            [
-              call(
-                variable(
-                  tok(TokenType.Identifier, "print", null, 6),
-                  makeSpan(6, 11),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 15),
+              [
+                call(
+                  variable(
+                    tok(TokenType.Identifier, "print", null, 6),
+                    makeSpan(6, 11),
+                  ),
+                  tok(TokenType.RightParen, ")", null, 14),
+                  [literal("", makeSpan(12, 14))],
+                  makeSpan(6, 15),
                 ),
-                tok(TokenType.RightParen, ")", null, 14),
-                [literal("", makeSpan(12, 14))],
-                makeSpan(6, 15),
-              ),
-            ],
-            makeSpan(0, 16),
+              ],
+              makeSpan(0, 16),
+            ),
+            makeSpan(0, 17),
           ),
-          makeSpan(0, 17),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("()");
@@ -82,30 +89,33 @@ describe("interpreter", () => {
     });
 
     describe("time", () => {
-      it("returns seconds since unix epoch", () => {
+      it("returns miliseconds since unix epoch", () => {
         vi.setSystemTime(new Date("2026-10-20T12:00:00Z"));
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 12),
-            [
-              call(
-                variable(
-                  tok(TokenType.Identifier, "time", null, 6),
-                  makeSpan(6, 10),
+        const statements: Stmt[] = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 12),
+              [
+                call(
+                  variable(
+                    tok(TokenType.Identifier, "time", null, 6),
+                    makeSpan(6, 10),
+                  ),
+                  tok(TokenType.RightParen, ")", null, 11),
+                  [],
+                  makeSpan(6, 12),
                 ),
-                tok(TokenType.RightParen, ")", null, 11),
-                [],
-                makeSpan(6, 12),
-              ),
-            ],
-            makeSpan(0, 13),
+              ],
+              makeSpan(0, 13),
+            ),
+            makeSpan(0, 14),
           ),
-          makeSpan(0, 14),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         const expected = new Date("2026-10-20T12:00:00Z").getTime();
@@ -143,7 +153,8 @@ describe("interpreter", () => {
             makeSpan(13, 21),
           ),
         ];
-        interpret(statements, diagnostics);
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("5");
@@ -174,7 +185,8 @@ describe("interpreter", () => {
             makeSpan(7, 16),
           ),
         ];
-        interpret(statements, diagnostics);
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("()");
@@ -207,7 +219,8 @@ describe("interpreter", () => {
             makeSpan(11, 19),
           ),
         ];
-        interpret(statements, diagnostics);
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("5");
@@ -218,6 +231,10 @@ describe("interpreter", () => {
       it("executes a block statement", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
+        const local = variable(
+          tok(TokenType.Identifier, "x", null, 19),
+          makeSpan(19, 20),
+        );
         const statements: Stmt[] = [
           blockStmt(
             [
@@ -233,12 +250,7 @@ describe("interpreter", () => {
                     makeSpan(13, 18),
                   ),
                   tok(TokenType.RightParen, ")", null, 20),
-                  [
-                    variable(
-                      tok(TokenType.Identifier, "x", null, 19),
-                      makeSpan(19, 20),
-                    ),
-                  ],
+                  [local],
                   makeSpan(13, 21),
                 ),
                 makeSpan(13, 22),
@@ -247,7 +259,8 @@ describe("interpreter", () => {
             makeSpan(0, 24),
           ),
         ];
-        interpret(statements, diagnostics);
+        const locals = new Map<Expr, number>([[local, 0]]);
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("42");
@@ -260,7 +273,8 @@ describe("interpreter", () => {
         const statements: Stmt[] = [
           break_(tok(TokenType.Break, "break"), makeSpan(0, 6)),
         ];
-        expect(() => interpret(statements, diagnostics)).toThrow(
+        const locals = new Map<Expr, number>();
+        expect(() => interpret(statements, locals, diagnostics)).toThrow(
           BreakException,
         );
       });
@@ -272,7 +286,8 @@ describe("interpreter", () => {
         const statements: Stmt[] = [
           continue_(tok(TokenType.Continue, "continue"), makeSpan(0, 9)),
         ];
-        expect(() => interpret(statements, diagnostics)).toThrow(
+        const locals = new Map<Expr, number>();
+        expect(() => interpret(statements, locals, diagnostics)).toThrow(
           ContinueException,
         );
       });
@@ -339,7 +354,8 @@ describe("interpreter", () => {
             makeSpan(11, 47),
           ),
         ];
-        interpret(statements, diagnostics);
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("1");
@@ -401,7 +417,8 @@ describe("interpreter", () => {
             makeSpan(24, 33),
           ),
         ];
-        interpret(statements, diagnostics);
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("()");
@@ -413,23 +430,26 @@ describe("interpreter", () => {
       it("evaluates a logical or expression", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 17),
-            [
-              binary(
-                literal(false, makeSpan(6, 11)),
-                tok(TokenType.Or, "or", null, 12),
-                literal(69, makeSpan(15, 17)),
-                makeSpan(6, 17),
-              ),
-            ],
-            makeSpan(0, 18),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 17),
+              [
+                binary(
+                  literal(false, makeSpan(6, 11)),
+                  tok(TokenType.Or, "or", null, 12),
+                  literal(69, makeSpan(15, 17)),
+                  makeSpan(6, 17),
+                ),
+              ],
+              makeSpan(0, 18),
+            ),
+            makeSpan(0, 19),
           ),
-          makeSpan(0, 19),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("69");
@@ -438,23 +458,26 @@ describe("interpreter", () => {
       it("evaluates a logical or expression that short circuits", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 21),
-            [
-              binary(
-                literal("Kara", makeSpan(6, 12)),
-                tok(TokenType.Or, "or", null, 13),
-                literal(false, makeSpan(16, 21)),
-                makeSpan(6, 21),
-              ),
-            ],
-            makeSpan(0, 22),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 21),
+              [
+                binary(
+                  literal("Kara", makeSpan(6, 12)),
+                  tok(TokenType.Or, "or", null, 13),
+                  literal(false, makeSpan(16, 21)),
+                  makeSpan(6, 21),
+                ),
+              ],
+              makeSpan(0, 22),
+            ),
+            makeSpan(0, 23),
           ),
-          makeSpan(0, 23),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("Kara");
@@ -463,23 +486,26 @@ describe("interpreter", () => {
       it("evaluates a logical and expression", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 20),
-            [
-              binary(
-                literal(true, makeSpan(6, 10)),
-                tok(TokenType.And, "and", null, 11),
-                literal(false, makeSpan(15, 20)),
-                makeSpan(6, 20),
-              ),
-            ],
-            makeSpan(0, 21),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 20),
+              [
+                binary(
+                  literal(true, makeSpan(6, 10)),
+                  tok(TokenType.And, "and", null, 11),
+                  literal(false, makeSpan(15, 20)),
+                  makeSpan(6, 20),
+                ),
+              ],
+              makeSpan(0, 21),
+            ),
+            makeSpan(0, 22),
           ),
-          makeSpan(0, 22),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("false");
@@ -488,23 +514,26 @@ describe("interpreter", () => {
       it("evaluates a logical and expression that short circuits", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 19),
-            [
-              binary(
-                literal(null, makeSpan(6, 9)),
-                tok(TokenType.And, "and", null, 11),
-                literal(true, makeSpan(15, 19)),
-                makeSpan(6, 19),
-              ),
-            ],
-            makeSpan(0, 20),
+        const statement = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 19),
+              [
+                binary(
+                  literal(null, makeSpan(6, 9)),
+                  tok(TokenType.And, "and", null, 11),
+                  literal(true, makeSpan(15, 19)),
+                  makeSpan(6, 19),
+                ),
+              ],
+              makeSpan(0, 20),
+            ),
+            makeSpan(0, 21),
           ),
-          makeSpan(0, 21),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statement, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("nil");
@@ -513,23 +542,26 @@ describe("interpreter", () => {
       it("evaluates an equality expression", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 13),
-            [
-              binary(
-                literal(10, makeSpan(6, 8)),
-                tok(TokenType.EqEq, "==", null, 9),
-                literal(5, makeSpan(12, 13)),
-                makeSpan(6, 13),
-              ),
-            ],
-            makeSpan(0, 14),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 13),
+              [
+                binary(
+                  literal(10, makeSpan(6, 8)),
+                  tok(TokenType.EqEq, "==", null, 9),
+                  literal(5, makeSpan(12, 13)),
+                  makeSpan(6, 13),
+                ),
+              ],
+              makeSpan(0, 14),
+            ),
+            makeSpan(0, 15),
           ),
-          makeSpan(0, 15),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("false");
@@ -538,23 +570,26 @@ describe("interpreter", () => {
       it("evaluates an inequality expression", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 13),
-            [
-              binary(
-                literal(10, makeSpan(6, 8)),
-                tok(TokenType.BangEq, "!=", null, 9),
-                literal(5, makeSpan(12, 13)),
-                makeSpan(6, 13),
-              ),
-            ],
-            makeSpan(0, 14),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 13),
+              [
+                binary(
+                  literal(10, makeSpan(6, 8)),
+                  tok(TokenType.BangEq, "!=", null, 9),
+                  literal(5, makeSpan(12, 13)),
+                  makeSpan(6, 13),
+                ),
+              ],
+              makeSpan(0, 14),
+            ),
+            makeSpan(0, 15),
           ),
-          makeSpan(0, 15),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("true");
@@ -563,23 +598,26 @@ describe("interpreter", () => {
       it("evaluates a greater than expression", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 12),
-            [
-              binary(
-                literal(10, makeSpan(6, 8)),
-                tok(TokenType.Greater, ">", null, 9),
-                literal(5, makeSpan(11, 12)),
-                makeSpan(6, 12),
-              ),
-            ],
-            makeSpan(0, 13),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 12),
+              [
+                binary(
+                  literal(10, makeSpan(6, 8)),
+                  tok(TokenType.Greater, ">", null, 9),
+                  literal(5, makeSpan(11, 12)),
+                  makeSpan(6, 12),
+                ),
+              ],
+              makeSpan(0, 13),
+            ),
+            makeSpan(0, 14),
           ),
-          makeSpan(0, 14),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("true");
@@ -588,23 +626,26 @@ describe("interpreter", () => {
       it("evaluates a greater equal expression", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 13),
-            [
-              binary(
-                literal(10, makeSpan(6, 8)),
-                tok(TokenType.GreaterEq, ">=", null, 9),
-                literal(5, makeSpan(12, 13)),
-                makeSpan(6, 13),
-              ),
-            ],
-            makeSpan(0, 14),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 13),
+              [
+                binary(
+                  literal(10, makeSpan(6, 8)),
+                  tok(TokenType.GreaterEq, ">=", null, 9),
+                  literal(5, makeSpan(12, 13)),
+                  makeSpan(6, 13),
+                ),
+              ],
+              makeSpan(0, 14),
+            ),
+            makeSpan(0, 15),
           ),
-          makeSpan(0, 15),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("true");
@@ -613,23 +654,26 @@ describe("interpreter", () => {
       it("evaluates a less than expression", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 12),
-            [
-              binary(
-                literal(10, makeSpan(6, 8)),
-                tok(TokenType.Less, "<", null, 9),
-                literal(5, makeSpan(11, 12)),
-                makeSpan(6, 12),
-              ),
-            ],
-            makeSpan(0, 13),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 12),
+              [
+                binary(
+                  literal(10, makeSpan(6, 8)),
+                  tok(TokenType.Less, "<", null, 9),
+                  literal(5, makeSpan(11, 12)),
+                  makeSpan(6, 12),
+                ),
+              ],
+              makeSpan(0, 13),
+            ),
+            makeSpan(0, 14),
           ),
-          makeSpan(0, 14),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("false");
@@ -638,23 +682,26 @@ describe("interpreter", () => {
       it("evaluates a less equal expression", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 13),
-            [
-              binary(
-                literal(10, makeSpan(6, 8)),
-                tok(TokenType.LessEq, "<=", null, 9),
-                literal(5, makeSpan(12, 13)),
-                makeSpan(6, 13),
-              ),
-            ],
-            makeSpan(0, 14),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 13),
+              [
+                binary(
+                  literal(10, makeSpan(6, 8)),
+                  tok(TokenType.LessEq, "<=", null, 9),
+                  literal(5, makeSpan(12, 13)),
+                  makeSpan(6, 13),
+                ),
+              ],
+              makeSpan(0, 14),
+            ),
+            makeSpan(0, 15),
           ),
-          makeSpan(0, 15),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("false");
@@ -663,23 +710,26 @@ describe("interpreter", () => {
       it("evaluates an addition expression", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 12),
-            [
-              binary(
-                literal(10, makeSpan(6, 8)),
-                tok(TokenType.Plus, "+", null, 9),
-                literal(5, makeSpan(11, 12)),
-                makeSpan(6, 12),
-              ),
-            ],
-            makeSpan(0, 13),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 12),
+              [
+                binary(
+                  literal(10, makeSpan(6, 8)),
+                  tok(TokenType.Plus, "+", null, 9),
+                  literal(5, makeSpan(11, 12)),
+                  makeSpan(6, 12),
+                ),
+              ],
+              makeSpan(0, 13),
+            ),
+            makeSpan(0, 14),
           ),
-          makeSpan(0, 14),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("15");
@@ -688,23 +738,26 @@ describe("interpreter", () => {
       it("evaluates a concatenation expression", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 26),
-            [
-              binary(
-                literal("Hello, ", makeSpan(6, 15)),
-                tok(TokenType.Plus, "+", null, 16),
-                literal("world!", makeSpan(18, 26)),
-                makeSpan(6, 26),
-              ),
-            ],
-            makeSpan(0, 27),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 26),
+              [
+                binary(
+                  literal("Hello, ", makeSpan(6, 15)),
+                  tok(TokenType.Plus, "+", null, 16),
+                  literal("world!", makeSpan(18, 26)),
+                  makeSpan(6, 26),
+                ),
+              ],
+              makeSpan(0, 27),
+            ),
+            makeSpan(0, 28),
           ),
-          makeSpan(0, 28),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("Hello, world!");
@@ -712,16 +765,19 @@ describe("interpreter", () => {
 
       it("emits an error if '+' is performed on a non-number", () => {
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          binary(
-            literal(5, makeSpan(0, 1)),
-            tok(TokenType.Plus, "+", null, 2),
-            literal(null, makeSpan(4, 7)),
-            makeSpan(0, 7),
+        const statements = [
+          expression(
+            binary(
+              literal(5, makeSpan(0, 1)),
+              tok(TokenType.Plus, "+", null, 2),
+              literal(null, makeSpan(4, 7)),
+              makeSpan(0, 7),
+            ),
+            makeSpan(0, 8),
           ),
-          makeSpan(0, 8),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(true);
         const diags = diagnostics.getDiagnostics();
@@ -735,23 +791,26 @@ describe("interpreter", () => {
       it("evaluates a subtraction expression", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 12),
-            [
-              binary(
-                literal(10, makeSpan(6, 8)),
-                tok(TokenType.Minus, "-", null, 9),
-                literal(5, makeSpan(11, 12)),
-                makeSpan(6, 12),
-              ),
-            ],
-            makeSpan(0, 13),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 12),
+              [
+                binary(
+                  literal(10, makeSpan(6, 8)),
+                  tok(TokenType.Minus, "-", null, 9),
+                  literal(5, makeSpan(11, 12)),
+                  makeSpan(6, 12),
+                ),
+              ],
+              makeSpan(0, 13),
+            ),
+            makeSpan(0, 14),
           ),
-          makeSpan(0, 14),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("5");
@@ -760,23 +819,26 @@ describe("interpreter", () => {
       it("evaluates a multiplication expression", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 12),
-            [
-              binary(
-                literal(10, makeSpan(6, 8)),
-                tok(TokenType.Star, "*", null, 9),
-                literal(5, makeSpan(11, 12)),
-                makeSpan(6, 12),
-              ),
-            ],
-            makeSpan(0, 13),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 12),
+              [
+                binary(
+                  literal(10, makeSpan(6, 8)),
+                  tok(TokenType.Star, "*", null, 9),
+                  literal(5, makeSpan(11, 12)),
+                  makeSpan(6, 12),
+                ),
+              ],
+              makeSpan(0, 13),
+            ),
+            makeSpan(0, 14),
           ),
-          makeSpan(0, 14),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("50");
@@ -785,23 +847,26 @@ describe("interpreter", () => {
       it("evaluates a division expression", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 12),
-            [
-              binary(
-                literal(10, makeSpan(6, 8)),
-                tok(TokenType.Slash, "/", null, 9),
-                literal(5, makeSpan(11, 12)),
-                makeSpan(6, 12),
-              ),
-            ],
-            makeSpan(0, 13),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 12),
+              [
+                binary(
+                  literal(10, makeSpan(6, 8)),
+                  tok(TokenType.Slash, "/", null, 9),
+                  literal(5, makeSpan(11, 12)),
+                  makeSpan(6, 12),
+                ),
+              ],
+              makeSpan(0, 13),
+            ),
+            makeSpan(0, 14),
           ),
-          makeSpan(0, 14),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("2");
@@ -810,23 +875,26 @@ describe("interpreter", () => {
       it("evaluates a modulo expression", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 12),
-            [
-              binary(
-                literal(11, makeSpan(6, 8)),
-                tok(TokenType.Percent, "%", null, 9),
-                literal(5, makeSpan(11, 12)),
-                makeSpan(6, 12),
-              ),
-            ],
-            makeSpan(0, 13),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 12),
+              [
+                binary(
+                  literal(11, makeSpan(6, 8)),
+                  tok(TokenType.Percent, "%", null, 9),
+                  literal(5, makeSpan(11, 12)),
+                  makeSpan(6, 12),
+                ),
+              ],
+              makeSpan(0, 13),
+            ),
+            makeSpan(0, 14),
           ),
-          makeSpan(0, 14),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("1");
@@ -834,16 +902,19 @@ describe("interpreter", () => {
 
       it("emits an error if operand isn't a number", () => {
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          binary(
-            literal(5, makeSpan(0, 1)),
-            tok(TokenType.Minus, "-", null, 2),
-            literal(null, makeSpan(4, 7)),
-            makeSpan(0, 7),
+        const statements = [
+          expression(
+            binary(
+              literal(5, makeSpan(0, 1)),
+              tok(TokenType.Minus, "-", null, 2),
+              literal(null, makeSpan(4, 7)),
+              makeSpan(0, 7),
+            ),
+            makeSpan(0, 8),
           ),
-          makeSpan(0, 8),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(true);
         const diags = diagnostics.getDiagnostics();
@@ -874,7 +945,8 @@ describe("interpreter", () => {
             makeSpan(0, 14),
           ),
         ];
-        interpret(statements, diagnostics);
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("()");
@@ -894,7 +966,8 @@ describe("interpreter", () => {
             makeSpan(0, 13),
           ),
         ];
-        interpret(statements, diagnostics);
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("5");
@@ -916,7 +989,8 @@ describe("interpreter", () => {
             makeSpan(0, 7),
           ),
         ];
-        interpret(statements, diagnostics);
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalled();
@@ -935,7 +1009,8 @@ describe("interpreter", () => {
             makeSpan(0, 5),
           ),
         ];
-        interpret(statements, diagnostics);
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(true);
         const diags = diagnostics.getDiagnostics();
@@ -957,7 +1032,8 @@ describe("interpreter", () => {
             makeSpan(0, 8),
           ),
         ];
-        interpret(statements, diagnostics);
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(true);
         const diags = diagnostics.getDiagnostics();
@@ -971,26 +1047,29 @@ describe("interpreter", () => {
       it("evaluates a grouped expression", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 14),
-            [
-              grouping(
-                binary(
-                  literal(40, makeSpan(7, 9)),
-                  tok(TokenType.Plus, "+", null, 10),
-                  literal(2, makeSpan(12, 13)),
-                  makeSpan(7, 13),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 14),
+              [
+                grouping(
+                  binary(
+                    literal(40, makeSpan(7, 9)),
+                    tok(TokenType.Plus, "+", null, 10),
+                    literal(2, makeSpan(12, 13)),
+                    makeSpan(7, 13),
+                  ),
+                  makeSpan(6, 14),
                 ),
-                makeSpan(6, 14),
-              ),
-            ],
-            makeSpan(0, 15),
+              ],
+              makeSpan(0, 15),
+            ),
+            makeSpan(0, 16),
           ),
-          makeSpan(0, 16),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("42");
@@ -1001,16 +1080,19 @@ describe("interpreter", () => {
       it("evaluates a number literal", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 8),
-            [literal(42, makeSpan(6, 8))],
-            makeSpan(0, 9),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 8),
+              [literal(42, makeSpan(6, 8))],
+              makeSpan(0, 9),
+            ),
+            makeSpan(0, 10),
           ),
-          makeSpan(0, 10),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("42");
@@ -1019,16 +1101,19 @@ describe("interpreter", () => {
       it("evaluates a string literal", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 14),
-            [literal("Hello!", makeSpan(6, 14))],
-            makeSpan(0, 15),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 14),
+              [literal("Hello!", makeSpan(6, 14))],
+              makeSpan(0, 15),
+            ),
+            makeSpan(0, 16),
           ),
-          makeSpan(0, 16),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("Hello!");
@@ -1037,16 +1122,19 @@ describe("interpreter", () => {
       it("evaluates literal 'true'", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 10),
-            [literal(true, makeSpan(6, 10))],
-            makeSpan(0, 11),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 10),
+              [literal(true, makeSpan(6, 10))],
+              makeSpan(0, 11),
+            ),
+            makeSpan(0, 12),
           ),
-          makeSpan(0, 12),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("true");
@@ -1055,16 +1143,19 @@ describe("interpreter", () => {
       it("evaluates literal 'false'", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 11),
-            [literal(false, makeSpan(6, 11))],
-            makeSpan(0, 12),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 11),
+              [literal(false, makeSpan(6, 11))],
+              makeSpan(0, 12),
+            ),
+            makeSpan(0, 13),
           ),
-          makeSpan(0, 13),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("false");
@@ -1073,16 +1164,19 @@ describe("interpreter", () => {
       it("evaluates literal 'nil'", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 9),
-            [literal(null, makeSpan(6, 9))],
-            makeSpan(0, 10),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 9),
+              [literal(null, makeSpan(6, 9))],
+              makeSpan(0, 10),
+            ),
+            makeSpan(0, 11),
           ),
-          makeSpan(0, 11),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("nil");
@@ -1093,22 +1187,25 @@ describe("interpreter", () => {
       it("evaluates a unary negation expression", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 8),
-            [
-              unary(
-                tok(TokenType.Minus, "-", null, 6),
-                literal(5, makeSpan(7, 8)),
-                makeSpan(6, 8),
-              ),
-            ],
-            makeSpan(0, 9),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 8),
+              [
+                unary(
+                  tok(TokenType.Minus, "-", null, 6),
+                  literal(5, makeSpan(7, 8)),
+                  makeSpan(6, 8),
+                ),
+              ],
+              makeSpan(0, 9),
+            ),
+            makeSpan(0, 10),
           ),
-          makeSpan(0, 10),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("-5");
@@ -1116,15 +1213,18 @@ describe("interpreter", () => {
 
       it("emits an error if operand is not a number", () => {
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          unary(
-            tok(TokenType.Minus, "-"),
-            literal(null, makeSpan(1, 4)),
-            makeSpan(0, 4),
+        const statements = [
+          expression(
+            unary(
+              tok(TokenType.Minus, "-"),
+              literal(null, makeSpan(1, 4)),
+              makeSpan(0, 4),
+            ),
+            makeSpan(0, 5),
           ),
-          makeSpan(0, 5),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(true);
         const diags = diagnostics.getDiagnostics();
@@ -1136,22 +1236,25 @@ describe("interpreter", () => {
       it("evaluates a logical not expression", () => {
         const spy = vi.spyOn(console, "log");
         const diagnostics = new DiagnosticCollector();
-        const stmt = expression(
-          call(
-            variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
-            tok(TokenType.RightParen, ")", null, 11),
-            [
-              unary(
-                tok(TokenType.Bang, "!", null, 6),
-                literal(true, makeSpan(7, 11)),
-                makeSpan(6, 11),
-              ),
-            ],
-            makeSpan(0, 12),
+        const statements = [
+          expression(
+            call(
+              variable(tok(TokenType.Identifier, "print"), makeSpan(0, 5)),
+              tok(TokenType.RightParen, ")", null, 11),
+              [
+                unary(
+                  tok(TokenType.Bang, "!", null, 6),
+                  literal(true, makeSpan(7, 11)),
+                  makeSpan(6, 11),
+                ),
+              ],
+              makeSpan(0, 12),
+            ),
+            makeSpan(0, 13),
           ),
-          makeSpan(0, 13),
-        );
-        interpret([stmt], diagnostics);
+        ];
+        const locals = new Map<Expr, number>();
+        interpret(statements, locals, diagnostics);
 
         expect(diagnostics.hasError()).toBe(false);
         expect(spy).toHaveBeenCalledWith("false");

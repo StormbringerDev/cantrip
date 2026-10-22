@@ -31,6 +31,7 @@ export default defineConfig(
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
       "@typescript-eslint/restrict-template-expressions": ["off"],
+      "@typescript-eslint/no-non-null-assertion": ["off"],
     },
   },
 );

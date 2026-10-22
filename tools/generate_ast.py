@@ -214,16 +214,8 @@ def emit_c(base_name: str, nodes: list[Node]) -> str:
 
     if uses_type(nodes, "LiteralValue"):
         includes.append('#include "common.h"')
-    if (
-        uses_type(nodes, "Expr")
-        or uses_type(nodes, "Expr?")
-        or uses_type(nodes, "Expr[]")
-    ) and base_name != "Expr":
-        includes.append('#include "expr.h"')
     if uses_type(nodes, "Span"):
         includes.append('#include "location.h"')
-    if (uses_type(nodes, "Stmt") or uses_type(nodes, "Stmt[]")) and base_name != "Stmt":
-        includes.append('#include "stmt.h"')
     if uses_type(nodes, "Token") or uses_type(nodes, "Token[]"):
         includes.append('#include "token.h"')
 
