@@ -6,6 +6,7 @@ import {
   binary,
   blockExpr,
   call,
+  fn,
   grouping,
   if_,
   literal,
@@ -20,6 +21,7 @@ import {
   continue_,
   expression,
   let_,
+  return_,
   while_,
   type Stmt,
 } from "./stmt.js";
@@ -54,6 +56,7 @@ export class Parser {
   private declaration(): Stmt | null {
     try {
       if (this.match(TokenType.Const)) return this.constDeclaration();
+      if (this.match(TokenType.Fn)) return this.fnDeclaration();
       if (this.match(TokenType.Let)) return this.letDeclaration();
 
       return this.statement();
@@ -77,6 +80,30 @@ export class Parser {
     return const_(name, initializer, { start, end });
   }
 
+  private fnDeclaration(): Stmt {
+    const start = this.previous().span.start;
+    const name = this.consume(TokenType.Identifier, "expect function name");
+    this.consume(TokenType.LeftParen, "expect '(' after function name");
+
+    const params: Token[] = [];
+    while (!this.check(TokenType.RightParen)) {
+      if (params.length >= 255) {
+        this.error(this.peek(), "can't have more than 255 parameters");
+      }
+
+      params.push(this.consume(TokenType.Identifier, "expect parameter name"));
+      if (this.match(TokenType.Comma) && this.check(TokenType.RightParen)) {
+        break;
+      }
+    }
+    this.consume(TokenType.RightParen, "expect ')' after parameters");
+
+    this.consume(TokenType.LeftBrace, "expect '{' before function body");
+    const body = this.blockExpression();
+    const span = { start, end: body.span.end };
+    return const_(name, fn(params, body, span), span);
+  }
+
   private letDeclaration(): Stmt {
     const start = this.previous().span.start;
     const name = this.consume(TokenType.Identifier, "expect variable name");
@@ -98,6 +125,7 @@ export class Parser {
     if (this.match(TokenType.Continue)) return this.continueStatement();
     // Bypass to remove requirement for semicolon on lone if expression
     if (this.match(TokenType.If)) return this.ifStatement();
+    if (this.match(TokenType.Return)) return this.returnStatement();
     if (this.match(TokenType.While)) return this.whileStatement();
 
     return this.expressionStatement();
@@ -133,6 +161,20 @@ export class Parser {
   private ifStatement(): Stmt {
     const expr = this.ifExpression();
     return expression(expr, expr.span);
+  }
+
+  private returnStatement(): Stmt {
+    const keyword = this.previous();
+    let value: Expr | null = null;
+    if (!this.check(TokenType.Semicolon)) {
+      value = this.expression();
+    }
+
+    const end = this.consume(
+      TokenType.Semicolon,
+      "expect ';' after return value",
+    ).span.end;
+    return return_(keyword, value, { start: keyword.span.start, end });
   }
 
   private whileStatement(): Stmt {
@@ -279,10 +321,24 @@ export class Parser {
     return this.call();
   }
 
+  private call(): Expr {
+    let expr = this.primary();
+
+    for (;;) {
+      if (this.match(TokenType.LeftParen)) {
+        expr = this.finishCall(expr);
+      } else {
+        break;
+      }
+    }
+
+    return expr;
+  }
+
   private finishCall(callee: Expr) {
     const args: Expr[] = [];
 
-    while (this.peek().type !== TokenType.RightParen) {
+    while (!this.check(TokenType.RightParen)) {
       if (args.length >= 255) {
         this.error(this.peek(), "can't have more than 255 arguments");
       }
@@ -301,20 +357,6 @@ export class Parser {
       start: callee.span.start,
       end: paren.span.end,
     });
-  }
-
-  private call(): Expr {
-    let expr = this.primary();
-
-    for (;;) {
-      if (this.match(TokenType.LeftParen)) {
-        expr = this.finishCall(expr);
-      } else {
-        break;
-      }
-    }
-
-    return expr;
   }
 
   private primary(): Expr {
@@ -340,6 +382,8 @@ export class Parser {
     }
 
     if (this.match(TokenType.If)) return this.ifExpression();
+
+    if (this.match(TokenType.Fn)) return this.fnExpression();
 
     // A block where an expression is expected is parsed as an expression
     if (this.match(TokenType.LeftBrace)) {
@@ -371,6 +415,28 @@ export class Parser {
     return if_(condition, thenBranch, elseBranch, { start, end });
   }
 
+  private fnExpression(): Expr {
+    const start = this.previous().span.start;
+    this.consume(TokenType.LeftParen, "expect '(' after 'fn'");
+
+    const params: Token[] = [];
+    while (!this.check(TokenType.RightParen)) {
+      if (params.length >= 255) {
+        this.error(this.peek(), "can't have more than 255 parameters");
+      }
+
+      params.push(this.consume(TokenType.Identifier, "expect parameter name"));
+      if (this.match(TokenType.Comma) && this.check(TokenType.RightParen)) {
+        break;
+      }
+    }
+    this.consume(TokenType.RightParen, "expect ')' after parameters");
+
+    this.consume(TokenType.LeftBrace, "expect '{' before function body");
+    const body = this.blockExpression();
+    return fn(params, body, { start, end: body.span.end });
+  }
+
   private blockExpression(): Expr {
     const start = this.previous().span.start;
     const { statements, value, end } = this.parseBlock();
@@ -391,9 +457,11 @@ export class Parser {
         [
           TokenType.LeftBrace,
           TokenType.Const,
+          TokenType.Fn,
           TokenType.Let,
           TokenType.Break,
           TokenType.Continue,
+          TokenType.Return,
           TokenType.While,
         ].includes(this.peek().type)
       ) {
@@ -491,6 +559,7 @@ export class Parser {
       if (this.previous().type === TokenType.Semicolon) return;
 
       switch (this.peek().type) {
+        case TokenType.Const:
         case TokenType.Fn:
         case TokenType.Let:
         case TokenType.If:

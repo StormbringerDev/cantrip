@@ -7,6 +7,7 @@ import type {
   BlockExpr,
   Call,
   Expr,
+  Fn,
   Grouping,
   If,
   Literal,
@@ -19,6 +20,7 @@ import type {
   Const,
   Expression,
   Let,
+  Return,
   Stmt,
   While,
 } from "../src/parser/stmt.js";
@@ -47,6 +49,33 @@ describe("parser", () => {
         expect((statements[0] as Stmt).type).toBe("Const");
         expect((statements[0] as Const).name.lexeme).toBe("maxRuns");
         expect((statements[0] as Const).initializer.type).toBe("Literal");
+      });
+    });
+
+    describe("fn declaration", () => {
+      it("parses a function declaration", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Fn, "fn"),
+          tok(TokenType.Identifier, "sayHello", null, 3),
+          tok(TokenType.LeftParen, "(", null, 11),
+          tok(TokenType.RightParen, ")", null, 12),
+          tok(TokenType.LeftBrace, "{", null, 14),
+          tok(TokenType.Identifier, "print", null, 16),
+          tok(TokenType.LeftParen, "(", null, 21),
+          tok(TokenType.String, '"Hello!"', "Hello!", 22),
+          tok(TokenType.RightParen, ")", null, 30),
+          tok(TokenType.Semicolon, ";", 31),
+          tok(TokenType.RightBrace, "}", null, 33),
+          tok(TokenType.Eof, "", null, 34),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as Stmt).type).toBe("Const");
+        expect((statements[0] as Const).name.lexeme).toBe("sayHello");
+        expect((statements[0] as Const).initializer.type).toBe("Fn");
       });
     });
 
@@ -241,6 +270,41 @@ describe("parser", () => {
         expect(diags).toHaveLength(1);
         expect(diags[0].severity).toBe("error");
         expect(diags[0].message).toBe("expect ';' after expression");
+      });
+    });
+
+    describe("return", () => {
+      it("parses a return statement", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Return, "return"),
+          tok(TokenType.Semicolon, ";", null, 6),
+          tok(TokenType.Eof, "", null, 7),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as Stmt).type).toBe("Return");
+        expect((statements[0] as Return).keyword.type).toBe(TokenType.Return);
+        expect((statements[0] as Return).value).toBeNull();
+      });
+
+      it("parses a return statement with a value", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.Return, "return"),
+          tok(TokenType.Number, "42", 42, 7),
+          tok(TokenType.Semicolon, ";", null, 9),
+          tok(TokenType.Eof, "", null, 10),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect((statements[0] as Stmt).type).toBe("Return");
+        expect((statements[0] as Return).keyword.type).toBe(TokenType.Return);
+        expect(((statements[0] as Return).value as Expr).type).toBe("Literal");
       });
     });
 
@@ -819,6 +883,44 @@ describe("parser", () => {
         expect(
           ((statements[0] as Expression).expression as Call).args,
         ).toHaveLength(2);
+      });
+    });
+
+    describe("fn", () => {
+      it("parses an anonymous function expression", () => {
+        const diagnostics = new DiagnosticCollector();
+        const tokens = [
+          tok(TokenType.LeftParen, "("),
+          tok(TokenType.Fn, "fn", null, 1),
+          tok(TokenType.LeftParen, "(", null, 3),
+          tok(TokenType.RightParen, ")", null, 4),
+          tok(TokenType.LeftBrace, "{", null, 6),
+          tok(TokenType.Number, "5", 5, 8),
+          tok(TokenType.RightBrace, "}", null, 10),
+          tok(TokenType.RightParen, ")", null, 11),
+          tok(TokenType.Semicolon, ";", null, 12),
+          tok(TokenType.Eof, "", null, 13),
+        ];
+        const statements = new Parser(tokens, diagnostics).parse();
+
+        expect(diagnostics.hasError()).toBe(false);
+        expect(statements).toHaveLength(1);
+        expect(
+          ((statements[0] as Expression).expression as Grouping).expression
+            .type,
+        ).toBe("Fn");
+        expect(
+          (
+            ((statements[0] as Expression).expression as Grouping)
+              .expression as Fn
+          ).params,
+        ).toHaveLength(0);
+        expect(
+          (
+            ((statements[0] as Expression).expression as Grouping)
+              .expression as Fn
+          ).body.type,
+        ).toBe("BlockExpr");
       });
     });
 

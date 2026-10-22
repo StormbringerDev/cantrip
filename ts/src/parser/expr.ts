@@ -36,6 +36,13 @@ export interface Call {
   readonly span: Span;
 }
 
+export interface Fn {
+  readonly type: "Fn";
+  readonly params: Token[];
+  readonly body: Expr;
+  readonly span: Span;
+}
+
 export interface If {
   readonly type: "If";
   readonly condition: Expr;
@@ -74,6 +81,7 @@ export type Expr =
   | Binary
   | BlockExpr
   | Call
+  | Fn
   | If
   | Grouping
   | Literal
@@ -108,6 +116,10 @@ export function call(
   span: Span,
 ): Call {
   return { type: "Call", callee, paren, args, span };
+}
+
+export function fn(params: Token[], body: Expr, span: Span): Fn {
+  return { type: "Fn", params, body, span };
 }
 
 export function if_(

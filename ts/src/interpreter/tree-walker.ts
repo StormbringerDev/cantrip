@@ -6,6 +6,7 @@ import type {
   BlockExpr,
   Call,
   Expr,
+  Fn,
   Grouping,
   If,
   Literal,
@@ -19,6 +20,7 @@ import type {
   Continue,
   Expression,
   Let,
+  Return,
   Stmt,
   While,
 } from "../parser/stmt.js";
@@ -27,9 +29,15 @@ import { Environment } from "./environment.js";
 import {
   BreakException,
   ContinueException,
+  ReturnException,
   RuntimeError,
 } from "./exceptions.js";
-import { stringify, UNIT, type Value } from "./runtime-types.js";
+import {
+  CantripFunction,
+  stringify,
+  UNIT,
+  type Value,
+} from "./runtime-types.js";
 import * as stdlib from "./stdlib.js";
 
 export function interpret(
@@ -72,6 +80,9 @@ function execute(stmt: Stmt): void {
     case "Let":
       executeLet(stmt);
       break;
+    case "Return":
+      executeReturn(stmt);
+      break;
     case "While":
       executeWhile(stmt);
       break;
@@ -90,6 +101,8 @@ function evaluate(expr: Expr): Value {
       return evaluateBlockExpr(expr);
     case "Call":
       return evaluateCall(expr);
+    case "Fn":
+      return evaluateFn(expr);
     case "If":
       return evaluateIf(expr);
     case "Grouping":
@@ -143,6 +156,13 @@ function executeLet(stmt: Let): void {
   }
 
   environment.define(stmt.name.lexeme, value);
+}
+
+function executeReturn(stmt: Return): void {
+  let value: Value = UNIT;
+  if (stmt.value != null) value = evaluate(stmt.value);
+
+  throw new ReturnException(value);
 }
 
 function executeWhile(stmt: While): void {
@@ -265,6 +285,27 @@ function evaluateCall(expr: Call): Value {
   }
 
   return func.call(args);
+}
+
+function evaluateFn(expr: Fn): Value {
+  const func: CantripFunction = {
+    arity: expr.params.length,
+    call: (args) => {
+      const env = new Environment(environment);
+      for (let i = 0; i < expr.params.length; i++) {
+        env.define(expr.params[i].lexeme, args[i]);
+      }
+
+      try {
+        return evaluate(expr.body);
+      } catch (err) {
+        if (err instanceof ReturnException) return err.value;
+        throw err;
+      }
+    },
+    toString: () => "<fn>",
+  };
+  return func;
 }
 
 function evaluateIf(expr: If): Value {

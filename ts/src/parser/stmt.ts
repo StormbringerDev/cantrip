@@ -42,6 +42,13 @@ export interface Let {
   readonly span: Span;
 }
 
+export interface Return {
+  readonly type: "Return";
+  readonly keyword: Token;
+  readonly value: Expr | null;
+  readonly span: Span;
+}
+
 export interface While {
   readonly type: "While";
   readonly condition: Expr;
@@ -50,7 +57,7 @@ export interface While {
 }
 
 export type Stmt =
-  BlockStmt | Break | Const | Continue | Expression | Let | While;
+  BlockStmt | Break | Const | Continue | Expression | Let | Return | While;
 
 export function blockStmt(statements: (Stmt | null)[], span: Span): BlockStmt {
   return { type: "BlockStmt", statements, span };
@@ -74,6 +81,14 @@ export function expression(expression: Expr, span: Span): Expression {
 
 export function let_(name: Token, initializer: Expr | null, span: Span): Let {
   return { type: "Let", name, initializer, span };
+}
+
+export function return_(
+  keyword: Token,
+  value: Expr | null,
+  span: Span,
+): Return {
+  return { type: "Return", keyword, value, span };
 }
 
 export function while_(condition: Expr, body: Stmt, span: Span): While {

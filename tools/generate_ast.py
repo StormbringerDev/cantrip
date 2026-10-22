@@ -19,11 +19,12 @@ TS_TYPES = {
     "Stmt": "Stmt",
     "Stmt[]": "(Stmt | null)[]",
     "Token": "Token",
+    "Token[]": "Token[]",
     "Span": "Span",
     "LiteralValue": "LiteralValue",
 }
 
-TS_RESERVED = ["break", "const", "continue", "if", "let", "while"]
+TS_RESERVED = ["break", "const", "continue", "if", "let", "return", "while"]
 
 C_TYPES = {
     "Expr": "Expr *",
@@ -32,11 +33,12 @@ C_TYPES = {
     "Stmt": "Stmt *",
     "Stmt[]": "Stmt **",
     "Token": "Token",
+    "Token[]": "Token *",
     "Span": "Span",
     "LiteralValue": "LiteralValue",
 }
 
-C_RESERVED = ["break", "const", "continue", "if", "while"]
+C_RESERVED = ["break", "const", "continue", "if", "return", "while"]
 
 EXPRESSIONS: list[Node] = [
     ("Assign", [("name", "Token"), ("value", "Expr"), ("span", "Span")]),
@@ -54,6 +56,7 @@ EXPRESSIONS: list[Node] = [
             ("span", "Span"),
         ],
     ),
+    ("Fn", [("params", "Token[]"), ("body", "Expr"), ("span", "Span")]),
     (
         "If",
         [
@@ -76,6 +79,7 @@ STATEMENTS: list[Node] = [
     ("Continue", [("keyword", "Token"), ("span", "Span")]),
     ("Expression", [("expression", "Expr"), ("span", "Span")]),
     ("Let", [("name", "Token"), ("initializer", "Expr?"), ("span", "Span")]),
+    ("Return", [("keyword", "Token"), ("value", "Expr?"), ("span", "Span")]),
     ("While", [("condition", "Expr"), ("body", "Stmt"), ("span", "Span")]),
 ]
 
@@ -133,13 +137,17 @@ def emit_ts(base_name: str, nodes: list[Node]) -> str:
     if uses_type(nodes, "Span"):
         imports.append('import type { Span } from "../types/location.js";')
 
-    if (uses_type(nodes, "Expr") or uses_type(nodes, "Expr?")) and base_name != "Expr":
+    if (
+        uses_type(nodes, "Expr")
+        or uses_type(nodes, "Expr?")
+        or uses_type(nodes, "Expr[]")
+    ) and base_name != "Expr":
         imports.append('import type { Expr } from "./expr.js";')
 
-    if uses_type(nodes, "Stmt[]") and base_name != "Stmt":
+    if (uses_type(nodes, "Stmt") or uses_type(nodes, "Stmt[]")) and base_name != "Stmt":
         imports.append('import type { Stmt } from "./stmt.js";')
 
-    if uses_type(nodes, "Token"):
+    if uses_type(nodes, "Token") or uses_type(nodes, "Token[]"):
         imports.append('import type { Token } from "./token.js";')
 
     if len(imports) > 0:
@@ -202,17 +210,26 @@ def emit_c(base_name: str, nodes: list[Node]) -> str:
         "",
     ]
 
+    includes: list[str] = []
+
     if uses_type(nodes, "LiteralValue"):
-        lines.append('#include "common.h"')
-    if (uses_type(nodes, "Expr") or uses_type(nodes, "Expr?")) and base_name != "Expr":
-        lines.append('#include "expr.h"')
+        includes.append('#include "common.h"')
+    if (
+        uses_type(nodes, "Expr")
+        or uses_type(nodes, "Expr?")
+        or uses_type(nodes, "Expr[]")
+    ) and base_name != "Expr":
+        includes.append('#include "expr.h"')
     if uses_type(nodes, "Span"):
-        lines.append('#include "location.h"')
-    if uses_type(nodes, "Stmt[]") and base_name != "Stmt":
-        lines.append('#include "stmt.h"')
-    if uses_type(nodes, "Token"):
-        lines.append('#include "token.h"')
-        lines.append("")
+        includes.append('#include "location.h"')
+    if (uses_type(nodes, "Stmt") or uses_type(nodes, "Stmt[]")) and base_name != "Stmt":
+        includes.append('#include "stmt.h"')
+    if uses_type(nodes, "Token") or uses_type(nodes, "Token[]"):
+        includes.append('#include "token.h"')
+
+    for include in includes:
+        lines.append(include)
+    lines.append("")
 
     # Node structs hold pointers to the base type, so the tag has to exist first.
     lines.append(f"typedef struct {base_name} {base_name};")
