@@ -4,8 +4,8 @@ import type { Span } from "../types/location.js";
 import type { Expr } from "./expr.js";
 import type { Token } from "./token.js";
 
-export interface Block {
-  readonly type: "Block";
+export interface BlockStmt {
+  readonly type: "BlockStmt";
   readonly statements: (Stmt | null)[];
   readonly span: Span;
 }
@@ -49,10 +49,11 @@ export interface While {
   readonly span: Span;
 }
 
-export type Stmt = Block | Break | Const | Continue | Expression | Let | While;
+export type Stmt =
+  BlockStmt | Break | Const | Continue | Expression | Let | While;
 
-export function block(statements: (Stmt | null)[], span: Span): Block {
-  return { type: "Block", statements, span };
+export function blockStmt(statements: (Stmt | null)[], span: Span): BlockStmt {
+  return { type: "BlockStmt", statements, span };
 }
 
 export function break_(keyword: Token, span: Span): Break {

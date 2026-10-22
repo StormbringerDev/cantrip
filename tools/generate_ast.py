@@ -44,7 +44,7 @@ EXPRESSIONS: list[Node] = [
         "Binary",
         [("left", "Expr"), ("operator", "Token"), ("right", "Expr"), ("span", "Span")],
     ),
-    ("Block", [("statements", "Stmt[]"), ("value", "Expr?"), ("span", "Span")]),
+    ("BlockExpr", [("statements", "Stmt[]"), ("value", "Expr?"), ("span", "Span")]),
     (
         "Call",
         [
@@ -70,7 +70,7 @@ EXPRESSIONS: list[Node] = [
 ]
 
 STATEMENTS: list[Node] = [
-    ("Block", [("statements", "Stmt[]"), ("span", "Span")]),
+    ("BlockStmt", [("statements", "Stmt[]"), ("span", "Span")]),
     ("Break", [("keyword", "Token"), ("span", "Span")]),
     ("Const", [("name", "Token"), ("initializer", "Expr"), ("span", "Span")]),
     ("Continue", [("keyword", "Token"), ("span", "Span")]),

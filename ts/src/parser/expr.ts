@@ -21,8 +21,8 @@ export interface Binary {
   readonly span: Span;
 }
 
-export interface Block {
-  readonly type: "Block";
+export interface BlockExpr {
+  readonly type: "BlockExpr";
   readonly statements: (Stmt | null)[];
   readonly value: Expr | null;
   readonly span: Span;
@@ -70,7 +70,15 @@ export interface Variable {
 }
 
 export type Expr =
-  Assign | Binary | Block | Call | If | Grouping | Literal | Unary | Variable;
+  | Assign
+  | Binary
+  | BlockExpr
+  | Call
+  | If
+  | Grouping
+  | Literal
+  | Unary
+  | Variable;
 
 export function assign(name: Token, value: Expr, span: Span): Assign {
   return { type: "Assign", name, value, span };
@@ -85,12 +93,12 @@ export function binary(
   return { type: "Binary", left, operator, right, span };
 }
 
-export function block(
+export function blockExpr(
   statements: (Stmt | null)[],
   value: Expr | null,
   span: Span,
-): Block {
-  return { type: "Block", statements, value, span };
+): BlockExpr {
+  return { type: "BlockExpr", statements, value, span };
 }
 
 export function call(

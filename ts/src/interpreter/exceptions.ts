@@ -1,13 +1,13 @@
 import type { Token } from "../parser/token.js";
 
-export class Break extends Error {
+export class BreakException extends Error {
   constructor() {
     super();
     this.name = "Break";
   }
 }
 
-export class Continue extends Error {
+export class ContinueException extends Error {
   constructor() {
     super();
     this.name = "Continue";

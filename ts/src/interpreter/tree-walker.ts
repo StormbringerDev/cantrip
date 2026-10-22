@@ -1,12 +1,34 @@
 import { DiagnosticCollector } from "../diagnostic/collector.js";
 import { error } from "../diagnostic/create.js";
-import type * as astExpr from "../parser/expr.js";
-import type { Expr } from "../parser/expr.js";
-import type * as astStmt from "../parser/stmt.js";
-import type { Stmt } from "../parser/stmt.js";
+import type {
+  Assign,
+  Binary,
+  BlockExpr,
+  Call,
+  Expr,
+  Grouping,
+  If,
+  Literal,
+  Unary,
+  Variable,
+} from "../parser/expr.js";
+import type {
+  BlockStmt,
+  Break,
+  Const,
+  Continue,
+  Expression,
+  Let,
+  Stmt,
+  While,
+} from "../parser/stmt.js";
 import { TokenType, type Token } from "../parser/token.js";
 import { Environment } from "./environment.js";
-import { Break, Continue, RuntimeError } from "./exceptions.js";
+import {
+  BreakException,
+  ContinueException,
+  RuntimeError,
+} from "./exceptions.js";
 import { stringify, UNIT, type Value } from "./runtime-types.js";
 import * as stdlib from "./stdlib.js";
 
@@ -32,8 +54,8 @@ globals.define("time", stdlib.timeNative);
 
 function execute(stmt: Stmt): void {
   switch (stmt.type) {
-    case "Block":
-      executeBlock(stmt);
+    case "BlockStmt":
+      executeBlockStmt(stmt);
       break;
     case "Break":
       executeBreak(stmt);
@@ -64,8 +86,8 @@ function evaluate(expr: Expr): Value {
       return evaluateAssign(expr);
     case "Binary":
       return evaluateBinary(expr);
-    case "Block":
-      return evaluateBlock(expr);
+    case "BlockExpr":
+      return evaluateBlockExpr(expr);
     case "Call":
       return evaluateCall(expr);
     case "If":
@@ -86,7 +108,7 @@ function evaluate(expr: Expr): Value {
   return UNIT;
 }
 
-function executeBlock(stmt: astStmt.Block): void {
+function executeBlockStmt(stmt: BlockStmt): void {
   const previous = environment;
   try {
     environment = new Environment(previous);
@@ -98,24 +120,24 @@ function executeBlock(stmt: astStmt.Block): void {
   }
 }
 
-function executeBreak(_stmt: astStmt.Break): void {
-  throw new Break();
+function executeBreak(_stmt: Break): void {
+  throw new BreakException();
 }
 
-function executeConst(stmt: astStmt.Const): void {
+function executeConst(stmt: Const): void {
   environment.define(stmt.name.lexeme, evaluate(stmt.initializer));
 }
 
-function executeContinue(_stmt: astStmt.Continue): void {
-  throw new Continue();
+function executeContinue(_stmt: Continue): void {
+  throw new ContinueException();
 }
 
-function executeExpression(stmt: astStmt.Expression): void {
+function executeExpression(stmt: Expression): void {
   evaluate(stmt.expression);
 }
 
-function executeLet(stmt: astStmt.Let): void {
-  let value = null;
+function executeLet(stmt: Let): void {
+  let value: Value = UNIT;
   if (stmt.initializer != null) {
     value = evaluate(stmt.initializer);
   }
@@ -123,25 +145,25 @@ function executeLet(stmt: astStmt.Let): void {
   environment.define(stmt.name.lexeme, value);
 }
 
-function executeWhile(stmt: astStmt.While): void {
+function executeWhile(stmt: While): void {
   while (isTruthy(evaluate(stmt.condition))) {
     try {
       execute(stmt.body);
     } catch (err) {
-      if (err instanceof Break) break;
-      else if (err instanceof Continue) continue;
+      if (err instanceof BreakException) break;
+      else if (err instanceof ContinueException) continue;
       else throw err;
     }
   }
 }
 
-function evaluateAssign(expr: astExpr.Assign): Value {
+function evaluateAssign(expr: Assign): Value {
   const value = evaluate(expr.value);
   environment.assign(expr.name, value);
   return value;
 }
 
-function evaluateBinary(expr: astExpr.Binary): Value {
+function evaluateBinary(expr: Binary): Value {
   const left = evaluate(expr.left);
 
   if (expr.operator.type === TokenType.Or) {
@@ -200,7 +222,7 @@ function evaluateBinary(expr: astExpr.Binary): Value {
   return UNIT;
 }
 
-function evaluateBlock(expr: astExpr.Block): Value {
+function evaluateBlockExpr(expr: BlockExpr): Value {
   const previous = environment;
   let value: Value = UNIT;
   try {
@@ -216,7 +238,7 @@ function evaluateBlock(expr: astExpr.Block): Value {
   return value;
 }
 
-function evaluateCall(expr: astExpr.Call): Value {
+function evaluateCall(expr: Call): Value {
   const callee = evaluate(expr.callee);
 
   const args: Value[] = [];
@@ -235,10 +257,17 @@ function evaluateCall(expr: astExpr.Call): Value {
   }
 
   const func = callee;
+  if (args.length != func.arity) {
+    throw new RuntimeError(
+      expr.paren,
+      `expected ${func.arity} arguments, got ${args.length}`,
+    );
+  }
+
   return func.call(args);
 }
 
-function evaluateIf(expr: astExpr.If): Value {
+function evaluateIf(expr: If): Value {
   if (isTruthy(evaluate(expr.condition))) {
     return evaluate(expr.thenBranch);
   } else if (expr.elseBranch !== null) {
@@ -247,15 +276,15 @@ function evaluateIf(expr: astExpr.If): Value {
   return UNIT;
 }
 
-function evaluateGrouping(expr: astExpr.Grouping): Value {
+function evaluateGrouping(expr: Grouping): Value {
   return evaluate(expr.expression);
 }
 
-function evaluateLiteral(expr: astExpr.Literal): Value {
+function evaluateLiteral(expr: Literal): Value {
   return expr.value;
 }
 
-function evaluateUnary(expr: astExpr.Unary): Value {
+function evaluateUnary(expr: Unary): Value {
   const right = evaluate(expr.right);
 
   switch (expr.operator.type) {
@@ -269,7 +298,7 @@ function evaluateUnary(expr: astExpr.Unary): Value {
   }
 }
 
-function evaluateVariable(expr: astExpr.Variable): Value {
+function evaluateVariable(expr: Variable): Value {
   return environment.get(expr.name);
 }
 

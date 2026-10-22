@@ -1,10 +1,28 @@
 import { DiagnosticCollector } from "../diagnostic/collector.js";
 import { error as diagnosticError } from "../diagnostic/create.js";
 import { Position } from "../types/location.js";
-import * as astExpr from "./expr.js";
-import type { Expr } from "./expr.js";
-import * as astStmt from "./stmt.js";
-import type { Stmt } from "./stmt.js";
+import {
+  assign,
+  binary,
+  blockExpr,
+  call,
+  grouping,
+  if_,
+  literal,
+  unary,
+  variable,
+  type Expr,
+} from "./expr.js";
+import {
+  blockStmt,
+  break_,
+  const_,
+  continue_,
+  expression,
+  let_,
+  while_,
+  type Stmt,
+} from "./stmt.js";
 import { TokenType, type Token } from "./token.js";
 
 class ParseError extends Error {
@@ -56,7 +74,7 @@ export class Parser {
       TokenType.Semicolon,
       "expect ';' after constant declaration",
     ).span.end;
-    return astStmt.const_(name, initializer, { start, end });
+    return const_(name, initializer, { start, end });
   }
 
   private letDeclaration(): Stmt {
@@ -70,7 +88,7 @@ export class Parser {
       TokenType.Semicolon,
       "expect ';' after variable declaration",
     ).span.end;
-    return astStmt.let_(name, initializer, { start, end });
+    return let_(name, initializer, { start, end });
   }
 
   private statement(): Stmt {
@@ -88,33 +106,33 @@ export class Parser {
   private blockStatement(): Stmt {
     const start = this.previous().span.start;
     const { statements, end } = this.parseBlock();
-    return astStmt.block(statements, { start, end });
+    return blockStmt(statements, { start, end });
   }
 
   private breakStatement(): Stmt {
     const keyword = this.previous();
     const end = this.consume(TokenType.Semicolon, "expect ';' after 'break'")
       .span.end;
-    return astStmt.break_(keyword, { start: keyword.span.start, end });
+    return break_(keyword, { start: keyword.span.start, end });
   }
 
   private continueStatement(): Stmt {
     const keyword = this.previous();
     const end = this.consume(TokenType.Semicolon, "expect ';' after 'continue'")
       .span.end;
-    return astStmt.continue_(keyword, { start: keyword.span.start, end });
+    return continue_(keyword, { start: keyword.span.start, end });
   }
 
   private expressionStatement(): Stmt {
     const expr = this.expression();
     const end = this.consume(TokenType.Semicolon, "expect ';' after expression")
       .span.end;
-    return astStmt.expression(expr, { start: expr.span.start, end });
+    return expression(expr, { start: expr.span.start, end });
   }
 
   private ifStatement(): Stmt {
     const expr = this.ifExpression();
-    return astStmt.expression(expr, expr.span);
+    return expression(expr, expr.span);
   }
 
   private whileStatement(): Stmt {
@@ -123,7 +141,7 @@ export class Parser {
     this.consume(TokenType.LeftBrace, "expect '{' after loop condition");
     const body = this.blockStatement();
 
-    return astStmt.while_(condition, body, { start, end: body.span.end });
+    return while_(condition, body, { start, end: body.span.end });
   }
 
   private expression(): Expr {
@@ -139,7 +157,7 @@ export class Parser {
 
       if (expr.type === "Variable") {
         const name = expr.name;
-        return astExpr.assign(name, value, {
+        return assign(name, value, {
           start: name.span.start,
           end: value.span.end,
         });
@@ -157,7 +175,7 @@ export class Parser {
     while (this.match(TokenType.Or)) {
       const operator = this.previous();
       const right = this.and();
-      expr = astExpr.binary(expr, operator, right, {
+      expr = binary(expr, operator, right, {
         start: expr.span.start,
         end: right.span.end,
       });
@@ -172,7 +190,7 @@ export class Parser {
     while (this.match(TokenType.And)) {
       const operator = this.previous();
       const right = this.equality();
-      expr = astExpr.binary(expr, operator, right, {
+      expr = binary(expr, operator, right, {
         start: expr.span.start,
         end: right.span.end,
       });
@@ -187,7 +205,7 @@ export class Parser {
     while (this.match(TokenType.EqEq, TokenType.BangEq)) {
       const operator = this.previous();
       const right = this.comparison();
-      expr = astExpr.binary(expr, operator, right, {
+      expr = binary(expr, operator, right, {
         start: expr.span.start,
         end: right.span.end,
       });
@@ -209,7 +227,7 @@ export class Parser {
     ) {
       const operator = this.previous();
       const right = this.term();
-      expr = astExpr.binary(expr, operator, right, {
+      expr = binary(expr, operator, right, {
         start: expr.span.start,
         end: right.span.end,
       });
@@ -224,7 +242,7 @@ export class Parser {
     while (this.match(TokenType.Plus, TokenType.Minus)) {
       const operator = this.previous();
       const right = this.factor();
-      expr = astExpr.binary(expr, operator, right, {
+      expr = binary(expr, operator, right, {
         start: expr.span.start,
         end: right.span.end,
       });
@@ -239,7 +257,7 @@ export class Parser {
     while (this.match(TokenType.Star, TokenType.Slash, TokenType.Percent)) {
       const operator = this.previous();
       const right = this.unary();
-      expr = astExpr.binary(expr, operator, right, {
+      expr = binary(expr, operator, right, {
         start: expr.span.start,
         end: right.span.end,
       });
@@ -252,7 +270,7 @@ export class Parser {
     if (this.match(TokenType.Minus, TokenType.Bang)) {
       const operator = this.previous();
       const right = this.unary();
-      return astExpr.unary(operator, right, {
+      return unary(operator, right, {
         start: operator.span.start,
         end: right.span.end,
       });
@@ -279,7 +297,7 @@ export class Parser {
       "expect ')' after arguments",
     );
 
-    return astExpr.call(callee, paren, args, {
+    return call(callee, paren, args, {
       start: callee.span.start,
       end: paren.span.end,
     });
@@ -300,18 +318,16 @@ export class Parser {
   }
 
   private primary(): Expr {
-    if (this.match(TokenType.True))
-      return astExpr.literal(true, this.previous().span);
+    if (this.match(TokenType.True)) return literal(true, this.previous().span);
     if (this.match(TokenType.False))
-      return astExpr.literal(false, this.previous().span);
-    if (this.match(TokenType.Nil))
-      return astExpr.literal(null, this.previous().span);
+      return literal(false, this.previous().span);
+    if (this.match(TokenType.Nil)) return literal(null, this.previous().span);
 
     if (this.match(TokenType.Number, TokenType.String))
-      return astExpr.literal(this.previous().literal, this.previous().span);
+      return literal(this.previous().literal, this.previous().span);
 
     if (this.match(TokenType.Identifier))
-      return astExpr.variable(this.previous(), this.previous().span);
+      return variable(this.previous(), this.previous().span);
 
     if (this.match(TokenType.LeftParen)) {
       const start = this.previous().span.start;
@@ -320,7 +336,7 @@ export class Parser {
         TokenType.RightParen,
         "expect `)` after expression",
       ).span.end;
-      return astExpr.grouping(expr, { start, end });
+      return grouping(expr, { start, end });
     }
 
     if (this.match(TokenType.If)) return this.ifExpression();
@@ -352,13 +368,13 @@ export class Parser {
       }
     }
 
-    return astExpr.if_(condition, thenBranch, elseBranch, { start, end });
+    return if_(condition, thenBranch, elseBranch, { start, end });
   }
 
   private blockExpression(): Expr {
     const start = this.previous().span.start;
     const { statements, value, end } = this.parseBlock();
-    return astExpr.block(statements, value, { start, end });
+    return blockExpr(statements, value, { start, end });
   }
 
   private parseBlock(): {
@@ -396,7 +412,7 @@ export class Parser {
           break;
         } else {
           // Push expression statement and jump to beginning otherwise
-          statements.push(astStmt.expression(expr, expr.span));
+          statements.push(expression(expr, expr.span));
           continue;
         }
       }
@@ -405,9 +421,7 @@ export class Parser {
       if (this.match(TokenType.Semicolon)) {
         // Push the expression as an expression statement
         const end = this.previous().span.end;
-        statements.push(
-          astStmt.expression(expr, { start: expr.span.start, end }),
-        );
+        statements.push(expression(expr, { start: expr.span.start, end }));
       } else if (this.check(TokenType.RightBrace)) {
         // Set the value if the next token ends the block
         value = expr;
