@@ -367,6 +367,7 @@ function lookUpVariable(
 function isTruthy(value: Value): boolean {
   if (value === null || value === UNIT) return false;
   if (typeof value === "boolean") return value;
+  if (value === 0 || value === "") return false;
   return true;
 }
 

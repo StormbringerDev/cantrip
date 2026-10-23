@@ -84,6 +84,9 @@ async function startRepl() {
     prompt: "> ",
   });
 
+  console.log(`Welcome to Cantrip v${version}.`);
+  console.log("Press Ctrl+D to exit the REPL.\n");
+
   rl.prompt();
   for await (const line of rl) {
     runSource(line);

@@ -53,7 +53,13 @@ describe("cantrip cli", () => {
     const result = await run([], "");
 
     expect(result).toSucceed();
-    expect(result.stdout.startsWith("> ")).toBe(true);
+    const expected = [
+      `Welcome to Cantrip v${version}.`,
+      "Press Ctrl+D to exit the REPL.",
+      "",
+      "> ",
+    ].join("\n");
+    expect(result.stdout.startsWith(expected)).toBe(true);
     expect(result.cwd).toBe(directory.path);
   });
 
@@ -62,7 +68,13 @@ describe("cantrip cli", () => {
 
     expect(result).toSucceed();
     expect(result).toExitWith(0);
-    expect(result.stdout.startsWith("> ")).toBe(true);
+    const expected = [
+      `Welcome to Cantrip v${version}.`,
+      "Press Ctrl+D to exit the REPL.",
+      "",
+      "> ",
+    ].join("\n");
+    expect(result.stdout.startsWith(expected)).toBe(true);
     expect(result).toHaveStdout("42");
     expect(result).toHaveStderr("unexpected character");
     expect(result).toHaveStderr("expect expression");
