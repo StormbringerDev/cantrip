@@ -1,0 +1,19 @@
+const a = "global a";
+const b = "global b";
+const c = "global c";
+{
+  const a = "outer a";
+  const b = "outer b";
+  {
+    const a = "inner a";
+    print(a);
+    print(b);
+    print(c);
+  }
+  print(a);
+  print(b);
+  print(c);
+}
+print(a);
+print(b);
+print(c);

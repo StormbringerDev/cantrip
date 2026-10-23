@@ -21,10 +21,10 @@ test-c: build-c
     ctest --preset dev
 
 conformance-ts: build-ts
-    python tools/conformance.py --cmd "node ts/dist/index.js"
+    python scripts/conformance.py --cmd "node ts/dist/index.js"
 
 conformance-c: build-c
-    python tools/conformance.py --cmd "./c/build/dev/cantrip"
+    python scripts/conformance.py --cmd "./c/build/dev/cantrip"
 
 test-all: test-ts test-c conformance-ts conformance-c
 

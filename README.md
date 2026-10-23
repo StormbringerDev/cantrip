@@ -87,7 +87,6 @@ print(add(40, 2));
 ### Language Features
 
 - [ ] `loop` expressions — Infinite loops that can return a value with `break`. `break` statements in a `while` loop will not be able to carry a value.
-- [x] `const` declarations — Syntax for declaring immutable variables: `const name = value`. `const` declarations must be initialized before use.
 - [ ] Arrow functions — Alternative syntax for creating anonymous functions: `(params) => expr` (equivalent to `fn(params) { ... }`).
 - [ ] Arrays and JS-like objects — Structured data to make handling JSON and other structured data easier.
 - [ ] Gradual typing with inferrence — A type-checking model similar to TypeScript.
