@@ -1,6 +1,6 @@
 [arg("target", pattern="ts|c")]
 generate-ast target outdir:
-    python tools/generate_ast.py --target={{target}} {{outdir}}
+    python scripts/generate_ast.py --target={{target}} {{outdir}}
 
 build-ts:
     cd ts && pnpm install && pnpm build
