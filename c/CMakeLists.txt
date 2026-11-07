@@ -12,6 +12,11 @@ option(CANTRIP_WARN_AS_ERROR "Treat warnings as errors." OFF)
 
 if(CANTRIP_BUILD_TESTS)
   enable_testing()
+  add_library(unity STATIC external/unity/src/unity.c)
+  target_include_directories(unity PUBLIC external/unity/src)
+  add_library(cmock STATIC external/cmock/src/cmock.c)
+  target_include_directories(cmock PUBLIC external/cmock/src)
+  target_link_libraries(cmock unity)
   add_subdirectory(tests)
 endif()
 

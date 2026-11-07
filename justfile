@@ -18,7 +18,7 @@ test-ts: build-ts
     cd ts && pnpm test
 
 test-c: build-c
-    ctest --preset dev
+    cd c && ctest --preset dev
 
 conformance-ts: build-ts
     python scripts/conformance.py --cmd "node ts/dist/index.js"
