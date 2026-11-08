@@ -14,6 +14,12 @@ build-c:
 run-c path="": build-c
     ./c/build/dev/cantrip {{path}}
 
+format-ts:
+    npx prettier ts --write
+
+format-c:
+    find c/{src,include,tests} -regex '.*\.\(c\|h\)' -exec clang-format -style=file -i {} \;
+
 test-ts: build-ts
     cd ts && pnpm test
 

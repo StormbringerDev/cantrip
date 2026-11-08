@@ -5,4 +5,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define CANTRIP_VERSION "0.1.0"
+
 #endif

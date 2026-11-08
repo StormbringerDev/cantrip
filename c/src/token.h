@@ -58,4 +58,4 @@ typedef struct {
   Span span;
 } Token;
 
-#endif
+#endif /* CANTRIP_TOKEN_H */
