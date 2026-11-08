@@ -116,7 +116,7 @@ Blocks are a special construct that can act as either an expression or a stateme
 let y = {
   let x = 5;
   x + 5  // This block returns 10
-}
+};
 ```
 
 ### Call Expressions
@@ -132,7 +132,7 @@ add(1, 2);
 Anonymous functions can be created with the following syntax: `fn(params) { ... }`. The block following the function parameters is evaluated as a [block expression](#block-expressions). Before execution, a new environment for the function is created and arguments from a [call expression](#call-expressions) are passed to the parameters in order from left to right.
 
 ```rust
-const add = fn(a, b) { a + b }
+const add = fn(a, b) { a + b };
 ```
 
 ### If Expressions
